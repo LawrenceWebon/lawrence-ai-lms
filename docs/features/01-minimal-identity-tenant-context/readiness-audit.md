@@ -6,17 +6,20 @@ Audited: 2026-08-09
 
 ## BLOCKER
 
-1. GitHub execution preflight fails: this checkout has no `origin`, and the active
-   `gh` token is invalid. The required issue/branch/worktree/PR ownership cannot be
-   created or verified until both are corrected.
+1. GitHub API preflight now passes and issue #1 plus branch
+   `chore/LMS-1-foundation-contracts` exist from the owner-approved `develop` base at
+   `300d0a1ff6d4c044f26eeeb263845ea8ea442388`. Local Git transport is not ready in
+   this Codex environment: `origin` uses SSH and fetch fails because no usable SSH key
+   is available. Worktree provisioning must wait until SSH access is restored or the
+   project owner explicitly switches `origin` to authenticated HTTPS.
 2. The repository has no engineering scaffold, manifests, lockfiles, test runners,
    application modules, OpenAPI generator, or executable commands. Step 0 must land
    first and turn TD-006 from proposed into an evidenced decision before lanes A–D
    are `READY FOR IMPLEMENTATION`.
 
-Minimum change required: connect the intended GitHub repository, restore `gh auth
-status`, create the Step 0 issue, and merge its reviewed scaffold/contracts PR with the
-planned commands passing. Then re-run this audit for the exact base SHA.
+Minimum change required: restore working Git transport, explicitly request Step 0
+implementation, and merge the independently reviewed issue #1 scaffold/contracts PR
+with the planned commands passing. Then re-run this audit for the exact base SHA.
 
 ## IMPORTANT
 

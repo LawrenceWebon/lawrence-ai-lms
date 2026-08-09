@@ -619,13 +619,14 @@ Avoid mixing:
 
 ## 11.3 Stacked branches
 
-Independent issues and PRs targeting the default branch are preferred. Agents use
-frozen contracts and fixtures so one unmerged implementation does not block another.
+Independent issues and PRs targeting the owner-approved `develop` branch are
+preferred. Agents use frozen contracts and fixtures so one unmerged implementation
+does not block another.
 
 Use stacked branches only for a genuine, declared dependency:
 
 ```text
-main
+develop
   └─ step-01
        └─ step-02
             └─ step-03

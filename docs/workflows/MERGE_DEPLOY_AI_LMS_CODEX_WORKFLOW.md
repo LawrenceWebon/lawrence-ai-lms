@@ -2325,7 +2325,7 @@ Formal Code Review
 After merge:
 
 ```text
-main
+approved target branch
   ↓
 build
   ↓

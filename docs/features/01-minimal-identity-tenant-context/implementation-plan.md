@@ -1,9 +1,9 @@
 # Implementation Plan — F-001 Minimal Identity and Tenant Context
 
-Status: **planned; GitHub execution blocked**
+Status: **Step 0 issue created; implementation not started**
 
-Placeholder issue IDs remain local until `origin` exists and `gh auth status` passes.
-Replace `<issue>` only with the created GitHub number.
+GitHub issue #1 and its linked branch exist for Step 0. Lane and integration issue IDs
+remain local until the Step 0 PR merges and this feature passes a new readiness audit.
 
 ## Dependency graph
 
@@ -16,12 +16,13 @@ Step 0 foundation/contracts
         +--> Lane D web UX/E2E fixtures -------+
 ```
 
-At most four lanes are active after Step 0. They target the default branch, use frozen
-fixtures, and do not import sibling branches. Step 5 starts only after lane PRs merge.
+At most four lanes are active after Step 0. They target the owner-approved `develop`
+branch, use frozen fixtures, and do not import sibling branches. Step 5 starts only
+after lane PRs merge.
 
 | Step | Local issue | Owner | Branch template | Owned paths | Depends on | PR order |
 |---|---|---|---|---|---|---|
-| 0 | LOCAL-F001-0 | Integration owner | `chore/LMS-<issue>-foundation-contracts` | root manifests/locks, scaffold/composition, CI, base profile/platform migrations, contracts and fixtures | docs | 1 |
+| 0 | [#1](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/1) | Integration owner | `chore/LMS-1-foundation-contracts` | root manifests/locks, scaffold/composition, CI, base profile/platform migrations, contracts and fixtures | docs | 1 |
 | A | LOCAL-F001-A | Agent A | `feature/LMS-<issue>-jwt-context` | identity module, JWT/API auth dependency, identity tests | Step 0 contracts | 2–5 |
 | B | LOCAL-F001-B | Agent B | `feature/LMS-<issue>-tenant-membership` | tenancy domain/services/policies/migrations/RLS and tests | Step 0 contracts | 2–5 |
 | C | LOCAL-F001-C | Agent C | `feature/LMS-<issue>-membership-api-admin` | membership/invitation FastAPI routers/schemas and adapter-only Admin plus tests | Step 0 service fakes | 2–5 |
@@ -115,5 +116,6 @@ The Make targets wrap pinned tools; agents do not replace them with ad hoc comma
 ## Dry-run result
 
 The predicted implementation follows existing planned boundaries and does not require
-a new provider or architecture. The only material prerequisite is the Step 0 runnable
-scaffold/contracts. Remote issue/branch creation remains blocked by repository preflight.
+a new provider or architecture. Issue #1 and its server-side linked branch exist. The
+remaining material prerequisite is its reviewed runnable scaffold/contracts PR; local
+worktree provisioning also requires a working Git transport for `origin`.

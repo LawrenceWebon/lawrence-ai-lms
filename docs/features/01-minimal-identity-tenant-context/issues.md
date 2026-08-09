@@ -1,14 +1,17 @@
-# Local GitHub Issue Bodies — F-001
+# GitHub Issues — F-001
 
-GitHub creation is blocked until `origin` exists and `gh auth status` passes. Create
-these issues in order with `.github/ISSUE_TEMPLATE/feature.md`; replace local IDs with
-the returned numbers and derive branches with `gh issue develop`.
+Step 0 is [GitHub issue #1](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/1)
+and its linked branch is `chore/LMS-1-foundation-contracts`, based on `develop` at
+`300d0a1ff6d4c044f26eeeb263845ea8ea442388`. Create lanes A-D only after the reviewed
+Step 0 PR merges and the readiness audit passes. Their bodies remain local plans until
+then; replace each local ID with its returned GitHub issue number.
 
-## LOCAL-F001-0 — Foundation and frozen contracts
+## #1 — Foundation and frozen contracts
 
 - Outcome: runnable minimum scaffold, exact lockfiles/commands, v1 schemas and fixtures.
 - Owner/paths: integration owner; shared manifests, composition, CI, base migrations,
   OpenAPI/event/fixture baselines.
+- Base/branch: `develop` -> `chore/LMS-1-foundation-contracts`.
 - Acceptance: all Step 0 checks and four isolated fixture suites run.
 - Non-goals: F-001 business behavior, external providers, real data.
 

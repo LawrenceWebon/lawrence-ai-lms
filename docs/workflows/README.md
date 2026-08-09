@@ -128,7 +128,8 @@ Each issue must declare:
 
 - Agents never share a worktree or branch.
 - An agent stages only declared paths; do not use `git add .` or `git add -A`.
-- Independent PRs target the repository default branch. Stacked PRs are exceptional
+- Independent implementation PRs target the owner-approved integration branch,
+  `develop`. Stacked PRs are exceptional
   and must declare `Depends-on: #<PR>` in the issue and PR.
 - Cross-lane dependencies are versioned contracts and fixtures, not imports from an
   unmerged sibling branch.
@@ -185,9 +186,22 @@ and deployment still require the gates in the Merge/Deploy workflow. Never use
 
 `gh` manages GitHub objects. `git` manages local commits, diffs, and worktrees.
 
+### Project branch policy
+
+- `develop` is the base for implementation issues and pull requests.
+- `master`, `staging`, and `production` are release/environment branches and must be
+  protected before they are used for merge or deployment.
+- GitHub's repository default may remain `master`; default-branch metadata does not
+  override the project owner's explicit `develop` base.
+- On 2026-08-09 GitHub rejected both rulesets and classic branch protection for this
+  private repository with HTTP 403 because the current account plan does not support
+  that feature. Do not represent those branches as protected, change visibility, or
+  bypass review gates. Enable the required protections after the repository gains a
+  supporting GitHub plan or visibility decision.
+
 ### 1. Repository preflight
 
-Do not hard-code `main` or `master`:
+Verify both GitHub's default branch and the owner-approved integration branch:
 
 ```bash
 gh auth status
@@ -201,13 +215,13 @@ Copy the verified values into explicit task variables:
 
 ```bash
 REPO=OWNER/REPOSITORY
-BASE=DEFAULT_BRANCH_FROM_GITHUB
+BASE=develop
 AI_LMS_WT_ROOT=/absolute/path/to/ai-lms-worktrees
 ```
 
-Stop if authentication, `origin`, the default branch, or canonical checkout state is
-unexpected. Never discard existing changes. The current local repository must have a
-GitHub `origin` before the remote steps below can run.
+Stop if authentication, `origin`, `develop`, or canonical checkout state is unexpected.
+Never discard existing changes. The current local repository must have a GitHub
+`origin` before the remote steps below can run.
 
 ### 2. Create one issue and linked branch per task
 
@@ -260,8 +274,8 @@ Use the branch forms from [coding standards](../plan/19-coding-standards.md):
 `feature/LMS-<issue>-<slug>`, `fix/LMS-<issue>-<slug>`, or
 `chore/LMS-<issue>-<slug>`.
 
-Before the first push, merge the latest default branch without rewriting history and
-rerun the task's verification commands:
+Before the first push, merge the latest approved base branch without rewriting history
+and rerun the task's verification commands:
 
 ```bash
 git fetch origin "$BASE"
