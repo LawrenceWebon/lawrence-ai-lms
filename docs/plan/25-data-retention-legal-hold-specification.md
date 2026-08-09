@@ -15,7 +15,7 @@ This document is the required system-and-field retention matrix for the LMS. The
 | Records owner | `TBD-BLOCKING: Lawrence` | Signed field/system matrix | missing |
 | Security-log owner | `TBD-BLOCKING: Lawrence` | Approved security-event retention | missing |
 | Finance/tax owner | Not applicable to initial MVP | Required before paid commerce | deferred |
-| Final approver | `TBD-BLOCKING: accountable executive` | Dated approval record | missing |
+| Final approver | `TBD-BLOCKING: Lawrence` | Dated approval record | missing |
 
 ## Mandatory retention matrix
 
