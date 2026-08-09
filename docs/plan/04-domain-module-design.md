@@ -58,6 +58,13 @@ For an interactive request, `principal_id` is the verified Supabase subject and 
 
 Workers repeat authorization at execution time. An enqueue-time decision, cached membership, namespace, tenant ID in a payload, or privileged dispatcher credential never carries authorization forward.
 
+The identity bootstrap has one narrow exception before a tenant is selected: an
+authenticated actor may list only their own minimal membership candidates or accept a
+presented invitation. These operations set actor/request context, use dedicated
+least-granted services or fixed-search-path helpers, return no tenant content, and
+derive/re-verify the tenant before any tenant-owned mutation. They do not create a
+general actor-only query path or an authorized tenant context.
+
 ## Commands and services
 
 Services change state. A top-level command service owns one unit of work; nested domain operations join it and may neither commit nor open an independent correctness transaction.

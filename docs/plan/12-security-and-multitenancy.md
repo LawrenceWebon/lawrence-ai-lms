@@ -80,6 +80,10 @@ Tenant-owned application tables use `ENABLE ROW LEVEL SECURITY` plus `FORCE ROW 
 - Validate actor, tenant, request and optional grant IDs as UUIDs before setting them.
 - Begin one transaction on one connection, use `set_config(..., true)`/`SET LOCAL`, re-read active membership/entitlement/resource ownership, then execute domain/audit/outbox work on that same connection.
 - Missing actor/tenant context returns no tenant rows and rejects tenant writes. An invalid/mismatched context is an authorization failure, not a fallback to platform scope.
+- The only pre-tenant exceptions are actor-scoped self-membership discovery and
+  invitation acceptance as defined in document 04. Their dedicated grants expose no
+  tenant content, cannot perform unrelated tenant writes, and are covered by
+  cross-tenant/enumeration tests.
 - Pool checkout/return tests prove transaction rollback/reset removes context; session-level tenant settings are forbidden.
 - Workers set context per claimed job transaction and re-read job tenant/scope; a payload tenant ID alone is never authority.
 - Policy helpers use fixed safe `search_path`, reviewed owner, explicit arguments where practical, and no public execution.

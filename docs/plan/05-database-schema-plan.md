@@ -40,7 +40,12 @@ Every tenant-owned table must also declare `UNIQUE (tenant_id, id)`. Every relat
 
 ## Scope catalog (not an executable data dictionary)
 
-The names below inventory long-term scope. They do **not** authorize a migration. Initial-MVP migrations include only identity/tenancy, manual course/version/publication, enrollment/progress, basic quiz, audit/outbox and the minimum supporting tables mapped to phases 0–4 in document 20. Commerce, payouts, live-provider integration and every AI table remain absent or unreachable until their gates close.
+The names below inventory long-term scope. They do **not** authorize a migration.
+Focused-MVP migrations begin with identity/tenancy, audit/outbox, the minimum canonical
+course/publication and enrollment/progress objects, then the issue-owned PDF ingestion
+and structured-generation groups described later in this document. Assessment,
+commerce, payouts, live-provider integration, RAG/chat, and unapproved provider objects
+remain absent until their gates close.
 
 ### Mandatory executable data dictionary (CHG-002)
 
