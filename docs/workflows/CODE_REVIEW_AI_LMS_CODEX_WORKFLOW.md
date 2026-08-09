@@ -25,8 +25,7 @@ the required distinct human/GitHub approval.
 An agent never reviews its own PR and never pushes fixes to the author's branch. Four
 implementation lanes may continue while a different lane is reviewed. A new push
 invalidates the prior reviewed SHA and requires re-review. `docs/plan`, the approved
-issue, and the PR contract replace the generic `docs/product`/`docs/features` examples
-below.
+product contract, issue, and PR contract define expected behavior.
 
 ---
 
@@ -126,7 +125,8 @@ The formal Code Review workflow should receive:
 ```text
 AGENTS.md and REVIEW_GUIDE.md             # when present
 docs/workflows/README.md
-docs/README.md and relevant docs/plan/ADRs
+docs/product/spec.md, features.md, and decisions.md
+relevant docs/plan/ADRs
 approved GitHub issue and frozen contracts
 pull request body and implementation summary
 exact base/head names and headRefOid
@@ -217,13 +217,14 @@ Use this precedence:
 
 1. repository-wide and nested `AGENTS.md`
 2. `docs/workflows/README.md`
-3. `docs/README.md` and `docs/plan/00-product-vision.md`
-4. relevant accepted ADRs and `docs/plan` contracts
-5. approved GitHub issue, frozen contracts, and acceptance/test plan
-6. implementation summary and PR description
-7. existing architecture and established code behavior
-8. actual diff and verification evidence
-9. reviewer inference
+3. `docs/product/spec.md`
+4. approved product decisions and derived features
+5. relevant accepted ADRs and `docs/plan` contracts
+6. approved GitHub issue, frozen contracts, and acceptance/test plan
+7. implementation summary and PR description
+8. existing architecture and established code behavior
+9. actual diff and verification evidence
+10. reviewer inference
 
 Important:
 
@@ -3325,6 +3326,10 @@ Keep it concise.
 ---
 
 # 54. Recommended Codex Skill Packaging
+
+This workflow is packaged as `.agents/skills/review-ai-lms-pr`. The generic structure
+below is retained as design background; it does not name an additional active
+repository skill.
 
 ```text
 .agents/

@@ -13,8 +13,9 @@
 ## Repository-specific application
 
 Follow [the repository workflow authority](README.md). For this repository,
-`docs/plan` is the product and architecture source; the `docs/product` and
-`docs/features` paths below are optional templates, not required parallel authorities.
+`docs/product/spec.md` is the concise product contract and `docs/plan` supplies the
+detailed architecture and safety constraints. Use `docs/features/_template` only when
+the GitHub issue needs durable detail beyond the issue itself.
 
 Plan Feature must produce a dependency graph of independently reviewable GitHub
 issues, not one long serial checklist. Freeze shared API/event/job/DTO fixtures first,
@@ -70,12 +71,13 @@ When planning a feature, use the following precedence:
 
 1. latest explicit project-owner instruction
 2. `/docs/workflows/README.md`
-3. `/docs/README.md` and `/docs/plan/00-product-vision.md`
-4. relevant accepted ADRs and `/docs/plan/` contracts
-5. the selected GitHub issue and frozen feature contracts
-6. existing production code and migrations as evidence of current implementation
-7. mockups, diagrams, tickets, and supporting notes
-8. generated implementation plans, tests, and agent prompts
+3. `/docs/product/spec.md`
+4. approved `/docs/product/decisions.md` and derived `features.md`
+5. relevant accepted ADRs and `/docs/plan/` contracts
+6. the selected GitHub issue and frozen feature contracts
+7. existing production code and migrations as evidence of current implementation
+8. mockups, diagrams, tickets, and supporting notes
+9. generated implementation plans, tests, and agent prompts
 
 ### Important rule
 
@@ -3069,7 +3071,9 @@ Do not implement the feature.
 
 # 27. Recommended Codex Skill Packaging
 
-Once this workflow works well manually, make it a reusable Codex skill.
+This workflow is packaged as `.agents/skills/plan-ai-lms-feature`. The generic
+structure below is retained as design background; it does not name an additional
+active repository skill.
 
 Recommended structure:
 

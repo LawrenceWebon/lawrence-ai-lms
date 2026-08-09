@@ -1,7 +1,9 @@
 # LMS SaaS Master Architecture and Delivery Plan
 
-Plan status: **approved documentation baseline; not production-ready**  
-Approved scope: private-institution LMS foundation; commerce and AI disabled until their non-waivable gates close.
+Plan status: **approved documentation baseline; not production-ready**
+
+Approved scope: private-institution LMS foundation plus rights-gated PDF-to-course
+generation with mandatory human publication; commerce and AI chat/RAG remain deferred.
 
 Start with the [documentation guide](docs/README.md). Current decision state and unresolved production gates remain in the workspace [decision register](../docs/final-review/16-DECISION-REGISTER.md) and [readiness checklist](../docs/final-review/17-FINAL-READINESS-CHECKLIST.md).
 
@@ -10,7 +12,8 @@ This documentation set defines the implementation plan for a production-oriented
 1. **Manual course authoring** by instructors and tenant administrators.
 2. **AI-assisted course creation from an uploaded book or document**, followed by mandatory human review.
 
-It also defines a course-scoped AI learning companion that answers from approved course content and returns citations to the source module, lesson, document section, and page where possible.
+The detailed plan also retains a deferred design for a course-scoped AI learning
+companion. That design is not part of the focused MVP.
 
 ## Core technology stack
 
@@ -31,7 +34,7 @@ It also defines a course-scoped AI learning companion that answers from approved
 | DNS and edge protection | Cloudflare |
 | Product analytics and feature flags | PostHog, default-off with a server-side allowlist |
 | Errors, tracing, and performance monitoring | Sentry |
-| Vector retrieval | Pinecone |
+| Optional vector retrieval | Pinecone, deferred unless feature planning proves it necessary |
 | Browser testing | Playwright |
 | Backend testing | pytest |
 | API contract | OpenAPI 3.1 and Swagger UI |
@@ -56,17 +59,23 @@ It also defines a course-scoped AI learning companion that answers from approved
 
 | File | Purpose |
 |---|---|
+| `AGENTS.md` | Durable Codex repository rules and reading order |
 | `docs/README.md` | Documentation authority, status, blockers, reading order, and navigation |
+| `docs/product/spec.md` | Concise PDF-to-course MVP product contract |
+| `docs/product/features.md` | Dependency-ordered MVP feature inventory and parallel lanes |
+| `docs/product/decisions.md` | Active product and workflow decisions |
+| `docs/product/open-questions.md` | Feature and production questions that still need owner input |
+| `docs/features/README.md` | Optional feature planning package and templates |
 | `docs/plan/00-product-vision.md` | Product boundaries, personas, and success measures |
 | `docs/plan/01-architecture-overview.md` | System architecture and deployment topology |
 | `docs/plan/02-tech-stack.md` | Technology ownership and selection rules |
 | `docs/plan/03-monorepo-folder-structure.md` | Repository and folder organization |
 | `docs/plan/04-domain-module-design.md` | Backend module boundaries and coding flow |
 | `docs/plan/05-database-schema-plan.md` | Domain table catalog and executable schema rules |
-| `docs/plan/06-ai-schema-extension.md` | Deferred ingestion, generation, RAG, and evaluation schema |
+| `docs/plan/06-ai-schema-extension.md` | Ingestion, generation, deferred RAG, and evaluation schema |
 | `docs/plan/07-manual-course-authoring.md` | Manual course builder workflow |
-| `docs/plan/08-book-ingestion-pipeline.md` | Deferred upload, extraction, OCR, normalization, and chunking |
-| `docs/plan/09-ai-course-generation.md` | Deferred AI blueprint and generation workflow |
+| `docs/plan/08-book-ingestion-pipeline.md` | Upload, extraction, OCR, normalization, and chunking |
+| `docs/plan/09-ai-course-generation.md` | Structured course blueprint and generation workflow |
 | `docs/plan/10-ai-chat-companion-rag.md` | Deferred secure course-scoped RAG architecture |
 | `docs/plan/11-api-and-event-contracts.md` | REST APIs, authentication, events, and idempotency |
 | `docs/plan/12-security-and-multitenancy.md` | Threat model, authorization, RLS, privacy, and AI safety |

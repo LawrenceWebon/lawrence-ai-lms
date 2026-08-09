@@ -1,6 +1,7 @@
 # LMS Documentation Guide
 
-Status: **approved documentation baseline; not production-ready and not a finalized implementation plan**  
+Status: **approved documentation baseline; not production-ready and not a finalized implementation plan**
+
 Last documentation decision update: 2026-08-02
 Last consistency reconciliation: 2026-08-03
 
@@ -28,7 +29,17 @@ The approved initial product is a private-institution LMS with manually administ
 - enrollment, course delivery, progress and basic quizzes; and
 - the minimum operational, security, accessibility and recovery foundation required for those flows.
 
-Paid commerce, recurring billing, marketplace payouts, source-document processing, AI generation and RAG/chat remain disabled. They have future design contracts so they can be evaluated safely, but must not gain runtime routes, jobs, credentials, migrations or UI until their non-waivable gates close.
+The concise implementation-facing product contract is now
+[`docs/product/spec.md`](product/spec.md), with the dependency-ordered feature inventory
+in [`docs/product/features.md`](product/features.md). The project-owner priority makes
+PDF upload-to-course generation the focused MVP journey; detailed plan sections remain
+the safety and architecture authority for that enabled journey.
+
+Paid commerce, recurring billing, marketplace payouts, and RAG/chat remain disabled.
+Source-document processing and structured course generation are enabled only for the
+focused PDF-to-course MVP described above. They must still satisfy the applicable
+rights, privacy, provider, security, recovery, and human-publication gates before real
+data or production activation.
 
 ## Blocking state
 
@@ -46,6 +57,17 @@ The following decisions remain open because the repository cannot invent owners,
 The owner-input specifications are [retention/legal hold](plan/25-data-retention-legal-hold-specification.md), [privacy/DPIA](plan/26-privacy-accountability-dpia-specification.md), [capacity/workload](plan/27-capacity-workload-specification.md), and [storage/recovery sizing](plan/28-storage-recovery-sizing-specification.md).
 
 ## Documentation map
+
+### Product contract and delivery setup
+
+| Document | Purpose |
+|---|---|
+| [Product specification](product/spec.md) | Concise PDF-to-course MVP outcome, scope, users, journey, and non-goals |
+| [Feature inventory](product/features.md) | Dependency order and four parallel implementation lanes |
+| [Product decisions](product/decisions.md) | Current owner-approved scope and workflow decisions |
+| [Open product questions](product/open-questions.md) | Questions that gate later feature or production steps |
+| [Feature workspace](features/README.md) | Optional durable feature-package template |
+| [Delivery workflows](workflows/README.md) | Four-agent worktree and GitHub CLI lifecycle |
 
 ### Product, architecture, and engineering boundaries
 

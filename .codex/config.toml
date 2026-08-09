@@ -1,0 +1,3 @@
+# Project-specific Codex settings belong here when the team deliberately approves
+# them. Keep repository behavior in AGENTS.md and discoverable team skills in
+# .agents/skills. This comment-only TOML file intentionally changes no Codex defaults.

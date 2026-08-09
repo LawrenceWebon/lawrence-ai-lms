@@ -50,20 +50,21 @@ implementation is allowed; production enablement is not implied.
 
 ## Repository source of truth
 
-The generic `docs/product/` and `docs/features/` paths in the longer workflow guides
-are templates, not required directories for this repository. Use this precedence:
+Use this precedence:
 
 1. the latest explicit project-owner instruction;
-2. `docs/README.md` and `docs/plan/00-product-vision.md`;
-3. relevant accepted ADRs and `docs/plan/` contracts;
-4. the approved GitHub issue and its linked decision/acceptance notes;
-5. the pull request contract and implementation evidence;
-6. existing code and tests;
-7. agent inference.
+2. `docs/product/spec.md`;
+3. approved entries in `docs/product/decisions.md` and the derived feature inventory;
+4. `docs/README.md`, accepted ADRs, and relevant `docs/plan` contracts;
+5. the approved GitHub issue and its linked decision/acceptance notes;
+6. the pull request contract and implementation evidence;
+7. existing code and tests;
+8. agent inference.
 
-When an owner instruction changes an older plan disposition, record the narrow plan
-update in a planning PR before or alongside the first dependent implementation PR.
-Do not create a second product specification merely to restate `docs/plan`.
+Keep `docs/product` concise and product-facing. Detailed architecture, schema,
+security, and operations remain in `docs/plan`. When an owner instruction changes an
+older plan disposition, update the product files and affected plan sections together
+before or alongside the first dependent implementation PR.
 
 ## Delivery flow
 
@@ -82,6 +83,21 @@ select plan slice
 Planning is proportional to the change. Do not rerun the full product-planning
 workflow for an already documented feature. Use it only for a real product-scope
 decision. Normal delivery begins with a focused GitHub issue derived from the plan.
+
+## Codex skill routing
+
+Repository skills live in `.agents/skills`; `.codex/config.toml` is reserved for
+project settings. Use the smallest skill matching the requested stage:
+
+| Stage | Skill | Stops at |
+|---|---|---|
+| Feature planning | `$plan-ai-lms-feature` | `READY FOR IMPLEMENTATION` |
+| Feature implementation | `$implement-ai-lms-feature` | `READY FOR CODE REVIEW` |
+| Independent PR review | `$review-ai-lms-pr` | `APPROVED FOR MERGE`, `CHANGES REQUIRED`, or `BLOCKED` |
+| Guarded merge | `$merge-ai-lms-pr` | verified merge record; deployment remains separate |
+
+The packaging examples in the longer workflow guides are design references, not
+additional skills that must be scaffolded. This table is the active repository set.
 
 ## Four-agent execution model
 

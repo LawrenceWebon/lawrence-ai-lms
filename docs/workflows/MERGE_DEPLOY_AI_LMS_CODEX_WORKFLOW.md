@@ -111,7 +111,8 @@ Recommended inputs:
 ```text
 AGENTS.md and REVIEW_GUIDE.md              # when present
 docs/workflows/README.md
-docs/README.md and relevant docs/plan/ADRs
+docs/product/spec.md, features.md, and decisions.md
+relevant docs/plan/ADRs
 approved GitHub issue and PR
 formal review of the current headRefOid
 required GitHub checks and integration order
@@ -2177,6 +2178,9 @@ when release safety evidence or required authorization is missing.
 ---
 
 # 38. Recommended Codex Skills
+
+The guarded merge portion is packaged as `.agents/skills/merge-ai-lms-pr`. The other
+entries below are possible future single-purpose skills and have not been scaffolded.
 
 ```text
 .agents/

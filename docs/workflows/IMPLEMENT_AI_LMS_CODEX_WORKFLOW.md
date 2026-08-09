@@ -24,9 +24,10 @@ authorize bypassing checks, force-pushing, self-merging, deployment, paid resour
 or production data changes. The exact commands and shared-hotspot rules are in
 `README.md`.
 
-Use `docs/plan` and the approved issue instead of inventing `docs/product` or
-`docs/features` artifacts. Progress belongs in issue/PR comments and evidence rather
-than a single shared status file that all four agents edit.
+Use the existing `docs/product` contract, relevant `docs/plan` files, and the approved
+issue. Create a durable `docs/features` folder only when the issue needs it. Progress
+belongs in issue/PR comments and evidence rather than a single shared status file that
+all four agents edit.
 
 ---
 
@@ -111,7 +112,7 @@ Recommended inputs:
 AGENTS.md                                      # when present
 docs/workflows/README.md
 docs/README.md
-docs/plan/00-product-vision.md
+docs/product/spec.md, features.md, and decisions.md
 relevant docs/plan and ADR files
 approved GitHub issue with ownership/contract/test fields
 frozen API/event/job/fixture contracts
@@ -156,12 +157,13 @@ Implementation must follow this precedence:
 
 1. `AGENTS.md` and applicable nested agent instructions for repository operation
 2. `docs/workflows/README.md` for repository execution policy
-3. `docs/README.md` and `docs/plan/00-product-vision.md`
-4. relevant accepted ADRs and `docs/plan` contracts
-5. approved GitHub issue, frozen contracts, and acceptance/test plan
-6. existing production code as evidence of current implementation patterns
-7. pull-request contract and generated step prompts
-8. agent inference
+3. `docs/product/spec.md`
+4. approved product decisions and derived features
+5. relevant accepted ADRs and `docs/plan` contracts
+6. approved GitHub issue, frozen contracts, and acceptance/test plan
+7. existing production code as evidence of current implementation patterns
+8. pull-request contract and generated step prompts
+9. agent inference
 
 Important:
 
@@ -3167,7 +3169,9 @@ Return material behavior changes to planning.
 
 # 46. Recommended Codex Skill Packaging
 
-After validating this workflow manually, package it as a reusable skill.
+This workflow is packaged as `.agents/skills/implement-ai-lms-feature`. The generic
+structure below is retained as design background; it does not name an additional
+active repository skill.
 
 ```text
 .agents/

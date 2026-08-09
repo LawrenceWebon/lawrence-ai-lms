@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI LMS PR Merger"
+  short_description: "Merge an approved AI LMS PR safely"
+  default_prompt: "Use $merge-ai-lms-pr to verify gates and merge an approved AI LMS pull request without bypasses."

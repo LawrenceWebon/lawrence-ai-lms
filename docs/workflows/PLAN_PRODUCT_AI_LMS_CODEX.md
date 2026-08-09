@@ -9,10 +9,10 @@
 ## Repository-specific application
 
 Follow [the repository workflow authority](README.md) before this generic guide.
-This LMS already has an approved planning baseline under `docs/plan`; do not create a
-second `docs/product` authority or rerun this full workflow for routine features.
-Use Plan Product only when the owner changes product scope. The current narrow change
-is to promote PDF upload-to-course generation into the core MVP while leaving
+This LMS has a concise product contract under `docs/product` backed by the detailed
+baseline in `docs/plan`. Maintain those files; do not recreate or expand them for a
+routine feature. Use Plan Product only when the owner changes product scope. The
+current scope promotes PDF upload-to-course generation into the core MVP while leaving
 commerce, AI companion/RAG, and advanced LMS capabilities out of scope.
 
 Any planning work is delivered through a focused GitHub issue and PR using the `gh`
@@ -39,7 +39,6 @@ Optional repository-level Codex setup:
 
 ```text
 /AGENTS.md
-/.agents/skills/plan-product/SKILL.md
 ```
 
 ### Source-of-truth hierarchy

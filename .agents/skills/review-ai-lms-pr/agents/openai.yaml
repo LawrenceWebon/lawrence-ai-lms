@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI LMS PR Reviewer"
+  short_description: "Review an AI LMS PR at exact SHA"
+  default_prompt: "Use $review-ai-lms-pr to perform an independent exact-SHA review of an AI LMS pull request."

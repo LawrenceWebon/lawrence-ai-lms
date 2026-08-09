@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI LMS Feature Implementer"
+  short_description: "Implement one approved AI LMS issue"
+  default_prompt: "Use $implement-ai-lms-feature to implement one approved issue in its isolated branch and worktree."

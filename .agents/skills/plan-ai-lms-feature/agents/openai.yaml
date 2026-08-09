@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI LMS Feature Planner"
+  short_description: "Plan one focused AI LMS feature"
+  default_prompt: "Use $plan-ai-lms-feature to turn an approved feature into independent GitHub issues and reviewable implementation contracts."
