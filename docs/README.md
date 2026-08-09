@@ -14,7 +14,12 @@ Use the following order when interpreting the documents:
 1. The latest explicit project-owner instruction and [product specification](product/spec.md) decide the focused MVP scope.
 2. Approved [product decisions](product/decisions.md), especially P-009, record narrow scope overrides and their limits.
 3. The synchronized [product capability boundary](plan/00-product-vision.md) and relevant detailed plans define how enabled behavior must be implemented safely.
-4. The external [decision register](../../docs/final-review/16-DECISION-REGISTER.md) and [readiness checklist](../../docs/final-review/17-FINAL-READINESS-CHECKLIST.md) remain the older audit baseline. P-009 supersedes only their prior PDF-ingestion/course-generation deferral; their open rights, privacy, provider, evaluation, worker, capacity, recovery and production gates remain active.
+4. The external workspace files `docs/final-review/16-DECISION-REGISTER.md` and
+   `docs/final-review/17-FINAL-READINESS-CHECKLIST.md` remain the older audit baseline
+   but are not part of this public repository. P-009 supersedes only their prior
+   PDF-ingestion/course-generation deferral; their open rights, privacy, provider,
+   evaluation, worker, capacity, recovery and production gates remain active through
+   the corresponding in-repository plan and product records.
 5. [Accepted ADRs](adr/README.md) govern architectural choices within the approved capability boundary.
 6. Architecture, domain, schema, security, privacy and operational plans define implementation constraints.
 7. Feature documents define behavior only for an enabled capability; a detailed deferred design is not authorization to scaffold, expose or configure it.
@@ -171,6 +176,12 @@ Named individuals, approval dates and immutable evidence links remain mandatory 
 
 ## Historical and external material
 
-- [`docs/final-review`](../../docs/final-review/00-REVIEW-INDEX.md) is the audit and decision evidence that produced this correction pass. Most review findings describe the pre-correction source and remain historical unless the readiness checklist says otherwise.
-- [`setup-guide-docs/supabase-prod-guide`](../../setup-guide-docs/supabase-prod-guide/docs/supabase-production-guide/README.md) remains a separate reference. Adopt its security/testing principles, but the LMS uses API-first core access and Django-only application migrations.
+- The external workspace `docs/final-review` directory is the audit and decision
+  evidence that produced this correction pass; it is not shipped in this public
+  repository. Most findings describe the pre-correction source and remain historical
+  unless the current in-repository product audit or plan says otherwise.
+- The external workspace `setup-guide-docs/supabase-prod-guide` remains a separate
+  reference and is not shipped in this public repository. Adopt its security/testing
+  principles, but the LMS uses API-first core access and Django-only application
+  migrations.
 - Do not rename/merge this current set into the proposed finalized outline while D-050 is open. When finalization is authorized, preserve history, update every link/manifest entry atomically, and archive superseded drafts rather than deleting them.

@@ -47,4 +47,8 @@ Phase 0 creates a machine-readable evidence manifest. Each entry contains:
 
 ## Current state
 
-There are no code, migrations, roles/policies, OpenAPI/event artifacts, provider sandbox contracts, production-shaped tests, dashboards, deployments or restore drills in this documentation repository. The first valid entries are produced by Phase 0; until then, all implementation gates remain pending or blocked as stated in the [readiness checklist](../../../docs/final-review/17-FINAL-READINESS-CHECKLIST.md).
+There are no code, migrations, roles/policies, OpenAPI/event artifacts, provider
+sandbox contracts, production-shaped tests, dashboards, deployments or restore drills
+in this documentation repository. The first valid entries are produced by Phase 0;
+until then, all implementation gates remain pending or blocked as stated in the
+[product audit](../product/product-audit.md) and feature readiness audits.

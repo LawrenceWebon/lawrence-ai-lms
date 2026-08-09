@@ -14,7 +14,11 @@ ADRs preserve why a durable architecture choice was made, its consequences, reje
 | [0004 — Human AI review](0004-ai-human-review.md) | Accepted; AI deferred | Only qualified humans approve immutable AI-assisted content for publication | AI/service actors cannot approve or publish |
 | [0005 — Hybrid worker boundary](0005-hybrid-serverless-workers.md) | Boundary accepted; provider open | Long work uses a persistent container worker, not normal web requests | D-023/D-024 provider/orchestration benchmark and approval |
 
-The workspace [decision register](../../../docs/final-review/16-DECISION-REGISTER.md) is the current status authority for decisions that do not yet have their own ADR. The [readiness checklist](../../../docs/final-review/17-FINAL-READINESS-CHECKLIST.md) governs whether accepted direction has sufficient implementation evidence.
+The in-repository [product decisions](../product/decisions.md) are the current status
+authority for decisions that do not yet have their own ADR. The
+[product audit](../product/product-audit.md) and feature readiness audits govern
+whether accepted direction has sufficient implementation evidence. The older external
+workspace audit remains historical context and is not shipped in this public repository.
 
 ## Required ADR structure
 

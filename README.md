@@ -5,7 +5,11 @@ Plan status: **approved documentation baseline; not production-ready**
 Approved scope: private-institution LMS foundation plus rights-gated PDF-to-course
 generation with mandatory human publication; commerce and AI chat/RAG remain deferred.
 
-Start with the [documentation guide](docs/README.md). Current decision state and unresolved production gates remain in the workspace [decision register](../docs/final-review/16-DECISION-REGISTER.md) and [readiness checklist](../docs/final-review/17-FINAL-READINESS-CHECKLIST.md).
+Start with the [documentation guide](docs/README.md). Current decision state and
+unresolved production gates are summarized in the in-repository
+[product decisions](docs/product/decisions.md),
+[open questions](docs/product/open-questions.md), and
+[product audit](docs/product/product-audit.md).
 
 This documentation set defines the implementation plan for a production-oriented, multi-tenant LMS SaaS with two course-authoring paths:
 
