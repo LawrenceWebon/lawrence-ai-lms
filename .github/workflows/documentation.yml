@@ -3,14 +3,14 @@ name: Documentation integrity
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [develop]
 
 permissions:
   contents: read
 
 jobs:
   documentation:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Validate generated document manifest

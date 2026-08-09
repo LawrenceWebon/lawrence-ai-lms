@@ -117,5 +117,4 @@ The Make targets wrap pinned tools; agents do not replace them with ad hoc comma
 
 The predicted implementation follows existing planned boundaries and does not require
 a new provider or architecture. Issue #1 and its server-side linked branch exist. The
-remaining material prerequisite is its reviewed runnable scaffold/contracts PR; local
-worktree provisioning also requires a working Git transport for `origin`.
+remaining material prerequisite is its reviewed runnable scaffold/contracts PR.
