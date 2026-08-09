@@ -1,0 +1,21 @@
+name: Documentation integrity
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  documentation:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate generated document manifest
+        shell: pwsh
+        run: ./scripts/generate-document-manifest.ps1 -Check
+      - name: Validate local Markdown links
+        shell: pwsh
+        run: ./scripts/validate-markdown-links.ps1
