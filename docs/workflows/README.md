@@ -193,9 +193,15 @@ and deployment still require the gates in the Merge/Deploy workflow. Never use
 - Before provisioning a task worktree, fetch `origin/develop` and create the issue-linked
   branch from that exact head. Do not branch new work from `master`, `staging`,
   `production`, or another task branch.
-- `develop`, `master`, `staging`, and `production` are protected. Each requires a pull
-  request, one approval, dismissal of stale approvals, resolved conversations, linear
-  history, and administrator enforcement; force-pushes and deletion are disabled.
+- The active repository ruleset `Protect long-lived branches` protects `develop`,
+  `master`, `staging`, and `production`. For non-bypass actors it requires a pull
+  request, one approval, dismissal of stale approvals, resolved conversations, squash
+  merge, and linear history; force-pushes and deletion are disabled.
+- The repository-admin role is the only bypass actor and its bypass mode is
+  `pull_request`. An administrator may therefore merge a reviewed, green PR when the
+  author cannot self-approve, but may not use the bypass for direct pushes. Classic
+  branch protections are intentionally removed so this ruleset is the single branch
+  protection authority.
 - Required status-check names remain unset until Step 0 commits stable CI jobs. The
   protection policy must be extended with those checks when their names are frozen.
 - `master`, `staging`, and `production` remain release/environment branches. Promotion
