@@ -2,9 +2,18 @@
 
 These tables extend the base LMS schema for book ingestion, AI course generation, and the course companion.
 
-Status: **deferred and disabled; approved schema direction only**  
+Status: **PDF ingestion and structured generation planned for the focused MVP; RAG/vector companion scope deferred; executable schema and evidence pending**
+
 Change IDs: CHG-003, CHG-009, CHG-015  
-Enablement gates: Q-06, Q-07, Q-08, Q-09, documents 25–28, provider approval, migrations, production-role RLS tests and end-to-end removal proof.
+Scope override: product decisions P-001/P-009/P-011. Provider-connected or real-data
+enablement gates remain Q-06, Q-07, Q-08, Q-09/Q-P07, documents 25–28, provider
+approval, migrations, production-role RLS tests and end-to-end removal proof. Local
+contract and fixture work does not authorize an external provider or production data.
+
+Only the source-rights/document, ingestion, generation, review, provenance, model-run,
+safety, usage, and generation-evaluation objects needed by an approved focused MVP
+issue may enter the migration graph. AI companion tables and vector-specific objects
+remain deferred unless a later product decision or F-005 quality evidence enables them.
 
 Every tenant-owned table below has non-null `tenant_id`, `UNIQUE (tenant_id,id)`, and composite same-tenant foreign keys. A field list that omits those columns for readability does not waive the invariant. Arrays/JSON may preserve immutable provider payloads or display snapshots, but never act as the only relationship, authorization, rights, lineage, citation, evaluation, or deletion edge.
 
@@ -325,7 +334,7 @@ Tracks tenant and feature consumption for quotas and billing.
 
 Records detected prompt injection, unsafe output, source-policy violation, PII leakage risk, or unsupported citation.
 
-## AI companion tables
+## AI companion tables — deferred
 
 ### `app.ai_assistant_configs`
 
@@ -424,7 +433,7 @@ Measure:
 - Course-generation structure quality
 - Instructor acceptance and edit distance
 
-## Pinecone data model
+## Pinecone data model — deferred unless F-005 proves vector retrieval necessary
 
 Use one namespace per tenant. Example vector ID:
 

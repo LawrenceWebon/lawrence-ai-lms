@@ -3,7 +3,13 @@
 Status: **approved target layout; Phase 0 scaffold and CI evidence do not yet exist**  
 Related findings and decisions: H-03, H-21, D-003, D-009, CHG-016, CHG-030, CHG-040
 
-The tree in this document is a target, not a claim about the current documentation-only repository. Phase 0 creates it incrementally. Initial scaffolding contains only the private-LMS domains approved in document 00; commerce, source ingestion, AI generation, RAG, payouts, Realtime, and other deferred capabilities must not gain deployable routes, jobs, credentials, or provider configuration until their gates close.
+The tree in this document is a target, not a claim about the current
+documentation-only repository. Phase 0 creates it incrementally. Initial scaffolding
+contains only the foundation and the bounded context required by the selected focused
+MVP issue. PDF ingestion and course-draft generation may be added in their declared
+phases after contracts freeze. Commerce, RAG/AI companion, payouts, Realtime, and other
+deferred capabilities must not gain deployable routes, jobs, credentials, or provider
+configuration until their gates close.
 
 ## Target repository tree
 
@@ -46,9 +52,9 @@ lms-saas/
 │   ├── seeds/                            # deterministic non-production seeds
 │   └── fixtures/                         # synthetic database test fixtures
 ├── evals/
-│   ├── ingestion/                        # deferred golden files and expected structure
+│   ├── ingestion/                        # rights-cleared PDF golden files and expected structure
 │   ├── retrieval/                        # deferred rights-cleared RAG cases
-│   ├── generation/                       # deferred locked generation cases
+│   ├── generation/                       # locked structured-course generation cases
 │   └── adversarial/                      # authorization/upload/prompt abuse cases
 ├── infra/
 │   ├── docker/
@@ -150,7 +156,12 @@ backend/src/lms/
 └── observability/
 ```
 
-Modules for assignments, gradebook, certificates, commerce, payments, subscriptions, ledger, payouts, documents, course generation, AI companion, live-provider integrations, or other post-MVP scope are added only in the phase that owns them and only after the corresponding decision and release gates close. A future module is documented in the scope catalog; it is not pre-scaffolded as an accidentally enabled feature.
+Modules for PDF documents and course generation are added only by their focused MVP
+issues after the relevant contracts and ownership freeze. Modules for assignments,
+gradebook, certificates, commerce, payments, subscriptions, ledger, payouts, AI
+companion, live-provider integrations, or other later scope are added only after the
+corresponding product decision and release gates close. A future module is documented
+in the scope catalog; it is not pre-scaffolded as an accidentally enabled feature.
 
 ## Domain module structure
 
@@ -202,7 +213,10 @@ apps/web/src/
 └── types/
 ```
 
-Deferred UI feature folders such as `checkout`, `documents`, `course-generation`, and `ai-companion` are created only when their capability is enabled. Browser code never imports a database client for core-table reads or writes.
+The `documents` and `course-generation` UI folders are created only by their owning
+focused MVP issues. Deferred UI folders such as `checkout` and `ai-companion` remain
+absent until separately enabled. Browser code never imports a database client for
+core-table reads or writes.
 
 ## Contract, test, and evidence locations
 

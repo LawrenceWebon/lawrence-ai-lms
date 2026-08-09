@@ -65,6 +65,7 @@ companion. That design is not part of the focused MVP.
 | `docs/product/features.md` | Dependency-ordered MVP feature inventory and parallel lanes |
 | `docs/product/decisions.md` | Active product and workflow decisions |
 | `docs/product/open-questions.md` | Feature and production questions that still need owner input |
+| `docs/product/product-audit.md` | Product Planning Gate verdict and next-feature handoff |
 | `docs/features/README.md` | Optional feature planning package and templates |
 | `docs/plan/00-product-vision.md` | Product boundaries, personas, and success measures |
 | `docs/plan/01-architecture-overview.md` | System architecture and deployment topology |
@@ -105,4 +106,8 @@ Documentation integrity is checked by `scripts/generate-document-manifest.ps1 -C
 
 ## First implementation milestone
 
-The first milestone should deliver tenant-aware authentication, role and permission enforcement, organization onboarding, a manually created course, enrollment, course playback, progress tracking, a basic quiz, and Playwright coverage. Book ingestion and AI generation should begin only after the canonical manual course model is stable.
+The first delivery sequence should establish tenant-aware identity and the minimal
+canonical course lifecycle, then deliver PDF admission/extraction, structured draft
+generation, human review/publication, learner playback/progress, and the critical
+Playwright journey. Book ingestion and generation contracts can be planned in parallel,
+but integration follows the dependency order in `docs/product/features.md`.

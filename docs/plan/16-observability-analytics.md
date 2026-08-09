@@ -31,7 +31,7 @@ document_version_id
 course_id
 ```
 
-Tenant/actor/course/document/run identifiers sent outside the core environment use approved keyed pseudonyms or lower-cardinality classifications when correlation does not require identity. Raw UUIDs remain personal/tenant data and are not “safe” merely because they are opaque. Do not attach full source text, prompts containing private content, chat bodies or high-cardinality identifiers without an approved purpose/retention entry. AI fields are absent while AI is disabled.
+Tenant/actor/course/document/run identifiers sent outside the core environment use approved keyed pseudonyms or lower-cardinality classifications when correlation does not require identity. Raw UUIDs remain personal/tenant data and are not “safe” merely because they are opaque. Do not attach full source text, prompts containing private content, chat bodies or high-cardinality identifiers without an approved purpose/retention entry. Document/generation fields are emitted only after their owning focused feature and telemetry allowlist are enabled; RAG/chat fields remain absent.
 
 ## PostHog responsibilities
 

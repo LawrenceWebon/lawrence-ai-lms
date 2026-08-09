@@ -1,13 +1,21 @@
 # AI Course Generation Plan
 
-Status: **post-MVP, disabled pending rights/provider/evaluation/provenance gates**  
+Status: **focused-MVP structured course-draft generation planned; provider/real-data/production activation gated**
+
 Change ID: CHG-011
 
 ## Principle
 
 AI produces a **reviewable proposal**, never an automatically published course.
 
-No external generation request may run until D-018/D-022, Q-06/Q-07/Q-09, documents 25–28, the provider record, locked evaluation corpus and normalized run-provenance schema are approved.
+Local provider-neutral contracts, deterministic adapters/fakes, provenance behavior,
+and rights-cleared evaluation fixtures may be planned and implemented under
+P-001/P-009/P-011. No external generation request or real customer source may run
+until D-018/D-022, Q-06/Q-07/Q-09/Q-P07, documents 25–28, the provider record, locked
+evaluation corpus, and normalized run-provenance schema are approved.
+
+The focused MVP generates only the minimal course structure and lesson-content types
+approved under Q-P04. Assessments, assignments, and assessment generation are deferred.
 
 ## Generation inputs
 
@@ -99,7 +107,7 @@ For each approved lesson, generate independently:
 
 Independent lesson generation allows retry and review without regenerating the entire course.
 
-### Stage 5: Assessment generation
+### Stage 5: Assessment generation — deferred
 
 Generate question drafts with:
 

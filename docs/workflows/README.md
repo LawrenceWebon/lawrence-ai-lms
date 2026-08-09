@@ -35,9 +35,10 @@ The implementation reuses the architecture and invariants already described in:
 - [definition of done](../plan/23-definition-of-done.md).
 
 The project-owner instruction promoting PDF-to-course into the core MVP supersedes
-the older sequencing that deferred documents 06, 08, and 09. The first planning PR
-must synchronize only the affected status/scope sections in documents 00, 03, 06,
-08, 09, 11, 15, 20, and 24. It must not reopen unrelated architecture decisions.
+the older sequencing that deferred documents 06, 08, and 09. The Plan Product audit
+on 2026-08-09 synchronized only affected status/scope sections in documents 00,
+03–09, 11, 15, 16, 20, 24, and 26. It did not reopen unrelated architecture or
+production-gate decisions.
 
 Commerce, marketplace payouts, recurring billing, AI companion/RAG, public course
 discovery, advanced grading, certificates, live classes, and broad analytics remain

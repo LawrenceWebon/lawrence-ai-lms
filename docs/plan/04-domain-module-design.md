@@ -173,9 +173,10 @@ Webhook admission verifies the exact raw-body signature/freshness contract, rese
 | Transactional email | Notifications | Outbox, preferences, delivery observations | Resend send/retrieve | Initial MVP after privacy/domain/retention gates |
 | Custom-domain activation/removal | Tenancy | Domain claim/lifecycle events | Cloudflare hostname/certificate | Post-launch |
 | Payment/refund/entitlement | Commerce/Finance | Order, event inbox, ledger and entitlement | PayMongo | Deferred and disabled |
-| Source ingestion/indexing | Documents | Job, source/artifact/vector manifests | Storage/OCR/Pinecone | Deferred and disabled |
-| Rights invalidation/takedown | Content Rights | Authorization, impact graph/items and audit | Object/vector/provider removal | Deferred and disabled; mandatory before AI |
-| AI generation/review | Course Generation | Run snapshot, lineage, artifacts and approval | Model provider | Deferred and disabled |
+| PDF source ingestion/OCR | Documents | Job and source/artifact manifests | Storage/OCR adapter | Focused MVP; external provider/real-data/production gated |
+| Vector indexing | Documents | Vector generation/reconcile manifests | Pinecone | Deferred unless F-005 proves necessary |
+| Rights invalidation/takedown | Content Rights | Authorization, impact graph/items and audit | Object/vector/provider removal | Focused MVP safety requirement; production evidence pending |
+| Structured course generation/review | Course Generation | Run snapshot, lineage, artifacts and approval | Model provider adapter | Focused MVP; provider-backed integration/release gated |
 
 No workflow uses Redis, QStash, email, analytics, a provider redirect, or Pinecone as its saga state or business authority.
 
@@ -190,12 +191,12 @@ No workflow uses Redis, QStash, email, analytics, a provider redirect, or Pineco
 | Courses | Stable course identity, immutable versions, instructors, review and publication pointer | launch |
 | Curriculum | Sections, lessons, content blocks and resources | launch |
 | Learning | Enrollment, version pin, progress, paths, notes and sessions | launch minimum |
-| Assessments | Question versions, quizzes, attempts, answers and server-side scoring | launch basic quiz only |
+| Assessments | Question versions, quizzes, attempts, answers and server-side scoring | deferred focused-product increment |
 | Assignments/Gradebook/Certificates | Submissions, rubric/grade history and credentials | post-launch increment |
 | Communication/Notifications | Announcements, message intent, preferences and delivery observations | launch minimum email; broader features later |
 | Commerce/Finance | Product/order, payment facts, ledger, refund, settlement and entitlement projection | deferred and disabled |
-| Documents/Content Rights | Source authorization, immutable versions, extraction, chunks and takedown | deferred and disabled |
-| Course Generation | AI run, blueprint/artifact lineage, evaluation and review workflow | deferred and disabled |
+| Documents/Content Rights | Source authorization, immutable PDF versions, extraction, optional segments and takedown | focused MVP; provider/production gated |
+| Course Generation | AI run, blueprint/artifact lineage, evaluation and review workflow | focused MVP; provider-backed integration/release gated |
 | AI Companion | Configuration, conversation, retrieval, citation and feedback | deferred and disabled |
 | Operations | Provider inbox/outbox, job execution, audit and operational evidence | launch minimum; feature-specific parts gated |
 

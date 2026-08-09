@@ -9,17 +9,35 @@ Implement the LMS incrementally according to this documentation set without weak
 
 ## Mandatory reading order
 
-1. `../README.md` and `../../README.md` for status, authority and navigation.
-2. `00-product-vision.md` for the approved launch/deferred capability boundary.
-3. `../../../docs/final-review/16-DECISION-REGISTER.md` and `../../../docs/final-review/17-FINAL-READINESS-CHECKLIST.md`; stop when the requested capability depends on an open/deferred/rejected decision or blocked gate.
-4. Relevant ADRs, especially migration ownership, PostgreSQL/Pinecone authority, human publication and worker runtime.
-5. `01-architecture-overview.md` and `04-domain-module-design.md` for trust, execution-context and transaction rules.
-6. `03-monorepo-folder-structure.md`, `05-database-schema-plan.md` and the complete relevant schema/security contract; never infer a field or relationship from a table name.
-7. The feature-specific workflow plus `11-api-and-event-contracts.md`.
-8. `12-security-and-multitenancy.md` and documents 25/26 for affected data, roles, threats, retention and privacy.
-9. `15-testing-quality-gates.md`, `20-implementation-roadmap.md`, `21-risk-register.md` and `23-definition-of-done.md` for evidence and release gates.
-10. `19-coding-standards.md`, relevant runbooks/evidence, and current entries in `SOURCES.md`.
-11. Relevant chapters under `../../../setup-guide-docs/supabase-prod-guide/docs/supabase-production-guide/`, applying LMS-specific overrides rather than copying generic browser-CRUD or CLI-migration choices.
+1. Root `AGENTS.md`, `docs/product/spec.md`, approved product decisions, and
+   `docs/product/features.md` for the current owner-approved scope.
+2. `../README.md`, `../../README.md`, and `../workflows/README.md` for status,
+   authority, navigation, four-agent ownership, and GitHub workflow.
+3. `00-product-vision.md` and `20-implementation-roadmap.md` for the synchronized
+   capability boundary and phase disposition.
+4. `../../../docs/final-review/16-DECISION-REGISTER.md` and
+   `../../../docs/final-review/17-FINAL-READINESS-CHECKLIST.md` as the older audit
+   baseline. Product decision P-009 supersedes only their prior PDF-ingestion and
+   course-generation deferral; their unresolved rights, privacy, provider, evaluation,
+   runtime, capacity, recovery, and production gates remain active.
+5. Relevant ADRs, especially migration ownership, PostgreSQL/Pinecone authority,
+   human publication and worker runtime.
+6. `01-architecture-overview.md` and `04-domain-module-design.md` for trust,
+   execution-context and transaction rules.
+7. `03-monorepo-folder-structure.md`, `05-database-schema-plan.md` and the complete
+   relevant schema/security contract; never infer a field or relationship from a table
+   name.
+8. The feature-specific workflow plus `11-api-and-event-contracts.md`.
+9. `12-security-and-multitenancy.md` and documents 25/26 for affected data, roles,
+   threats, retention and privacy.
+10. `15-testing-quality-gates.md`, `21-risk-register.md` and
+    `23-definition-of-done.md` for evidence and release gates.
+11. `19-coding-standards.md`, relevant runbooks/evidence, and current entries in
+    `SOURCES.md`.
+12. Relevant chapters under
+    `../../../setup-guide-docs/supabase-prod-guide/docs/supabase-production-guide/`,
+    applying LMS-specific overrides rather than copying generic browser-CRUD or
+    CLI-migration choices.
 
 ## Before changing code
 
@@ -30,7 +48,10 @@ Implement the LMS incrementally according to this documentation set without weak
 - List security and tenant-isolation impacts.
 - List events and external integrations affected.
 - Do not introduce another ORM or migration owner.
-- Resolve applicable D/Q/CHG/risk IDs and read their current status/evidence. Do not implement an `open`, `blocked`, `deferred` or rejected capability as though it were approved.
+- Resolve applicable P/D/Q/CHG/risk IDs and read their current status/evidence. A
+  focused MVP issue may perform the local, synthetic-data work explicitly allowed by
+  P-009, but it must not treat an open provider/real-data/production gate as closed or
+  implement any other `open`, `blocked`, `deferred`, or rejected capability.
 - Verify relevant official-source entries in `SOURCES.md` are within their recheck date and re-verify capability/limits before provider-sensitive work.
 - Identify exact migration, OpenAPI/event, test, dashboard/runbook, privacy/retention and rollout evidence paths that the change must produce.
 - Refuse any shortcut that uses owner/`BYPASSRLS`, a browser core Data API path, session-level tenant context, unbalanced/mutable finance, incomplete AI lineage, AI/service approval, or unapproved provider/region transfer.

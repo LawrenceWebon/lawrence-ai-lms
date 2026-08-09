@@ -472,12 +472,17 @@ Initial private-LMS sequence:
 3. Create minimum identity, tenancy, local-entitlement and organization tables.
 4. Create RLS helpers, production-role policies, audit, idempotency and outbox/inbox tables with fail-closed tests.
 5. Create minimum assets, catalog, immutable course/curriculum/review/publication tables.
-6. Create enrollment, progress and basic-assessment tables.
+6. Create enrollment and progress tables.
 7. Create only the communication/notification and operational tables required by enabled MVP flows.
 8. Create approved views and all predicate/FK/query indexes, then run the production-role matrix and schema fingerprint/drift checks.
 9. Seed only stable platform roles, permissions and required locale reference data using deterministic synthetic identifiers.
 
-Gated later sequences are separate migration groups: assignments/gradebook/certificates; custom domains; commerce/financials; source/document ingestion; AI generation/evaluation; and RAG/vector/chat. A deferred catalog name is never included merely to “prepare” the schema. Its decision, dictionary, threat model, retention classification, workload and tests must be approved first.
+Focused PDF source/document ingestion and structured generation/evaluation are separate,
+issue-owned migration groups added only in their declared phases after the relevant
+dictionary, contracts, threats, retention classification, and tests freeze. Gated
+later sequences remain separate for assessments/assignments/gradebook/certificates,
+custom domains, commerce/financials, and RAG/vector/chat. A deferred catalog name is
+never included merely to “prepare” the schema.
 
 Use expand-and-contract migrations for production changes. Never perform a large backfill in a deployment transaction.
 

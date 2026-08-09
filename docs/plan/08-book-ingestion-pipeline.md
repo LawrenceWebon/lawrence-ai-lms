@@ -1,18 +1,20 @@
 # Book and Document Ingestion Pipeline
 
-Status: **post-MVP, disabled pending rights/provider/retention/capacity gates**  
+Status: **focused-MVP PDF ingestion planned; real-data/provider/production activation gated**
+
 Change IDs: CHG-010, CHG-020
+
+Product scope: P-001/P-009/P-011. Local contract and worker work uses synthetic or
+rights-cleared PDF fixtures. It does not authorize real customer documents, an OCR
+provider, a persistent runtime, or production storage.
 
 ## Supported initial inputs
 
 - Text PDF
 - Scanned PDF
-- EPUB
-- DOCX
-- Markdown
-- Plain text
-- HTML export
-- Page images as an explicit scanned-document workflow
+
+EPUB, DOCX, Markdown, plain text, HTML export, and standalone page-image import are
+deferred source formats.
 
 ## Rights gate
 
@@ -50,9 +52,7 @@ upload_pending
 → normalizing
 → structure_detection
 → quality_check
-→ chunking
-→ indexing
-→ ready
+→ ready_for_generation
 ```
 
 Failure states must be resumable from the last safe step.
@@ -124,7 +124,11 @@ Calculate:
 
 Block downstream embedding/generation when quality is below the approved versioned threshold. A reviewer may request reprocessing or mark pages for manual correction, but cannot improvise a threshold waiver. Any future exception policy requires named scope/reason/approver/expiry and cannot waive malware, rights, tenant-isolation or human-publication gates.
 
-### 6. Structure-aware chunking
+### 6. Optional structure-aware segmentation
+
+Enable this stage only when the frozen F-005 generation contract needs bounded source
+segments beyond the canonical section/element structure. It does not imply vector
+indexing.
 
 Primary chunking order:
 
@@ -134,9 +138,10 @@ Primary chunking order:
 4. Token-size enforcement inside a section
 5. Contextual prefix containing book title and hierarchy
 
-Store small retrieval chunks and parent sections. Search small chunks but provide the larger parent context to the LLM when needed.
+Store deterministic small segments and their parent sections when enabled. Provide the
+larger parent context to the generation adapter when needed.
 
-### 7. Pinecone indexing
+### 7. Pinecone indexing — deferred unless F-005 proves it necessary
 
 - Use one tenant namespace.
 - Upsert only rights-eligible chunks into a non-active generation using the complete metadata contract in documents 06/10.

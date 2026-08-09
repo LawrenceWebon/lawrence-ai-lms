@@ -51,7 +51,7 @@ Course
 | Lesson/content type | Initial disposition |
 |---|---|
 | Rich text, downloadable resource, approved PDF, external link | initial MVP |
-| Basic quiz | initial MVP assessment |
+| Basic quiz | deferred assessment increment |
 | Managed video/embed and audio with captions/transcripts | post-launch after provider/accessibility/privacy/cost approval; bytes do not traverse the web/API stack |
 | Presentation and generic embedded content | post-launch after sandbox/CSP/accessibility review |
 | Assignment and survey | post-launch learning increment |

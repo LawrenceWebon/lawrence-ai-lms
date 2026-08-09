@@ -8,13 +8,18 @@ Change IDs: CHG-022, CHG-030, CHG-031
 | Phase | Disposition | Rule |
 |---|---|---|
 | 0–1 | Core foundation | May begin only with synthetic/local data until documents 25–28 and P0 schema/RLS gates close |
-| 2–4 | Initial private-LMS MVP | Manual immutable course authoring, learning and basic assessment; evidence-based exits required |
+| 2–3 | Focused LMS foundation | Minimal canonical authoring/review/publication, learning and progress; evidence-based exits required |
+| 4 | Deferred assessment increment | Quizzes, assignments, grading and certificates are not required for the focused MVP |
 | 5 | Deferred paid commerce | Disabled until Q-05/C-04, provider capability/tax contract and finance integrity suites close |
 | 6 | Split | Manual tenant contracts/local entitlements move into Phase 1; recurring/usage billing remains deferred |
-| 7–10 | Deferred ingestion/AI/RAG | Disabled until rights/provider/evaluation/provenance/removal and capacity gates close |
+| 7–9 | Focused PDF-to-course MVP | Local contract/fixture work may proceed in dependency order; provider, real-data and production activation remain gated |
+| 10 | Deferred AI companion/RAG | Disabled until separately approved and its rights/retrieval/evaluation gates close |
 | 11 | Continuous hardening | Core recovery/security/capacity work begins in Phase 0; it is not postponed until after features |
 
-No source table/API/provider credential/job/route/UI for a deferred capability is considered part of the MVP. Future phase prose below is a gated backlog, not an instruction to enable it.
+No table/API/provider credential/job/route/UI for a deferred capability is considered
+part of the MVP. Focused ingestion/generation phases may add only issue-owned artifacts
+after contracts freeze; their inclusion does not approve an external provider, real
+data, or production release.
 
 ## Phase evidence manifest (CHG-030)
 
@@ -106,7 +111,9 @@ Exit criteria:
 - Student can enroll, resume, and complete a course.
 - Cross-tenant, version-pinning, concurrent/idempotent progress and primary read-after-write tests link to the phase evidence manifest.
 
-## Phase 4 — Basic assessments; advanced grading and certificates later
+## Phase 4 — Assessments, grading, and certificates — deferred increment
+
+**Outside the focused MVP.** This phase requires a separate product decision.
 
 Deliver:
 
@@ -154,21 +161,27 @@ Exit criteria:
 
 - Tenant plan limits are enforced server-side.
 
-## Phase 7 — Document upload and ingestion
+## Phase 7 — Focused PDF upload and ingestion
 
-**Deferred and disabled.** Rights, provider, retention, workload/storage and worker gates must close first.
+**Focused MVP planned.** Product/contract planning and local implementation with
+synthetic or rights-cleared PDFs may proceed after F-001 and the source contracts
+freeze. Real documents, external OCR, staging/production storage, and production worker
+activation wait for the applicable rights, provider, retention, workload/storage,
+privacy, and runtime gates.
 
 Deliver:
 
 - Rights declaration
 - Private signed uploads
 - Quarantine and validation
-- Docling extraction
+- Provider-neutral extraction adapter
 - OCR fallback
 - Canonical JSON and Markdown
 - Pages, elements, sections, chunks
-- Pinecone indexing
 - Ingestion review UI
+
+Pinecone/vector indexing is excluded unless F-005 quality planning proves it necessary
+and a separate gate enables it.
 
 Exit criteria:
 
@@ -176,7 +189,10 @@ Exit criteria:
 
 ## Phase 8 — AI course blueprint
 
-**Deferred and disabled.** Provider/model and locked evaluation approvals are prerequisites.
+**Focused MVP planned.** Provider-neutral contracts, deterministic fakes, run
+provenance, and rights-cleared evaluation fixtures may proceed after the normalized
+source and course-draft contracts freeze. Provider-connected generation waits for the
+approved provider/model and locked numeric evaluation gates.
 
 Deliver:
 
@@ -192,17 +208,20 @@ Exit criteria:
 
 - Approved blueprint maps every item to source sections.
 
-## Phase 9 — AI lesson and assessment generation
+## Phase 9 — Structured lesson generation and canonical draft review
 
-**Deferred and disabled.** Immutable provenance, human-only publication and rights-removal proof are prerequisites.
+**Focused MVP planned.** It depends on the minimal canonical course lifecycle and the
+approved blueprint/draft contracts. Provider-backed integration or release requires
+immutable provenance, human-only publication, evaluation, and rights-removal proof.
 
 Deliver:
 
 - Lesson artifacts
-- Quiz and assignment drafts
 - Citation validation
 - Artifact review and diff
 - Canonicalization into course draft version
+
+Quiz, assignment, and assessment generation remain outside the focused MVP.
 
 Exit criteria:
 
@@ -252,12 +271,13 @@ Exit criteria:
 | Manual contract/entitlement/onboarding | Tenancy/entitlement | tenant lifecycle/step/entitlement tables and commands | Retry/compensation/reconcile + access-before-entitlement denial | 1 core |
 | Manual course/review/publication | Course/curriculum | immutable course version + transition commands | Actor/state/hash/concurrency/rights/assessment tests | 2 MVP |
 | Enrollment/player/progress | Learning | enrollment pinned to version + progress commands | Cross-tenant/read-after-write/idempotency journeys | 3 MVP |
-| Basic quizzes | Assessment | versioned questions/attempt snapshots | Constraint/scoring/concurrency/Playwright evidence | 4 MVP |
+| Quizzes/assessments | Assessment | future versioned question/attempt contracts | Separate product decision plus constraint/scoring/concurrency/Playwright evidence | 4 deferred increment |
 | Certificates/advanced grading/live links/custom domains | Learning/tenancy | feature-specific dictionary/API | Phase-specific authorization/accessibility/domain proof | post-launch increment |
 | Paid commerce/tenant recurring billing | Finance/entitlement | future inbox/state/ledger/refund/subscription APIs | Q-05 + provider sandbox + property/concurrency/reconcile | 5–6 deferred |
 | Instructor marketplace/payouts | Marketplace finance | no MVP schema/API | Linked accounts/legal/tax/settlement proof | outside initial roadmap |
-| Source ingestion/OCR/vector | Content intelligence | documents 06/08 future schema/API/jobs | Q-06/Q-07/Q-08 + upload/removal/worker/capacity proof | 7 deferred |
-| AI generation | Content intelligence/course | future run/lineage/evaluation/artifact APIs | Q-09 + immutable provenance + human-only publication | 8–9 deferred |
+| PDF source admission/ingestion/OCR | Content intelligence | documents 06/08 source schema/API/jobs | P-009/P-011 + upload/rights/removal/worker evidence; external/production gates remain | 7 focused MVP |
+| Structured course generation/review | Content intelligence/course | run/lineage/evaluation/artifact and canonical-draft APIs | P-002/P-009 + Q-P01/Q-P04/Q-P07 + immutable provenance + human-only publication | 8–9 focused MVP; provider/release gated |
+| Vector indexing for generation | Content intelligence | vector manifest/reconcile contract only if enabled | F-005 necessity evidence plus rights/removal/provider/evaluation proof | deferred unless proven necessary |
 | AI companion/RAG | Learning intelligence | future conversation/retrieval/citation APIs | Course-version zero-leak, DB reauth, deletion and locked eval | 10 deferred |
 
 Each implemented row must expand to exact model/migration, endpoint/event, test, dashboard/runbook and evidence paths in the Phase manifest. Unmapped tables/routes are rejected or explicitly deferred.

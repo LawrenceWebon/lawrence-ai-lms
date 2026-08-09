@@ -3,7 +3,7 @@
 Status: **approved documentation baseline; not production-ready and not a finalized implementation plan**
 
 Last documentation decision update: 2026-08-02
-Last consistency reconciliation: 2026-08-03
+Last consistency reconciliation: 2026-08-09
 
 This directory is the current LMS planning baseline. It describes approved direction, gated future designs, and the evidence required before implementation or production. It does not prove that code, migrations, infrastructure, provider contracts, tests, capacity, privacy approvals, or recovery exercises exist.
 
@@ -11,12 +11,14 @@ This directory is the current LMS planning baseline. It describes approved direc
 
 Use the following order when interpreting the documents:
 
-1. [Product capability boundary](plan/00-product-vision.md) decides what may be built or enabled for the initial MVP.
-2. The external [decision register](../../docs/final-review/16-DECISION-REGISTER.md) and [readiness checklist](../../docs/final-review/17-FINAL-READINESS-CHECKLIST.md) record confirmed, deferred, rejected and open decisions. An open or blocked gate is never silently resolved.
-3. [Accepted ADRs](adr/README.md) govern architectural choices within the approved capability boundary.
-4. Architecture, domain, schema, security, privacy and operational plans define implementation constraints.
-5. Feature documents define behavior only for an enabled capability; a detailed deferred design is not authorization to scaffold, expose or configure it.
-6. The [source register](plan/SOURCES.md) supports dated external claims. The separate Supabase production guide is advisory and must be adapted through the LMS API-first and Django-migration boundaries.
+1. The latest explicit project-owner instruction and [product specification](product/spec.md) decide the focused MVP scope.
+2. Approved [product decisions](product/decisions.md), especially P-009, record narrow scope overrides and their limits.
+3. The synchronized [product capability boundary](plan/00-product-vision.md) and relevant detailed plans define how enabled behavior must be implemented safely.
+4. The external [decision register](../../docs/final-review/16-DECISION-REGISTER.md) and [readiness checklist](../../docs/final-review/17-FINAL-READINESS-CHECKLIST.md) remain the older audit baseline. P-009 supersedes only their prior PDF-ingestion/course-generation deferral; their open rights, privacy, provider, evaluation, worker, capacity, recovery and production gates remain active.
+5. [Accepted ADRs](adr/README.md) govern architectural choices within the approved capability boundary.
+6. Architecture, domain, schema, security, privacy and operational plans define implementation constraints.
+7. Feature documents define behavior only for an enabled capability; a detailed deferred design is not authorization to scaffold, expose or configure it.
+8. The [source register](plan/SOURCES.md) supports dated external claims. The separate Supabase production guide is advisory and must be adapted through the LMS API-first and Django-migration boundaries.
 
 If documents conflict, apply the most restrictive active safety, privacy, tenant-isolation, financial, rights, recovery or capability gate and record the conflict. Do not choose a convenient interpretation.
 
@@ -26,7 +28,7 @@ The approved initial product is a private-institution LMS with manually administ
 
 - authentication, tenant membership, roles and audit;
 - manual immutable course authoring, human review and publication;
-- enrollment, course delivery, progress and basic quizzes; and
+- enrollment, course delivery, and progress; and
 - the minimum operational, security, accessibility and recovery foundation required for those flows.
 
 The concise implementation-facing product contract is now
@@ -66,6 +68,7 @@ The owner-input specifications are [retention/legal hold](plan/25-data-retention
 | [Feature inventory](product/features.md) | Dependency order and four parallel implementation lanes |
 | [Product decisions](product/decisions.md) | Current owner-approved scope and workflow decisions |
 | [Open product questions](product/open-questions.md) | Questions that gate later feature or production steps |
+| [Product planning audit](product/product-audit.md) | Plan Product gate result and F-001 Plan Feature handoff |
 | [Feature workspace](features/README.md) | Optional durable feature-package template |
 | [Delivery workflows](workflows/README.md) | Four-agent worktree and GitHub CLI lifecycle |
 
@@ -96,8 +99,8 @@ The owner-input specifications are [retention/legal hold](plan/25-data-retention
 | Document | Purpose |
 |---|---|
 | [07 — Manual course authoring](plan/07-manual-course-authoring.md) | Canonical immutable review/publication workflow |
-| [08 — Document ingestion](plan/08-book-ingestion-pipeline.md) | Deferred rights-gated upload, quarantine, extraction and takedown |
-| [09 — AI course generation](plan/09-ai-course-generation.md) | Deferred run/evaluation/human-canonicalization workflow |
+| [08 — Document ingestion](plan/08-book-ingestion-pipeline.md) | Focused-MVP rights-gated PDF upload, quarantine, extraction and takedown |
+| [09 — AI course generation](plan/09-ai-course-generation.md) | Focused-MVP structured-draft run, evaluation and human-canonicalization workflow |
 | [10 — AI companion and RAG](plan/10-ai-chat-companion-rag.md) | Deferred authorized retrieval, course-only answers and citations |
 | [17 — Payments, email and integrations](plan/17-payments-emails-integrations.md) | Active email direction and deferred finance/provider contracts |
 | [18 — Localization and accessibility](plan/18-localization-accessibility.md) | Locale, RTL, time-zone and WCAG 2.2 AA requirements |

@@ -49,7 +49,11 @@ Duplicate-sensitive commands require `Idempotency-Key`. PostgreSQL reserves `(en
 
 ## Core API groups
 
-Groups for commerce, document ingestion, generation and AI chat are post-MVP and must not be deployed or advertised by OpenAPI until their gates close.
+The focused MVP contract includes identity/tenant, canonical course, enrollment,
+progress, PDF document/ingestion, and structured course-generation groups. Each group
+appears in OpenAPI only when its owning feature is implemented and its applicable
+gate passes. Commerce, assessments, certificates, and AI chat/RAG groups remain absent
+until separately enabled.
 
 ```text
 /auth-context
@@ -63,26 +67,16 @@ Groups for commerce, document ingestion, generation and AI chat are post-MVP and
 /lessons
 /enrollments
 /progress
-/question-banks
-/quizzes
-/quiz-attempts
-/assignments
-/submissions
-/certificates
-/products
-/carts
-/orders
-/payments
-/refunds
-/subscriptions
 /documents
 /document-ingestion-runs
 /course-generation-runs
-/ai-conversations
-/ai-messages
-/support-tickets
-/notifications
 ```
+
+Deferred groups include question banks/quizzes/assignments/certificates, products/
+carts/orders/payments/refunds/subscriptions, and AI conversations/messages. Their
+presence in future design documents is not permission to expose them. Notifications
+and support-ticket APIs also require a focused feature need rather than being scaffolded
+by default.
 
 ## Important command endpoints
 
@@ -94,11 +88,10 @@ POST /documents/{id}/ingestion-runs
 POST /course-generation-runs
 POST /course-generation-runs/{id}/approve-blueprint
 POST /generated-artifacts/{id}/approve
-POST /ai-conversations/{id}/messages
-POST /orders/{id}/payment-intents
-POST /payments/webhooks/paymongo
-POST /emails/webhooks/resend
 ```
+
+AI conversation, commerce, payment, and other deferred command endpoints remain
+outside the production OpenAPI until separately enabled.
 
 ## Error format
 

@@ -38,7 +38,9 @@ Change IDs: CHG-038, CHG-046
 
 Critical journeys:
 
-Only journeys 1–5 (adapted to private/manual onboarding) are core-MVP candidates. Payment, ingestion, generation and RAG journeys are non-applicable until their feature gates close; they must not be treated as launch evidence merely because they appear in this future test catalog.
+Journeys 1–4 and 7–10, adapted to the private focused product, are MVP candidates.
+Journey 12 applies to every enabled UI. Quiz, payment, and RAG journeys remain deferred
+and cannot be claimed as launch evidence.
 
 1. Tenant registration and owner login
 2. Invite instructor and student
@@ -61,11 +63,12 @@ Maintain legal test documents representing:
 - Scanned PDF
 - Multi-column PDF
 - Table-heavy PDF
-- EPUB
-- DOCX
 - Corrupted document
 - Password-protected document
 - Mixed language
+
+EPUB and DOCX golden files become applicable only if those source formats are later
+enabled.
 
 Assert:
 
@@ -101,9 +104,10 @@ Score:
 - Lesson-source alignment
 - Duplicate content
 - Citation validity
-- Question correctness
-- Difficulty alignment
 - Instructor edit distance
+
+Question correctness and assessment difficulty evaluations are deferred with generated
+assessments.
 
 ## Performance tests
 
@@ -129,7 +133,8 @@ Load acceptance uses document 27's baseline, expected, 3× and whale profiles pl
 | Publication | Manual/AI path parity, actor separation, immutable hash, stale/concurrent transitions, rights/evaluation invalidation | Non-waivable before publish |
 | Payments | State-model contract, raw signature/replay, duplicate/out-of-order events, property/concurrency tests, balanced ledger, exactly-once entitlement, refund/reconcile | Required only before commerce; cannot be waived |
 | Upload/ingestion | MIME/magic/polyglot/archive/page/pixel/malware/sandbox limits, orphan reconcile, stage retry/lease/checkpoint | Required only before ingestion; cannot be waived |
-| AI/RAG | Rights operations, immutable run lineage, locked numeric evaluations, cross-tenant/course/version zero-leak, prompt injection, citation-open auth, human-only publish | Required only before AI; cannot be waived |
+| AI generation | Rights operations, immutable run lineage, locked numeric generation evaluations, cross-tenant/source/version zero-leak, source prompt injection, provenance validation, human-only publish | Required for F-005/F-006; cannot be waived for provider-backed integration or release |
+| AI companion/RAG | Retrieval and citation-open authorization, course-version isolation, prompt injection, locked retrieval/chat evaluations | Required only if RAG is later enabled; cannot be waived |
 | Removal/deletion | Rights expiry/revoke through objects/vectors/published citations; DSAR/legal hold/backups/restored tombstones/provider reconcile | Non-waivable for enabled data classes |
 | Resilience/recovery | Provider timeouts/retries/circuit breakers, queue poison/replay, worker drain, DB/object isolated restore and achieved RPO/RTO | Non-waivable production gate |
 | Accessibility | Automated axe plus manual keyboard/focus/screen-reader/zoom/reflow/captions and representative-user evidence | Non-waivable WCAG gate |
@@ -169,7 +174,11 @@ SAST
 RLS matrix
 ```
 
-Critical tenancy and enabled enrollment/publication tests must pass before merge. Payment, certificate, ingestion and AI suites are `not_applicable` only while those capabilities are absent and hard-disabled; each becomes mandatory before its first implementation can merge or deploy.
+Critical tenancy and enabled enrollment/publication tests must pass before merge. The
+upload/ingestion suite becomes mandatory with F-003/F-004. Structured-generation,
+provenance, evaluation, prompt-injection, and human-publication suites become mandatory
+with F-005/F-006 at the gate stated above. Payment, certificate, and RAG suites remain
+`not_applicable` only while those capabilities are absent and hard-disabled.
 
 ### Non-waivable release evidence
 
