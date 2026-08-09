@@ -20,7 +20,7 @@ assignees: []
 ## Ownership
 
 - Agent/owner:
-- Base branch:
+- Base branch: `develop`
 - Branch:
 - Worktree:
 - Owned paths:

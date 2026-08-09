@@ -128,8 +128,8 @@ Each issue must declare:
 
 - Agents never share a worktree or branch.
 - An agent stages only declared paths; do not use `git add .` or `git add -A`.
-- Independent implementation PRs target the owner-approved integration branch,
-  `develop`. Stacked PRs are exceptional
+- Every task branch starts from the latest protected `develop` branch and its pull
+  request targets `develop`. Stacked PRs are exceptional
   and must declare `Depends-on: #<PR>` in the issue and PR.
 - Cross-lane dependencies are versioned contracts and fixtures, not imports from an
   unmerged sibling branch.
@@ -188,20 +188,23 @@ and deployment still require the gates in the Merge/Deploy workflow. Never use
 
 ### Project branch policy
 
-- `develop` is the base for implementation issues and pull requests.
-- `master`, `staging`, and `production` are release/environment branches and must be
-  protected before they are used for merge or deployment.
-- GitHub's repository default may remain `master`; default-branch metadata does not
-  override the project owner's explicit `develop` base.
-- On 2026-08-09 GitHub rejected both rulesets and classic branch protection for this
-  private repository with HTTP 403 because the current account plan does not support
-  that feature. Do not represent those branches as protected, change visibility, or
-  bypass review gates. Enable the required protections after the repository gains a
-  supporting GitHub plan or visibility decision.
+- `develop` is GitHub's default branch and the base/PR target for every task, including
+  feature, fix, chore, documentation, and integration work.
+- Before provisioning a task worktree, fetch `origin/develop` and create the issue-linked
+  branch from that exact head. Do not branch new work from `master`, `staging`,
+  `production`, or another task branch.
+- `develop`, `master`, `staging`, and `production` are protected. Each requires a pull
+  request, one approval, dismissal of stale approvals, resolved conversations, linear
+  history, and administrator enforcement; force-pushes and deletion are disabled.
+- Required status-check names remain unset until Step 0 commits stable CI jobs. The
+  protection policy must be extended with those checks when their names are frozen.
+- `master`, `staging`, and `production` remain release/environment branches. Promotion
+  between them follows the separately authorized merge/deploy workflow; task branches
+  never target them directly.
 
 ### 1. Repository preflight
 
-Verify both GitHub's default branch and the owner-approved integration branch:
+Verify that GitHub's default and owner-approved integration branch is `develop`:
 
 ```bash
 gh auth status
@@ -219,9 +222,9 @@ BASE=develop
 AI_LMS_WT_ROOT=/absolute/path/to/ai-lms-worktrees
 ```
 
-Stop if authentication, `origin`, `develop`, or canonical checkout state is unexpected.
-Never discard existing changes. The current local repository must have a GitHub
-`origin` before the remote steps below can run.
+Stop if authentication, `origin`, GitHub's default `develop`, or canonical checkout
+state is unexpected. Never discard existing changes. The current local repository must
+have a GitHub `origin` before the remote steps below can run.
 
 ### 2. Create one issue and linked branch per task
 

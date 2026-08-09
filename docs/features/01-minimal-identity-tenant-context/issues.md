@@ -2,7 +2,7 @@
 
 Step 0 is [GitHub issue #1](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/1)
 and its linked branch is `chore/LMS-1-foundation-contracts`, based on `develop` at
-`300d0a1ff6d4c044f26eeeb263845ea8ea442388`. Create lanes A-D only after the reviewed
+`5551256ccd661b74233b5623d5de1b70c38db7f1`. Create lanes A-D only after the reviewed
 Step 0 PR merges and the readiness audit passes. Their bodies remain local plans until
 then; replace each local ID with its returned GitHub issue number.
 
