@@ -97,6 +97,7 @@ The owner-input specifications are [retention/legal hold](plan/25-data-retention
 | [Official source register](plan/SOURCES.md) | Dated claim, limitation, recheck and owner register |
 | [Runbook catalog](runbooks/README.md) | Required incident/recovery procedures, format and safety rules |
 | [Evidence index](evidence/README.md) | Evidence schema, artifact rules and explicit pre-implementation state |
+| [Delivery workflows](workflows/README.md) | Repository-specific four-agent, worktree, GitHub issue/PR, review and merge workflow |
 
 AI relational entities are detailed in [06 — AI schema extension](plan/06-ai-schema-extension.md). All architecture decisions and their lifecycle are indexed in the [ADR guide](adr/README.md).
 
