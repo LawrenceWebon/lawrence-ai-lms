@@ -1,6 +1,6 @@
 {
-  "x-generated": "GENERATED for F-001 Step 0 from the reviewed model/migration contract; DO NOT EDIT outside the integration-owner workflow",
-  "schema_version": 1,
+  "x-generated": "GENERATED for F-001 Steps 0 and Lane B from reviewed Django models/migrations",
+  "schema_version": 2,
   "objects": [
     {
       "schema": "app",
@@ -20,21 +20,297 @@
       "keys": ["PRIMARY KEY (id)", "UNIQUE (provider_subject)"],
       "relationships": [],
       "invariants": ["ck_user_profiles_status: status IN ('active','inactive')"],
-      "access": {
-        "owner": "lms_object_owner",
-        "runtime_roles": [],
-        "rls": "not_applicable_global_table"
-      },
-      "performance": ["unique index on provider_subject"],
-      "lifecycle": {
-        "insert_update_owner": "future F-001 identity service",
-        "delete_behavior": "blocked until documents 25/26 approve identity deletion"
-      },
-      "verification": {
-        "migration": "lms_identity.0001_initial",
-        "model": "lms.modules.identity.models.UserProfile",
-        "tests": ["backend/tests/database/test_runtime_role.py"]
-      }
+      "access": { "owner": "lms_object_owner", "runtime_roles": [], "rls": "not_applicable_global_table; accessed only through fixed security-definer actor lookup" },
+      "performance": [{ "index": "user_profiles_provider_subject_key", "columns": ["provider_subject"], "workload": "verified actor lookup", "threshold": "one row", "explain_evidence": "backend/tests/tenancy/test_rls.py" }],
+      "lifecycle": { "insert_owner": "identity", "update_owner": "identity", "delete_behavior": "RESTRICT from memberships; deletion coordinator pending documents 25/26", "immutability_point": "provider_subject after insert", "partition_rule": "not partitioned" },
+      "verification": { "migration": "lms_identity.0001_initial", "model": "lms.modules.identity.models.UserProfile", "tests": ["backend/tests/database/test_runtime_role.py", "backend/tests/tenancy/test_services.py"] }
+    },
+    {
+      "schema": "app",
+      "table": "tenants",
+      "domain_owner": "tenancy",
+      "phase": "F-001-lane-b",
+      "authority": "Django",
+      "tenant_classification": "tenant_root",
+      "columns": [
+        { "name": "id", "type": "uuid", "nullable": false, "default": "uuid4", "immutable": true, "classification": "tenant_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "slug", "type": "varchar(63)", "nullable": false, "default": null, "immutable": true, "classification": "tenant_metadata", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "display_name", "type": "varchar(120)", "nullable": false, "default": null, "immutable": false, "classification": "tenant_metadata", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "status", "type": "varchar(16)", "nullable": false, "default": "active", "immutable": false, "classification": "security_state", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "created_at", "type": "timestamptz", "nullable": false, "default": "application_time", "immutable": true, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "updated_at", "type": "timestamptz", "nullable": false, "default": "application_time", "immutable": false, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "row_version", "type": "bigint", "nullable": false, "default": 1, "immutable": false, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" }
+      ],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (slug)"],
+      "relationships": [],
+      "invariants": ["ck_tenants_status: status IN ('active','inactive','suspended')"],
+      "access": { "owner": "lms_object_owner", "runtime_roles": ["lms_api_runtime:SELECT"], "rls": "ENABLE + FORCE; tenants_select uses current active membership/entitlement or presented invitation" },
+      "performance": [{ "index": "tenants_pkey", "columns": ["id"], "workload": "tenant selector resolution", "threshold": "one row", "explain_evidence": "backend/tests/tenancy/test_rls.py" }],
+      "lifecycle": { "insert_owner": "tenancy provisioning", "update_owner": "tenancy service", "delete_behavior": "RESTRICT; coordinated lifecycle only", "immutability_point": "id and slug after insert", "partition_rule": "not partitioned" },
+      "verification": { "migration": "tenancy.0001_initial", "model": "lms.modules.tenancy.models.Tenant", "tests": ["backend/tests/tenancy/test_services.py", "backend/tests/tenancy/test_rls.py"] }
+    },
+    {
+      "schema": "app",
+      "table": "entitlement_periods",
+      "domain_owner": "tenancy",
+      "phase": "F-001-lane-b",
+      "authority": "Django",
+      "tenant_classification": "tenant_owned",
+      "columns": [
+        { "name": "id", "type": "uuid", "nullable": false, "default": "uuid4", "immutable": true, "classification": "internal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "tenant_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "tenant_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "status", "type": "varchar(16)", "nullable": false, "default": "active", "immutable": false, "classification": "entitlement_state", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "starts_at", "type": "timestamptz", "nullable": false, "default": null, "immutable": true, "classification": "entitlement_state", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "valid_until", "type": "timestamptz", "nullable": true, "default": null, "immutable": false, "classification": "entitlement_state", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "created_at", "type": "timestamptz", "nullable": false, "default": "application_time", "immutable": true, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "updated_at", "type": "timestamptz", "nullable": false, "default": "application_time", "immutable": false, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "row_version", "type": "bigint", "nullable": false, "default": 1, "immutable": false, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" }
+      ],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)"],
+      "relationships": [{ "cardinality": "tenant 1:N entitlement_periods", "foreign_key": "tenant_id -> tenants.id", "deferrable": false, "on_delete": "RESTRICT", "on_update": "NO ACTION", "index": "ix_entitlements_access" }],
+      "invariants": ["status IN ('active','expired','suspended')", "valid_until IS NULL OR valid_until > starts_at"],
+      "access": { "owner": "lms_object_owner", "runtime_roles": ["lms_api_runtime:SELECT"], "rls": "ENABLE + FORCE; current active tenant or actor-only active membership candidate discovery" },
+      "performance": [{ "index": "ix_entitlements_access", "columns": ["tenant_id", "status", "starts_at", "valid_until"], "workload": "per-request entitlement check", "threshold": "one current period", "explain_evidence": "backend/tests/tenancy/test_rls.py" }],
+      "lifecycle": { "insert_owner": "tenancy provisioning", "update_owner": "tenancy lifecycle", "delete_behavior": "RESTRICT", "immutability_point": "tenant and start after insert", "partition_rule": "not partitioned" },
+      "verification": { "migration": "tenancy.0001_initial", "model": "lms.modules.tenancy.models.EntitlementPeriod", "tests": ["backend/tests/tenancy/test_services.py", "backend/tests/tenancy/test_rls.py"] }
+    },
+    {
+      "schema": "app",
+      "table": "tenant_memberships",
+      "domain_owner": "tenancy",
+      "phase": "F-001-lane-b",
+      "authority": "Django",
+      "tenant_classification": "tenant_owned",
+      "columns": [
+        { "name": "id", "type": "uuid", "nullable": false, "default": "uuid4", "immutable": true, "classification": "internal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "tenant_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "tenant_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "user_profile_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "personal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "status", "type": "varchar(16)", "nullable": false, "default": "active", "immutable": false, "classification": "security_state", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "created_at", "type": "timestamptz", "nullable": false, "default": "application_time", "immutable": true, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "updated_at", "type": "timestamptz", "nullable": false, "default": "application_time", "immutable": false, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "row_version", "type": "bigint", "nullable": false, "default": 1, "immutable": false, "classification": "concurrency_state", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" }
+      ],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,user_profile_id)"],
+      "relationships": [{ "cardinality": "tenant 1:N memberships", "foreign_key": "tenant_id -> tenants.id", "deferrable": false, "on_delete": "RESTRICT", "on_update": "NO ACTION", "index": "ix_memberships_access" }, { "cardinality": "user_profile 1:N memberships", "foreign_key": "user_profile_id -> user_profiles.id", "deferrable": false, "on_delete": "RESTRICT", "on_update": "NO ACTION", "index": "ix_memberships_access" }],
+      "invariants": ["status IN ('active','inactive')", "row_version compare-and-swap on update"],
+      "access": { "owner": "lms_object_owner", "runtime_roles": ["lms_api_runtime:SELECT,INSERT,UPDATE,DELETE"], "rls": "ENABLE + FORCE; self discovery, tenant-admin permission, or token-bound acceptance; no DELETE policy" },
+      "performance": [{ "index": "ix_memberships_access", "columns": ["tenant_id", "status", "user_profile_id"], "workload": "actor tenant authorization", "threshold": "one membership", "explain_evidence": "backend/tests/tenancy/test_rls.py" }],
+      "lifecycle": { "insert_owner": "invitation acceptance", "update_owner": "tenancy service", "delete_behavior": "no runtime delete; retain inactive membership", "immutability_point": "tenant/user edge after insert", "partition_rule": "not partitioned" },
+      "verification": { "migration": "tenancy.0001_initial", "model": "lms.modules.tenancy.models.TenantMembership", "tests": ["backend/tests/tenancy/test_services.py", "backend/tests/tenancy/test_constraints.py", "backend/tests/tenancy/test_rls.py"] }
+    },
+    {
+      "schema": "app",
+      "table": "permissions",
+      "domain_owner": "tenancy",
+      "phase": "F-001-lane-b",
+      "authority": "Django",
+      "tenant_classification": "global_reference",
+      "columns": [
+        { "name": "id", "type": "uuid", "nullable": false, "default": "deterministic uuid5", "immutable": true, "classification": "internal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "code", "type": "varchar(96)", "nullable": false, "default": null, "immutable": true, "classification": "security_configuration", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "description", "type": "varchar(200)", "nullable": false, "default": null, "immutable": false, "classification": "security_configuration", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" }
+      ],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (code)"],
+      "relationships": [],
+      "invariants": ["migration seeds exactly tenancy.memberships.read, tenancy.invitations.create, tenancy.memberships.update"],
+      "access": { "owner": "lms_object_owner", "runtime_roles": ["lms_api_runtime:SELECT"], "rls": "not_applicable_global_reference" },
+      "performance": [{ "index": "permissions_code_key", "columns": ["code"], "workload": "permission policy lookup", "threshold": "one row", "explain_evidence": "backend/tests/tenancy/test_services.py" }],
+      "lifecycle": { "insert_owner": "Django migration", "update_owner": "Django migration", "delete_behavior": "RESTRICT while granted", "immutability_point": "code after migration", "partition_rule": "not partitioned" },
+      "verification": { "migration": "tenancy.0001_initial", "model": "lms.modules.tenancy.models.Permission", "tests": ["backend/tests/tenancy/test_services.py"] }
+    },
+    {
+      "schema": "app",
+      "table": "roles",
+      "domain_owner": "tenancy",
+      "phase": "F-001-lane-b",
+      "authority": "Django",
+      "tenant_classification": "tenant_owned",
+      "columns": [
+        { "name": "id", "type": "uuid", "nullable": false, "default": "deterministic uuid5", "immutable": true, "classification": "internal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "tenant_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "tenant_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "code", "type": "varchar(32)", "nullable": false, "default": null, "immutable": true, "classification": "security_configuration", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "display_name", "type": "varchar(80)", "nullable": false, "default": null, "immutable": false, "classification": "security_configuration", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "created_at", "type": "timestamptz", "nullable": false, "default": "application_time", "immutable": true, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "updated_at", "type": "timestamptz", "nullable": false, "default": "application_time", "immutable": false, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" }
+      ],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,code)"],
+      "relationships": [{ "cardinality": "tenant 1:N roles", "foreign_key": "tenant_id -> tenants.id", "deferrable": false, "on_delete": "RESTRICT", "on_update": "NO ACTION", "index": "ix_roles_tenant_code" }],
+      "invariants": ["code IN ('tenant_admin','instructor','reviewer','learner')"],
+      "access": { "owner": "lms_object_owner", "runtime_roles": ["lms_api_runtime:SELECT"], "rls": "ENABLE + FORCE; active tenant or presented invitation" },
+      "performance": [{ "index": "ix_roles_tenant_code", "columns": ["tenant_id", "code"], "workload": "fixed role resolution", "threshold": "four rows per tenant", "explain_evidence": "backend/tests/tenancy/test_services.py" }],
+      "lifecycle": { "insert_owner": "tenancy provisioning", "update_owner": "Django migration", "delete_behavior": "RESTRICT", "immutability_point": "tenant/code after provision", "partition_rule": "not partitioned" },
+      "verification": { "migration": "tenancy.0001_initial", "model": "lms.modules.tenancy.models.Role", "tests": ["backend/tests/tenancy/test_constraints.py", "backend/tests/tenancy/test_services.py"] }
+    },
+    {
+      "schema": "app",
+      "table": "role_permissions",
+      "domain_owner": "tenancy",
+      "phase": "F-001-lane-b",
+      "authority": "Django",
+      "tenant_classification": "tenant_owned",
+      "columns": [
+        { "name": "id", "type": "uuid", "nullable": false, "default": "uuid4", "immutable": true, "classification": "internal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "tenant_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "tenant_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "role_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "security_configuration", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "permission_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "security_configuration", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" }
+      ],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,role_id,permission_id)"],
+      "relationships": [{ "cardinality": "role 1:N grants", "foreign_key": "(tenant_id,role_id) -> roles(tenant_id,id)", "deferrable": false, "on_delete": "RESTRICT", "on_update": "NO ACTION", "index": "ix_role_permissions_lookup" }, { "cardinality": "permission 1:N grants", "foreign_key": "permission_id -> permissions.id", "deferrable": false, "on_delete": "RESTRICT", "on_update": "NO ACTION", "index": "ix_role_permissions_lookup" }],
+      "invariants": ["tenant_admin receives exactly the three F-001 permissions; other fixed roles receive none"],
+      "access": { "owner": "lms_object_owner", "runtime_roles": ["lms_api_runtime:SELECT"], "rls": "ENABLE + FORCE; active current tenant" },
+      "performance": [{ "index": "ix_role_permissions_lookup", "columns": ["tenant_id", "role_id", "permission_id"], "workload": "authorization predicate", "threshold": "bounded fixed-role grant set", "explain_evidence": "backend/tests/tenancy/test_rls.py" }],
+      "lifecycle": { "insert_owner": "tenancy provisioning", "update_owner": "none", "delete_behavior": "RESTRICT; migration-controlled", "immutability_point": "insert", "partition_rule": "not partitioned" },
+      "verification": { "migration": "tenancy.0001_initial", "model": "lms.modules.tenancy.models.RolePermission", "tests": ["backend/tests/tenancy/test_services.py", "backend/tests/tenancy/test_rls.py"] }
+    },
+    {
+      "schema": "app",
+      "table": "membership_roles",
+      "domain_owner": "tenancy",
+      "phase": "F-001-lane-b",
+      "authority": "Django",
+      "tenant_classification": "tenant_owned",
+      "columns": [
+        { "name": "id", "type": "uuid", "nullable": false, "default": "uuid4", "immutable": true, "classification": "internal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "tenant_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "tenant_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "membership_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "security_state", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "role_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "security_state", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" }
+      ],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,membership_id,role_id)"],
+      "relationships": [{ "cardinality": "membership 1:N roles", "foreign_key": "(tenant_id,membership_id) -> tenant_memberships(tenant_id,id)", "deferrable": false, "on_delete": "CASCADE", "on_update": "NO ACTION", "index": "ix_membership_roles_lookup" }, { "cardinality": "role 1:N membership edges", "foreign_key": "(tenant_id,role_id) -> roles(tenant_id,id)", "deferrable": false, "on_delete": "RESTRICT", "on_update": "NO ACTION", "index": "ix_membership_roles_lookup" }],
+      "invariants": ["composite FKs prevent cross-tenant role assignment", "sorted unique role summaries"],
+      "access": { "owner": "lms_object_owner", "runtime_roles": ["lms_api_runtime:SELECT,INSERT,DELETE"], "rls": "ENABLE + FORCE; self/read permission; writes require update permission or token acceptance" },
+      "performance": [{ "index": "ix_membership_roles_lookup", "columns": ["tenant_id", "membership_id", "role_id"], "workload": "membership authorization and summary", "threshold": "four fixed roles maximum", "explain_evidence": "backend/tests/tenancy/test_rls.py" }],
+      "lifecycle": { "insert_owner": "tenancy service", "update_owner": "replace edges in tenancy service", "delete_behavior": "CASCADE only with membership containment", "immutability_point": "edge row", "partition_rule": "not partitioned" },
+      "verification": { "migration": "tenancy.0001_initial", "model": "lms.modules.tenancy.models.MembershipRole", "tests": ["backend/tests/tenancy/test_constraints.py", "backend/tests/tenancy/test_services.py", "backend/tests/tenancy/test_rls.py"] }
+    },
+    {
+      "schema": "app",
+      "table": "tenant_invitations",
+      "domain_owner": "tenancy",
+      "phase": "F-001-lane-b",
+      "authority": "Django",
+      "tenant_classification": "tenant_owned",
+      "columns": [
+        { "name": "id", "type": "uuid", "nullable": false, "default": "uuid4", "immutable": true, "classification": "internal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "tenant_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "tenant_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "email", "type": "varchar(254)", "nullable": false, "default": null, "immutable": true, "classification": "personal_contact", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "token_digest", "type": "varchar(64)", "nullable": false, "default": "HMAC-SHA256", "immutable": true, "classification": "credential_digest", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "status", "type": "varchar(16)", "nullable": false, "default": "active", "immutable": false, "classification": "security_state", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "expires_at", "type": "timestamptz", "nullable": false, "default": "creation + 24 hours", "immutable": true, "classification": "security_state", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "accepted_by_id", "type": "uuid", "nullable": true, "default": null, "immutable": false, "classification": "personal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "accepted_membership_id", "type": "uuid", "nullable": true, "default": null, "immutable": false, "classification": "security_state", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "accepted_at", "type": "timestamptz", "nullable": true, "default": null, "immutable": false, "classification": "security_state", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "created_at", "type": "timestamptz", "nullable": false, "default": "application_time", "immutable": true, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "updated_at", "type": "timestamptz", "nullable": false, "default": "application_time", "immutable": false, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "row_version", "type": "bigint", "nullable": false, "default": 1, "immutable": false, "classification": "concurrency_state", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" }
+      ],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (token_digest)"],
+      "relationships": [{ "cardinality": "tenant 1:N invitations", "foreign_key": "tenant_id -> tenants.id", "deferrable": false, "on_delete": "RESTRICT", "on_update": "NO ACTION", "index": "ix_invites_active" }, { "cardinality": "invitation 0:1 accepted membership", "foreign_key": "(tenant_id,accepted_membership_id) -> tenant_memberships(tenant_id,id)", "deferrable": false, "on_delete": "RESTRICT", "on_update": "NO ACTION", "index": "tenant_invitations_accepted_membership_id" }],
+      "invariants": ["status IN ('active','accepted','expired','revoked')", "raw token is never persisted, logged, audited, or placed in outbox"],
+      "access": { "owner": "lms_object_owner", "runtime_roles": ["lms_api_runtime:SELECT,INSERT,UPDATE"], "rls": "ENABLE + FORCE; tenant-admin create or keyed-digest token acceptance" },
+      "performance": [{ "index": "tenant_invitations_token_digest_key", "columns": ["token_digest"], "workload": "single-use token acceptance", "threshold": "one row", "explain_evidence": "backend/tests/tenancy/test_services.py" }, { "index": "ix_invites_active", "columns": ["tenant_id", "status", "expires_at"], "workload": "tenant invitation lifecycle", "threshold": "bounded active set", "explain_evidence": "backend/tests/tenancy/test_services.py" }],
+      "lifecycle": { "insert_owner": "create_invitation", "update_owner": "accept/revoke/expire service", "delete_behavior": "RESTRICT; status transition and retention coordinator", "immutability_point": "tenant/email/token digest/expiry after insert", "partition_rule": "not partitioned" },
+      "verification": { "migration": "tenancy.0001_initial", "model": "lms.modules.tenancy.models.TenantInvitation", "tests": ["backend/tests/tenancy/test_services.py", "backend/tests/tenancy/test_rls.py"] }
+    },
+    {
+      "schema": "app",
+      "table": "tenant_invitation_roles",
+      "domain_owner": "tenancy",
+      "phase": "F-001-lane-b",
+      "authority": "Django",
+      "tenant_classification": "tenant_owned",
+      "columns": [
+        { "name": "id", "type": "uuid", "nullable": false, "default": "uuid4", "immutable": true, "classification": "internal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "tenant_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "tenant_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "invitation_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "security_state", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "role_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "security_state", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" }
+      ],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,invitation_id,role_id)"],
+      "relationships": [{ "cardinality": "invitation 1:N requested roles", "foreign_key": "(tenant_id,invitation_id) -> tenant_invitations(tenant_id,id)", "deferrable": false, "on_delete": "CASCADE", "on_update": "NO ACTION", "index": "ix_invitation_roles_lookup" }, { "cardinality": "role 1:N invitation edges", "foreign_key": "(tenant_id,role_id) -> roles(tenant_id,id)", "deferrable": false, "on_delete": "RESTRICT", "on_update": "NO ACTION", "index": "ix_invitation_roles_lookup" }],
+      "invariants": ["composite FKs prevent cross-tenant invitation role assignment"],
+      "access": { "owner": "lms_object_owner", "runtime_roles": ["lms_api_runtime:SELECT,INSERT"], "rls": "ENABLE + FORCE; tenant-admin creation or presented invitation read" },
+      "performance": [{ "index": "ix_invitation_roles_lookup", "columns": ["tenant_id", "invitation_id", "role_id"], "workload": "invitation acceptance", "threshold": "four fixed roles maximum", "explain_evidence": "backend/tests/tenancy/test_services.py" }],
+      "lifecycle": { "insert_owner": "create_invitation", "update_owner": "none", "delete_behavior": "CASCADE with invitation only", "immutability_point": "insert", "partition_rule": "not partitioned" },
+      "verification": { "migration": "tenancy.0001_initial", "model": "lms.modules.tenancy.models.TenantInvitationRole", "tests": ["backend/tests/tenancy/test_services.py", "backend/tests/tenancy/test_constraints.py"] }
+    },
+    {
+      "schema": "audit",
+      "table": "tenant_audit_facts",
+      "domain_owner": "tenancy",
+      "phase": "F-001-lane-b",
+      "authority": "Django",
+      "tenant_classification": "tenant_owned_append_only",
+      "columns": [
+        { "name": "id", "type": "uuid", "nullable": false, "default": "uuid4", "immutable": true, "classification": "internal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "tenant_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "tenant_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "event_type", "type": "varchar(96)", "nullable": false, "default": null, "immutable": true, "classification": "security_audit", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "actor_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "personal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "subject_type", "type": "varchar(64)", "nullable": false, "default": null, "immutable": true, "classification": "security_audit", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "subject_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "internal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "request_id", "type": "uuid", "nullable": false, "default": "transaction context", "immutable": true, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "payload", "type": "jsonb", "nullable": false, "default": {}, "immutable": true, "classification": "security_audit_allowlist", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "occurred_at", "type": "timestamptz", "nullable": false, "default": "application_time", "immutable": true, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" }
+      ],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)"],
+      "relationships": [{ "cardinality": "tenant 1:N audit facts", "foreign_key": "tenant_id -> tenants.id", "deferrable": false, "on_delete": "RESTRICT", "on_update": "NO ACTION", "index": "ix_audit_tenant_time" }],
+      "invariants": ["BEFORE UPDATE OR DELETE trigger rejects mutation", "payload excludes email and invitation token"],
+      "access": { "owner": "lms_object_owner", "runtime_roles": ["lms_api_runtime:INSERT"], "rls": "ENABLE + FORCE; authorized tenancy mutation only" },
+      "performance": [{ "index": "ix_audit_tenant_time", "columns": ["tenant_id", "occurred_at"], "workload": "tenant audit chronology", "threshold": "bounded local F-001 facts", "explain_evidence": "backend/tests/tenancy/test_services.py" }],
+      "lifecycle": { "insert_owner": "tenancy services", "update_owner": "none", "delete_behavior": "immutable; retention/legal-hold coordinator only after approved migration", "immutability_point": "insert", "partition_rule": "not partitioned until CHG-043 thresholds" },
+      "verification": { "migration": "tenancy.0001_initial", "model": "lms.modules.tenancy.models.AuditFact", "tests": ["backend/tests/tenancy/test_services.py", "backend/tests/tenancy/test_rls.py"] }
+    },
+    {
+      "schema": "integration",
+      "table": "idempotency_reservations",
+      "domain_owner": "tenancy",
+      "phase": "F-001-lane-b",
+      "authority": "Django",
+      "tenant_classification": "tenant_owned",
+      "columns": [
+        { "name": "id", "type": "uuid", "nullable": false, "default": "uuid4", "immutable": true, "classification": "internal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "tenant_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "tenant_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "actor_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "personal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "operation", "type": "varchar(64)", "nullable": false, "default": null, "immutable": true, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "key_digest", "type": "varchar(64)", "nullable": false, "default": "HMAC-SHA256", "immutable": true, "classification": "credential_digest", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "request_hash", "type": "varchar(64)", "nullable": false, "default": "SHA-256", "immutable": true, "classification": "operational_digest", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "status", "type": "varchar(16)", "nullable": false, "default": "reserved", "immutable": false, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "response_payload", "type": "jsonb", "nullable": false, "default": {}, "immutable": false, "classification": "operational_allowlist", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "created_at", "type": "timestamptz", "nullable": false, "default": "application_time", "immutable": true, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "updated_at", "type": "timestamptz", "nullable": false, "default": "application_time", "immutable": false, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" }
+      ],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,actor_id,operation,key_digest)"],
+      "relationships": [{ "cardinality": "tenant 1:N reservations", "foreign_key": "tenant_id -> tenants.id", "deferrable": false, "on_delete": "RESTRICT", "on_update": "NO ACTION", "index": "ix_idempotency_lookup" }],
+      "invariants": ["status IN ('reserved','completed')", "same key/different request hash returns IDEMPOTENCY_CONFLICT", "response never contains invitation token"],
+      "access": { "owner": "lms_object_owner", "runtime_roles": ["lms_api_runtime:SELECT,INSERT,UPDATE"], "rls": "ENABLE + FORCE; same actor, tenant, and invitation-create permission" },
+      "performance": [{ "index": "ix_idempotency_lookup", "columns": ["tenant_id", "actor_id", "operation", "key_digest"], "workload": "single-effect command reservation", "threshold": "one row", "explain_evidence": "backend/tests/tenancy/test_services.py" }],
+      "lifecycle": { "insert_owner": "create_invitation", "update_owner": "create_invitation completion", "delete_behavior": "retention coordinator; no runtime delete", "immutability_point": "identity/request digest after insert", "partition_rule": "not partitioned until CHG-043 thresholds" },
+      "verification": { "migration": "tenancy.0001_initial", "model": "lms.modules.tenancy.models.IdempotencyReservation", "tests": ["backend/tests/tenancy/test_services.py", "backend/tests/tenancy/test_rls.py"] }
+    },
+    {
+      "schema": "integration",
+      "table": "tenant_outbox_facts",
+      "domain_owner": "tenancy",
+      "phase": "F-001-lane-b",
+      "authority": "Django",
+      "tenant_classification": "tenant_owned_append_only",
+      "columns": [
+        { "name": "id", "type": "uuid", "nullable": false, "default": "uuid4", "immutable": true, "classification": "internal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "tenant_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "tenant_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "event_type", "type": "varchar(96)", "nullable": false, "default": null, "immutable": true, "classification": "event_metadata", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "aggregate_type", "type": "varchar(64)", "nullable": false, "default": null, "immutable": true, "classification": "event_metadata", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "aggregate_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "internal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "actor_id", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "personal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "request_id", "type": "uuid", "nullable": false, "default": "transaction context", "immutable": true, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "payload", "type": "jsonb", "nullable": false, "default": {}, "immutable": true, "classification": "event_allowlist", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "occurred_at", "type": "timestamptz", "nullable": false, "default": "application_time", "immutable": true, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" }
+      ],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)"],
+      "relationships": [{ "cardinality": "tenant 1:N outbox facts", "foreign_key": "tenant_id -> tenants.id", "deferrable": false, "on_delete": "RESTRICT", "on_update": "NO ACTION", "index": "ix_outbox_tenant_time" }],
+      "invariants": ["BEFORE UPDATE OR DELETE trigger rejects mutation", "event types restricted by service to frozen F-001 facts", "payload excludes email and invitation token"],
+      "access": { "owner": "lms_object_owner", "runtime_roles": ["lms_api_runtime:INSERT"], "rls": "ENABLE + FORCE; authorized tenancy mutation only" },
+      "performance": [{ "index": "ix_outbox_tenant_time", "columns": ["tenant_id", "occurred_at"], "workload": "tenant outbox polling chronology", "threshold": "bounded local F-001 facts", "explain_evidence": "backend/tests/tenancy/test_services.py" }],
+      "lifecycle": { "insert_owner": "tenancy services", "update_owner": "none", "delete_behavior": "immutable; dispatcher/retention migration only", "immutability_point": "insert", "partition_rule": "not partitioned until CHG-043 thresholds" },
+      "verification": { "migration": "tenancy.0001_initial", "model": "lms.modules.tenancy.models.OutboxFact", "tests": ["backend/tests/tenancy/test_services.py", "backend/tests/tenancy/test_rls.py"] }
     }
   ]
 }
