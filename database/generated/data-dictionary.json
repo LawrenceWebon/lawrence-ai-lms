@@ -1,0 +1,40 @@
+{
+  "x-generated": "GENERATED for F-001 Step 0 from the reviewed model/migration contract; DO NOT EDIT outside the integration-owner workflow",
+  "schema_version": 1,
+  "objects": [
+    {
+      "schema": "app",
+      "table": "user_profiles",
+      "domain_owner": "identity",
+      "phase": "F-001-step-0",
+      "authority": "Django",
+      "tenant_classification": "global",
+      "columns": [
+        { "name": "id", "type": "uuid", "nullable": false, "default": "uuid4", "immutable": true, "classification": "internal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "provider_subject", "type": "uuid", "nullable": false, "default": null, "immutable": true, "classification": "personal_identifier", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "status", "type": "varchar(16)", "nullable": false, "default": "active", "immutable": false, "classification": "security_state", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "created_at", "type": "timestamptz", "nullable": false, "default": "application_time", "immutable": true, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "updated_at", "type": "timestamptz", "nullable": false, "default": "application_time", "immutable": false, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" },
+        { "name": "row_version", "type": "bigint", "nullable": false, "default": 1, "immutable": false, "classification": "operational", "retention_reference": "docs/plan/25-data-retention-legal-hold-specification.md" }
+      ],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (provider_subject)"],
+      "relationships": [],
+      "invariants": ["ck_user_profiles_status: status IN ('active','inactive')"],
+      "access": {
+        "owner": "lms_object_owner",
+        "runtime_roles": [],
+        "rls": "not_applicable_global_table"
+      },
+      "performance": ["unique index on provider_subject"],
+      "lifecycle": {
+        "insert_update_owner": "future F-001 identity service",
+        "delete_behavior": "blocked until documents 25/26 approve identity deletion"
+      },
+      "verification": {
+        "migration": "lms_identity.0001_initial",
+        "model": "lms.modules.identity.models.UserProfile",
+        "tests": ["backend/tests/database/test_runtime_role.py"]
+      }
+    }
+  ]
+}

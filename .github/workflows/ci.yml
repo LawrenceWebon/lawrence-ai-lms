@@ -1,0 +1,74 @@
+name: Step 0 foundation
+
+on:
+  pull_request:
+  push:
+    branches: [develop]
+
+permissions:
+  contents: read
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+  UV_VERSION: 0.12.3
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version-file: .python-version
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Install pinned package managers and dependencies
+        run: |
+          python -m pip install "uv==$UV_VERSION"
+          make clean-install
+      - name: Lint and architecture boundaries
+        run: make lint
+      - name: Typecheck
+        run: make typecheck
+      - name: Unit and contract tests
+        run: make test
+      - name: OpenAPI and generated-client drift
+        run: make openapi-check
+      - name: Web production build
+        run: make web-build
+      - name: Documentation integrity
+        run: make docs-check
+
+  rls:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version-file: .python-version
+      - name: Install pinned backend dependencies
+        run: |
+          python -m pip install "uv==$UV_VERSION"
+          uv sync --project backend --frozen --all-groups
+      - name: Verify non-owner production role
+        run: make test-rls
+      - name: Stop disposable database
+        if: always()
+        run: docker compose down --volumes
+
+  e2e-f001:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Install exact frontend dependencies
+        run: npm ci
+      - name: Install pinned browser
+        run: npx playwright install --with-deps chromium
+      - name: Run the F-001 foundation browser check
+        run: make e2e-f001

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://contracts.ai-lms.local/f001/synthetic-fixtures.v1.schema.json",
+  "lane": "web",
+  "tenants": [
+    { "id": "00000000-0000-4000-8000-0000000000a1", "slug": "alpha", "entitlement": "active" },
+    { "id": "00000000-0000-4000-8000-0000000000b1", "slug": "beta", "entitlement": "active" }
+  ],
+  "users": [
+    { "id": "00000000-0000-4000-8000-000000000101", "fixture": "alpha_admin", "memberships": ["alpha:tenant_admin:active:v1"] },
+    { "id": "00000000-0000-4000-8000-000000000102", "fixture": "multi_tenant_instructor", "memberships": ["alpha:instructor:active:v2", "beta:instructor:active:v1"] },
+    { "id": "00000000-0000-4000-8000-000000000103", "fixture": "alpha_learner", "memberships": ["alpha:learner:active:v1"] },
+    { "id": "00000000-0000-4000-8000-000000000104", "fixture": "inactive_member", "memberships": ["alpha:learner:inactive:v3"] },
+    { "id": "00000000-0000-4000-8000-000000000105", "fixture": "outsider", "memberships": [] }
+  ],
+  "invitations": [
+    { "id": "00000000-0000-4000-8000-000000000201", "status": "active", "token_fixture": "synthetic-active-token-000000000001" },
+    { "id": "00000000-0000-4000-8000-000000000202", "status": "expired", "token_fixture": "synthetic-expired-token-00000000001" },
+    { "id": "00000000-0000-4000-8000-000000000203", "status": "revoked", "token_fixture": "synthetic-revoked-token-00000000001" }
+  ],
+  "runtime_role": { "name": "lms_api_runtime", "owner": false, "bypass_rls": false }
+}

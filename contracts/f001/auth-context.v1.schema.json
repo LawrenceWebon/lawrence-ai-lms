@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-lms.local/f001/auth-context.v1.schema.json",
+  "title": "F-001 authentication context v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "principal", "active_tenant", "membership", "entitlement", "available_tenants"],
+  "properties": {
+    "$schema": { "const": "https://contracts.ai-lms.local/f001/auth-context.v1.schema.json" },
+    "principal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["user_id", "authentication_time", "assurance_level"],
+      "properties": {
+        "user_id": { "type": "string", "format": "uuid" },
+        "authentication_time": { "type": "string", "format": "date-time" },
+        "assurance_level": { "enum": ["aal1", "aal2"] }
+      }
+    },
+    "active_tenant": { "oneOf": [{ "$ref": "#/$defs/tenant" }, { "type": "null" }] },
+    "membership": { "oneOf": [{ "$ref": "#/$defs/membership" }, { "type": "null" }] },
+    "entitlement": { "oneOf": [{ "$ref": "#/$defs/entitlement" }, { "type": "null" }] },
+    "available_tenants": {
+      "type": "array",
+      "maxItems": 100,
+      "items": { "$ref": "#/$defs/tenant_candidate" }
+    }
+  },
+  "$defs": {
+    "tenant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "slug", "display_name"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "slug": { "type": "string", "minLength": 1, "maxLength": 63 },
+        "display_name": { "type": "string", "minLength": 1, "maxLength": 120 }
+      }
+    },
+    "tenant_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "slug", "display_name", "membership_status"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "slug": { "type": "string", "minLength": 1, "maxLength": 63 },
+        "display_name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "membership_status": { "enum": ["active", "inactive"] }
+      }
+    },
+    "membership": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "row_version", "role_codes", "permission_codes"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "status": { "enum": ["active", "inactive"] },
+        "row_version": { "type": "integer", "minimum": 1 },
+        "role_codes": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "permission_codes": { "type": "array", "uniqueItems": true, "items": { "type": "string" } }
+      }
+    },
+    "entitlement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "valid_until"],
+      "properties": {
+        "status": { "enum": ["active", "expired", "suspended"] },
+        "valid_until": { "oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }] }
+      }
+    }
+  }
+}

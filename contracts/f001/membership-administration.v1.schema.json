@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-lms.local/f001/membership-administration.v1.schema.json",
+  "title": "F-001 membership administration fixture v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "operation", "request", "expected_status", "expected_problem_code"],
+  "properties": {
+    "$schema": { "const": "https://contracts.ai-lms.local/f001/membership-administration.v1.schema.json" },
+    "operation": {
+      "enum": ["list_memberships", "create_invitation", "accept_invitation", "update_membership"]
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tenant_id": { "type": "string", "format": "uuid" },
+        "membership_id": { "type": "string", "format": "uuid" },
+        "email": { "type": "string", "format": "email", "maxLength": 254 },
+        "role_codes": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/role_code" } },
+        "row_version": { "type": "integer", "minimum": 1 },
+        "invitation_token": { "type": "string", "minLength": 32, "maxLength": 512 },
+        "idempotency_key": { "type": "string", "minLength": 16, "maxLength": 128 }
+      }
+    },
+    "expected_status": { "type": "integer", "minimum": 200, "maximum": 599 },
+    "expected_problem_code": {
+      "oneOf": [{ "$ref": "#/$defs/problem_code" }, { "type": "null" }]
+    }
+  },
+  "$defs": {
+    "role_code": { "enum": ["tenant_admin", "instructor", "reviewer", "learner"] },
+    "problem_code": {
+      "enum": [
+        "AUTHENTICATION_REQUIRED",
+        "TOKEN_INVALID",
+        "TENANT_CONTEXT_REQUIRED",
+        "TENANT_ACCESS_DENIED",
+        "TENANT_ACCESS_INACTIVE",
+        "INVITATION_INVALID",
+        "INVITATION_EXPIRED",
+        "IDEMPOTENCY_CONFLICT",
+        "VERSION_CONFLICT"
+      ]
+    }
+  }
+}

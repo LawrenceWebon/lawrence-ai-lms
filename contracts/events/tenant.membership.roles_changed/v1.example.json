@@ -1,0 +1,19 @@
+{
+  "event_id": "10000000-0000-4000-8000-000000000003",
+  "event_type": "tenant.membership.roles_changed.v1",
+  "event_version": 1,
+  "producer": "tenancy",
+  "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+  "aggregate_type": "tenant_membership",
+  "aggregate_id": "20000000-0000-4000-8000-000000000002",
+  "aggregate_version": 2,
+  "occurred_at": "2026-08-10T00:00:00Z",
+  "recorded_at": "2026-08-10T00:00:01Z",
+  "correlation_id": "30000000-0000-4000-8000-000000000003",
+  "causation_id": "40000000-0000-4000-8000-000000000003",
+  "privacy_class": "internal",
+  "payload": {
+    "membership_id": "20000000-0000-4000-8000-000000000002",
+    "role_codes": ["instructor", "reviewer"]
+  }
+}

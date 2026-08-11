@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "migration_authority": "platform_database.0001_platform_baseline",
+  "roles": [
+    {
+      "name": "lms_object_owner",
+      "login": false,
+      "superuser": false,
+      "create_database": false,
+      "create_role": false,
+      "inherit": false,
+      "replication": false,
+      "bypass_rls": false,
+      "purpose": "non-login owner for application schemas and objects"
+    },
+    {
+      "name": "lms_api_runtime",
+      "login": true,
+      "superuser": false,
+      "create_database": false,
+      "create_role": false,
+      "inherit": false,
+      "replication": false,
+      "bypass_rls": false,
+      "purpose": "least-privilege API runtime and production-role test harness"
+    }
+  ]
+}
