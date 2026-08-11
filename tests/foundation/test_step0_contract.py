@@ -70,6 +70,16 @@ class StepZeroScaffoldContractTests(unittest.TestCase):
             web_package["scripts"]["typecheck"],
         )
 
+    def test_e2e_uses_the_production_web_surface(self) -> None:
+        makefile = (REPO_ROOT / "Makefile").read_text(encoding="utf-8")
+        playwright_config = (REPO_ROOT / "apps/e2e/playwright.config.ts").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertRegex(makefile, r"(?m)^e2e-f001:\s+web-build$")
+        self.assertIn("npm run start --workspace @ai-lms/web", playwright_config)
+        self.assertNotIn("npm run dev --workspace @ai-lms/web", playwright_config)
+
     def test_deferred_capabilities_are_not_scaffolded(self) -> None:
         prohibited = {
             "backend/src/lms/modules/ai_companion",

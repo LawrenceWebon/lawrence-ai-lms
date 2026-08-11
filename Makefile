@@ -33,7 +33,7 @@ openapi-check:
 web-build:
 	npm run build --workspace @ai-lms/web
 
-e2e-f001:
+e2e-f001: web-build
 	npm run test:e2e --workspace @ai-lms/e2e
 
 docs-check:

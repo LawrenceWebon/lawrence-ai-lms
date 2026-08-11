@@ -12,7 +12,7 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "npm run dev --workspace @ai-lms/web -- --hostname 127.0.0.1 --port 3100",
+    command: "npm run start --workspace @ai-lms/web -- --hostname 127.0.0.1 --port 3100",
     cwd: path.resolve(import.meta.dirname, "../.."),
     url: "http://127.0.0.1:3100",
     reuseExistingServer: false,
