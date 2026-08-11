@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-lms.local/f001/problem-details.v1.schema.json",
+  "title": "F-001 RFC Problem Details v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "title", "status", "detail", "code", "request_id", "errors"],
+  "properties": {
+    "type": { "type": "string", "format": "uri" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "status": { "type": "integer", "minimum": 400, "maximum": 599 },
+    "detail": { "type": "string", "maxLength": 1000 },
+    "code": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]+$" },
+    "request_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "errors": { "type": "array", "maxItems": 100, "items": { "type": "object" } }
+  }
+}

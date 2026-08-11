@@ -1,0 +1,12 @@
+{
+  "name": "@ai-lms/test-data",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/f001.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}

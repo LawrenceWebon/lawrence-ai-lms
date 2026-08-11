@@ -2,7 +2,8 @@
 
 ## Status
 
-Planning complete; execution preflight blocked.
+Planning complete; Step 0 implementation in progress. Lanes A-D remain blocked until
+the reviewed Step 0 PR merges and the readiness audit is rerun from that exact base.
 
 ## Product reference
 

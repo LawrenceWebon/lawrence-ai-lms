@@ -1,9 +1,10 @@
 # Implementation Plan — F-001 Minimal Identity and Tenant Context
 
-Status: **Step 0 issue created; implementation not started**
+Status: **Step 0 implementation in progress; lanes not started**
 
-GitHub issue #1 and its linked branch exist for Step 0. Lane and integration issue IDs
-remain local until the Step 0 PR merges and this feature passes a new readiness audit.
+GitHub issue #1 and its linked branch are active for Step 0. Lane and integration issue
+IDs remain local until the Step 0 PR merges and this feature passes a new readiness
+audit.
 
 ## Dependency graph
 

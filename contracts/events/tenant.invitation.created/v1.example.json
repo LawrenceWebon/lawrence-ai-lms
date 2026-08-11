@@ -1,0 +1,19 @@
+{
+  "event_id": "10000000-0000-4000-8000-000000000001",
+  "event_type": "tenant.invitation.created.v1",
+  "event_version": 1,
+  "producer": "tenancy",
+  "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+  "aggregate_type": "tenant_invitation",
+  "aggregate_id": "20000000-0000-4000-8000-000000000001",
+  "aggregate_version": 1,
+  "occurred_at": "2026-08-10T00:00:00Z",
+  "recorded_at": "2026-08-10T00:00:01Z",
+  "correlation_id": "30000000-0000-4000-8000-000000000001",
+  "causation_id": "40000000-0000-4000-8000-000000000001",
+  "privacy_class": "internal",
+  "payload": {
+    "invitation_id": "20000000-0000-4000-8000-000000000001",
+    "role_codes": ["instructor"]
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-lms.local/events/tenant.membership.activated/v1.schema.json",
+  "title": "tenant.membership.activated.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "event_type", "event_version", "producer", "tenant_id", "aggregate_type", "aggregate_id", "aggregate_version", "occurred_at", "recorded_at", "correlation_id", "causation_id", "privacy_class", "payload"],
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "event_type": { "const": "tenant.membership.activated.v1" },
+    "event_version": { "const": 1 },
+    "producer": { "const": "tenancy" },
+    "tenant_id": { "type": "string", "format": "uuid" },
+    "aggregate_type": { "const": "tenant_membership" },
+    "aggregate_id": { "type": "string", "format": "uuid" },
+    "aggregate_version": { "type": "integer", "minimum": 1 },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "recorded_at": { "type": "string", "format": "date-time" },
+    "correlation_id": { "type": "string", "format": "uuid" },
+    "causation_id": { "type": "string", "format": "uuid" },
+    "privacy_class": { "const": "internal" },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["membership_id", "status"],
+      "properties": {
+        "membership_id": { "type": "string", "format": "uuid" },
+        "status": { "const": "active" }
+      }
+    }
+  }
+}

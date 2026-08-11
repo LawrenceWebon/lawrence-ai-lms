@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-lms.local/f001/synthetic-fixtures.v1.schema.json",
+  "title": "F-001 synthetic fixture suite v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "lane", "tenants", "users", "invitations", "runtime_role"],
+  "properties": {
+    "$schema": { "const": "https://contracts.ai-lms.local/f001/synthetic-fixtures.v1.schema.json" },
+    "lane": { "enum": ["identity", "tenancy", "adapters", "web"] },
+    "tenants": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/tenant" } },
+    "users": { "type": "array", "minItems": 5, "items": { "$ref": "#/$defs/user" } },
+    "invitations": { "type": "array", "minItems": 3, "items": { "$ref": "#/$defs/invitation" } },
+    "runtime_role": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "owner", "bypass_rls"],
+      "properties": {
+        "name": { "const": "lms_api_runtime" },
+        "owner": { "const": false },
+        "bypass_rls": { "const": false }
+      }
+    }
+  },
+  "$defs": {
+    "tenant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "slug", "entitlement"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "slug": { "enum": ["alpha", "beta"] },
+        "entitlement": { "const": "active" }
+      }
+    },
+    "user": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "fixture", "memberships"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "fixture": { "enum": ["alpha_admin", "multi_tenant_instructor", "alpha_learner", "inactive_member", "outsider"] },
+        "memberships": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "invitation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "token_fixture"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "status": { "enum": ["active", "expired", "revoked"] },
+        "token_fixture": { "type": "string", "pattern": "^synthetic-" }
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://contracts.ai-lms.local/f001/auth-context.v1.schema.json",
+  "principal": {
+    "user_id": "00000000-0000-4000-8000-000000000101",
+    "authentication_time": "2026-08-10T00:00:00Z",
+    "assurance_level": "aal1"
+  },
+  "active_tenant": null,
+  "membership": null,
+  "entitlement": null,
+  "available_tenants": [
+    {
+      "id": "00000000-0000-4000-8000-0000000000a1",
+      "slug": "alpha",
+      "display_name": "Alpha Learning",
+      "membership_status": "active"
+    },
+    {
+      "id": "00000000-0000-4000-8000-0000000000b1",
+      "slug": "beta",
+      "display_name": "Beta Learning",
+      "membership_status": "active"
+    }
+  ]
+}

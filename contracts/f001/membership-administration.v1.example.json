@@ -1,0 +1,12 @@
+{
+  "$schema": "https://contracts.ai-lms.local/f001/membership-administration.v1.schema.json",
+  "operation": "create_invitation",
+  "request": {
+    "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+    "email": "instructor@example.invalid",
+    "role_codes": ["instructor"],
+    "idempotency_key": "fixture-create-invitation-0001"
+  },
+  "expected_status": 201,
+  "expected_problem_code": null
+}

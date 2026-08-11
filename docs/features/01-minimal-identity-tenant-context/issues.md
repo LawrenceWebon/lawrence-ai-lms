@@ -1,8 +1,8 @@
 # GitHub Issues — F-001
 
 Step 0 is [GitHub issue #1](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/1)
-and its linked branch is `chore/LMS-1-foundation-contracts`, based on `develop` at
-`5551256ccd661b74233b5623d5de1b70c38db7f1`. Create lanes A-D only after the reviewed
+and its linked branch is `chore/LMS-1-foundation-contracts`, synchronized to `develop`
+at `ebe7a7c685135f35f931795c54fa7367190dc377`. Create lanes A-D only after the reviewed
 Step 0 PR merges and the readiness audit passes. Their bodies remain local plans until
 then; replace each local ID with its returned GitHub issue number.
 
