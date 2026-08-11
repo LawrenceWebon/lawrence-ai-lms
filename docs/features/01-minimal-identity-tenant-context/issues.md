@@ -1,10 +1,11 @@
 # GitHub Issues — F-001
 
-Step 0 is [GitHub issue #1](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/1)
-and its linked branch is `chore/LMS-1-foundation-contracts`, synchronized to `develop`
-at `ebe7a7c685135f35f931795c54fa7367190dc377`. Create lanes A-D only after the reviewed
-Step 0 PR merges and the readiness audit passes. Their bodies remain local plans until
-then; replace each local ID with its returned GitHub issue number.
+Step 0 [GitHub issue #1](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/1)
+merged through PR #4 at `ec4006fcfe45a1c9832f80704581fb1289dcde7f`.
+[GitHub issue #5](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/5)
+implements the owner-required Docker-only workflow amendment. Create lanes A-D only
+after issue #5 merges and the readiness audit passes. Their bodies remain local plans
+until then; replace each local ID with its returned GitHub issue number.
 
 ## #1 — Foundation and frozen contracts
 
@@ -14,6 +15,17 @@ then; replace each local ID with its returned GitHub issue number.
 - Base/branch: `develop` -> `chore/LMS-1-foundation-contracts`.
 - Acceptance: all Step 0 checks and four isolated fixture suites run.
 - Non-goals: F-001 business behavior, external providers, real data.
+
+## #5 — Docker-only development workflow
+
+- Outcome: reusable pinned backend/web tooling services and PostgreSQL start with
+  `docker compose up -d --build`; no host project dependency install is required.
+- Owner/paths: integration owner; Compose/Docker/Make/CI and workflow/readiness hotspots.
+- Base/branch: `develop` -> `chore/LMS-5-docker-workflow`.
+- Worktree: `/home/lawrence/Project Neo/worktrees/ai-lms/integration-LMS-5`.
+- Acceptance: all stable commands execute through healthy isolated containers; no host
+  `.venv` or `node_modules`; second build reuses dependency layers.
+- Non-goals: F-001 business behavior, dependency upgrades, providers, schema changes.
 
 ## LOCAL-F001-A — JWT identity and execution context
 

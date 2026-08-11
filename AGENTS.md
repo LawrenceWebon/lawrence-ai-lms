@@ -42,6 +42,9 @@ explicitly requests implementation and the selected issue is ready.
 
 - Follow `docs/workflows/README.md`.
 - One issue equals one agent, branch, isolated worktree, and PR.
+- Create repository worktrees only under the exact absolute
+  `/home/lawrence/Project Neo/worktrees/ai-lms/` root; do not place worktrees inside
+  the repository or under `/tmp`.
 - Up to four independent issues may run concurrently after shared contracts freeze.
 - Every issue declares owned paths, dependencies, shared hotspots, tests, and merge
   order.
@@ -52,6 +55,9 @@ explicitly requests implementation and the selected issue is ready.
 - Never use `git add .`, `git add -A`, force-push, `gh pr merge --admin`, or bypass a
   required check.
 - An agent never approves or merges its own PR.
+- Do not create a host `.venv` or install project Node dependencies on the host.
+  Start each isolated task with `docker compose up -d --build`, then reuse that
+  task's Compose services for project commands and dependency execution.
 
 ## Architecture boundaries
 

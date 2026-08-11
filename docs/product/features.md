@@ -1,6 +1,6 @@
 # AI LMS Feature Inventory
 
-Status: **approved MVP sequence; F-001 Step 0 implementation in progress**
+Status: **approved MVP sequence; F-001 Docker workflow amendment in progress**
 
 Derived from: `docs/product/spec.md`
 

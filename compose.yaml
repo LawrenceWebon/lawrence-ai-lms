@@ -1,4 +1,4 @@
-name: ${COMPOSE_PROJECT_NAME:-ai-lms-f001-step0}
+name: ${COMPOSE_PROJECT_NAME:-ai-lms-local}
 
 services:
   db:
@@ -16,3 +16,92 @@ services:
       retries: 30
     tmpfs:
       - /var/lib/postgresql
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    command: ["sleep", "infinity"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DJANGO_SETTINGS_MODULE: lms.config.settings.test
+      HOME: /tmp/ai-lms-home
+      MYPY_CACHE_DIR: /tmp/mypy-cache
+      PYTHONPATH: backend/src
+      PYTHONPYCACHEPREFIX: /tmp/python-cache
+      PYTEST_ADDOPTS: -o cache_dir=/tmp/pytest-cache
+      RUFF_CACHE_DIR: /tmp/ruff-cache
+      TEST_DATABASE_URL: postgresql://postgres:postgres@db:5432/postgres
+    healthcheck:
+      test: ["CMD", "python", "--version"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    init: true
+    user: "${AI_LMS_UID:-1000}:${AI_LMS_GID:-1000}"
+    volumes:
+      - ./.dockerignore:/workspace/.dockerignore:ro
+      - ./.github:/workspace/.github:ro
+      - ./.gitignore:/workspace/.gitignore:ro
+      - ./.node-version:/workspace/.node-version:ro
+      - ./.python-version:/workspace/.python-version:ro
+      - ./AGENTS.md:/workspace/AGENTS.md:ro
+      - ./Makefile:/workspace/Makefile:ro
+      - ./README.md:/workspace/README.md:ro
+      - ./apps:/workspace/apps
+      - ./backend:/workspace/backend
+      - ./contracts:/workspace/contracts
+      - ./database:/workspace/database
+      - ./docs:/workspace/docs
+      - ./docker:/workspace/docker:ro
+      - ./compose.yaml:/workspace/compose.yaml:ro
+      - ./manifest.json:/workspace/manifest.json
+      - ./package-lock.json:/workspace/package-lock.json:ro
+      - ./package.json:/workspace/package.json:ro
+      - ./packages:/workspace/packages
+      - ./scripts:/workspace/scripts
+      - ./tests:/workspace/tests
+    working_dir: /workspace
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    command: ["sleep", "infinity"]
+    environment:
+      HOME: /tmp/ai-lms-home
+      NEXT_TELEMETRY_DISABLED: "1"
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      XDG_CACHE_HOME: /tmp/xdg-cache
+    healthcheck:
+      test: ["CMD", "node", "--version"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    init: true
+    user: "${AI_LMS_UID:-1000}:${AI_LMS_GID:-1000}"
+    volumes:
+      - ./.dockerignore:/workspace/.dockerignore:ro
+      - ./.github:/workspace/.github:ro
+      - ./.gitignore:/workspace/.gitignore:ro
+      - ./.node-version:/workspace/.node-version:ro
+      - ./.python-version:/workspace/.python-version:ro
+      - ./AGENTS.md:/workspace/AGENTS.md:ro
+      - ./Makefile:/workspace/Makefile:ro
+      - ./README.md:/workspace/README.md:ro
+      - ./apps:/workspace/apps
+      - ./backend:/workspace/backend
+      - ./contracts:/workspace/contracts
+      - ./database:/workspace/database
+      - ./docs:/workspace/docs
+      - ./docker:/workspace/docker:ro
+      - ./compose.yaml:/workspace/compose.yaml:ro
+      - ./manifest.json:/workspace/manifest.json
+      - ./package-lock.json:/workspace/package-lock.json:ro
+      - ./package.json:/workspace/package.json:ro
+      - ./packages:/workspace/packages
+      - ./scripts:/workspace/scripts
+      - ./tests:/workspace/tests
+    working_dir: /workspace
