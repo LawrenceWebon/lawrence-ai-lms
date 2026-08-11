@@ -2,10 +2,11 @@
 
 Step 0 [GitHub issue #1](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/1)
 merged through PR #4 at `ec4006fcfe45a1c9832f80704581fb1289dcde7f`.
-[GitHub issue #5](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/5)
-implements the owner-required Docker-only workflow amendment. Create lanes A-D only
-after issue #5 merges and the readiness audit passes. Their bodies remain local plans
-until then; replace each local ID with its returned GitHub issue number.
+[GitHub issue #5](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/5) and PR
+#6 merged the owner-required Docker-only workflow at
+`b34ba7ac377a6a12363b036ece3d682d0b0ecdd8`. The readiness audit passes at that exact
+base. Lanes A-D are ready to create as bounded GitHub issues; replace each local ID
+with its returned GitHub issue number before implementation starts.
 
 ## #1 — Foundation and frozen contracts
 

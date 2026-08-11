@@ -1,6 +1,6 @@
 # AI LMS Feature Inventory
 
-Status: **approved MVP sequence; F-001 Docker workflow amendment in progress**
+Status: **approved MVP sequence; F-001 ready for lane issue creation**
 
 Derived from: `docs/product/spec.md`
 

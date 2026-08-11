@@ -1,22 +1,32 @@
 # Readiness Audit — F-001 Minimal Identity and Tenant Context
 
-Status: **NOT READY**
+Status: **READY FOR IMPLEMENTATION**
 
 Audited: 2026-08-11 against `develop` at
-`ec4006fcfe45a1c9832f80704581fb1289dcde7f`
+`b34ba7ac377a6a12363b036ece3d682d0b0ecdd8`
 
-## BLOCKER
+## BLOCKERS
 
-1. Step 0 merged and TD-006 is evidenced, but its local Python/Node commands still
-   install and execute project dependencies on the host. The project owner's latest
-   instruction requires worktrees under
-   `/home/lawrence/Project Neo/worktrees/ai-lms/`, no host `.venv`, and reusable Docker
-   services started by `docker compose up -d --build`. Issue #5 is the bounded
-   correction and must merge before lanes A-D are `READY FOR IMPLEMENTATION`.
+None.
 
-GitHub preflight passes; `develop` is the default branch and issue #5 is linked to
-`chore/LMS-5-docker-workflow` from the audited SHA. Minimum change required: merge its
-independently reviewed, green PR, then re-run this audit for the exact merge SHA.
+GitHub preflight passes. `develop` is the default branch, local and remote `develop`
+resolve to the audited SHA, issue #5 is closed, and PR #6 merged with successful
+`documentation`, `quality`, `rls`, and `e2e-f001` checks.
+
+## Execution evidence
+
+- A fresh isolated project, `ai-lms-f001-readiness` on PostgreSQL host port `55436`,
+  started with `docker compose up -d --build --wait`; all three services became
+  healthy and backend/web dependency layers were reused from cache.
+- Architecture, migration authority, Ruff, ESLint, mypy, TypeScript, OpenAPI/client,
+  Next.js production build, and documentation checks passed inside the reusable
+  backend/web containers.
+- The non-RLS suite passed 21 tests, the production-equivalent PostgreSQL RLS suite
+  passed 2 tests, and the isolated F-001 Playwright journey passed 1 test.
+- Python resolved from `/opt/venv/bin/python` with prefix `/opt/venv`; Node resolved
+  from `/usr/local/bin/node` with dependencies at `/workspace/node_modules`. Services
+  ran as UID/GID 1000.
+- No host `.venv`, host `node_modules`, or root-owned repository file was created.
 
 ## IMPORTANT
 
@@ -37,7 +47,7 @@ independently reviewed, green PR, then re-run this audit for the exact merge SHA
 | Gate | Result | Evidence |
 |---|---|---|
 | Product | pass | F-001 exists; flow, goals, non-goals and acceptance are explicit |
-| Architecture | blocked | scaffold/toolchain exist; owner-required Docker-only execution amendment #5 is not merged |
+| Architecture | pass | merged scaffold/toolchain run only through healthy reusable Docker services; PR #6 is merged |
 | Security | pass for planning | JWT, RLS, tenant, invitation, privacy and mutation boundaries are explicit |
 | Reliability | pass for planning | fail-closed, replay, concurrency, rollback and provider-free behavior defined |
 | AI | not applicable | F-001 has no AI behavior |
@@ -46,7 +56,9 @@ independently reviewed, green PR, then re-run this audit for the exact merge SHA
 
 ## Final Feature Planning Gate
 
-**NOT READY**
+**READY FOR IMPLEMENTATION**
 
-Only the BLOCKER above prevents lane implementation handoff. No additional product
-decision is required for F-001.
+Lanes A-D are independently testable against frozen contracts and fixtures. Create
+one bounded GitHub issue, linked branch, approved-root worktree, and isolated Compose
+project per lane before implementation. No additional product decision is required
+for F-001.
