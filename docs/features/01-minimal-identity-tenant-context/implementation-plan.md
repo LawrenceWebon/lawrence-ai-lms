@@ -1,18 +1,20 @@
 # Implementation Plan — F-001 Minimal Identity and Tenant Context
 
-Status: **Docker workflow amendment in progress; lanes not started**
+Status: **READY FOR IMPLEMENTATION; lane issues not started**
 
 Step 0 merged through PR #4 at
-`ec4006fcfe45a1c9832f80704581fb1289dcde7f`. Owner-required issue #5 now
-containerizes the local execution workflow. Lane and integration issue IDs remain
-local until issue #5 merges and this feature passes a new readiness audit.
+`ec4006fcfe45a1c9832f80704581fb1289dcde7f`. Owner-required issue #5 and PR #6
+containerized the local execution workflow and merged at
+`b34ba7ac377a6a12363b036ece3d682d0b0ecdd8`. The readiness audit passes at that exact
+base. Lane and integration IDs remain local until each bounded GitHub issue and linked
+branch is created.
 
 ## Dependency graph
 
 ```text
 Step 0 foundation/contracts (merged)
         |
-Docker workflow amendment #5
+Docker workflow amendment #5 (merged)
         |
         +--> Lane A JWT/execution context ----+
         +--> Lane B tenancy domain/RLS -------+--> Step 5 integration
@@ -28,10 +30,10 @@ after lane PRs merge.
 |---|---|---|---|---|---|---|
 | 0 | [#1](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/1) | Integration owner | `chore/LMS-1-foundation-contracts` | root manifests/locks, scaffold/composition, CI, base profile/platform migrations, contracts and fixtures | docs | 1 |
 | 0a | [#5](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/5) | Integration owner | `chore/LMS-5-docker-workflow` | Compose/tooling images, Make/CI execution, workflow/readiness records | Step 0 merged | 2 |
-| A | LOCAL-F001-A | Agent A | `feature/LMS-<issue>-jwt-context` | identity module, JWT/API auth dependency, identity tests | #5 merged and readiness pass | 3–6 |
-| B | LOCAL-F001-B | Agent B | `feature/LMS-<issue>-tenant-membership` | tenancy domain/services/policies/migrations/RLS and tests | #5 merged and readiness pass | 3–6 |
-| C | LOCAL-F001-C | Agent C | `feature/LMS-<issue>-membership-api-admin` | membership/invitation FastAPI routers/schemas and adapter-only Admin plus tests | #5 merged and readiness pass | 3–6 |
-| D | LOCAL-F001-D | Agent D | `feature/LMS-<issue>-tenant-context-web` | web auth/tenant-context features and isolated E2E fixture/spec paths | #5 merged and readiness pass | 3–6 |
+| A | LOCAL-F001-A | Agent A | `feature/LMS-<issue>-jwt-context` | identity module, JWT/API auth dependency, identity tests | merged `b34ba7a` readiness pass | 3–6 |
+| B | LOCAL-F001-B | Agent B | `feature/LMS-<issue>-tenant-membership` | tenancy domain/services/policies/migrations/RLS and tests | merged `b34ba7a` readiness pass | 3–6 |
+| C | LOCAL-F001-C | Agent C | `feature/LMS-<issue>-membership-api-admin` | membership/invitation FastAPI routers/schemas and adapter-only Admin plus tests | merged `b34ba7a` readiness pass | 3–6 |
+| D | LOCAL-F001-D | Agent D | `feature/LMS-<issue>-tenant-context-web` | web auth/tenant-context features and isolated E2E fixture/spec paths | merged `b34ba7a` readiness pass | 3–6 |
 | 5 | LOCAL-F001-I | Integration owner | `feature/LMS-<issue>-identity-integration` | composition, OpenAPI/client regeneration, shared migration order, full E2E/evidence | A–D merged | 7 |
 
 ## Isolation contract
@@ -123,6 +125,7 @@ The Make targets wrap pinned tools; agents do not replace them with ad hoc comma
 
 ## Dry-run result
 
-The merged scaffold and frozen contracts follow the approved boundaries and require no
-provider or architecture change. The only remaining material prerequisite is merged
-issue #5 evidence proving the owner-approved Docker-only execution contract.
+The merged scaffold, frozen contracts, and Docker-only workflow follow the approved
+boundaries and require no provider or architecture change. No material planning
+prerequisite remains. Create the bounded lane issues and linked branches from the
+latest protected `develop` before provisioning their isolated worktrees.

@@ -2,9 +2,10 @@
 
 ## Status
 
-Planning complete; Step 0 merged in PR #4. Lanes A-D remain blocked until the
-owner-required Docker workflow amendment in issue #5 merges and the readiness audit is
-rerun from that exact `develop` base.
+Planning complete. Step 0 merged in PR #4 and the Docker-only workflow amendment
+merged in PR #6. The readiness audit passes against `develop` at
+`b34ba7ac377a6a12363b036ece3d682d0b0ecdd8`; lanes A-D are ready for issue creation
+and independently isolated implementation.
 
 ## Product reference
 
@@ -121,7 +122,8 @@ historical examples.
 ## Existing architecture relevant to this feature
 
 - Verified: Step 0 provides pinned manifests, a minimal scaffold, migrations, routes,
-  contracts, and tests at `ec4006fcfe45a1c9832f80704581fb1289dcde7f`.
+  contracts, and tests; PR #6 adds the owner-required Docker-only execution workflow
+  at `b34ba7ac377a6a12363b036ece3d682d0b0ecdd8`.
 - Approved target: Next.js web, FastAPI HTTP/OpenAPI, Django models/services/migrations/Admin, PostgreSQL RLS, Supabase Auth.
 - Approved boundaries: ADR-0001, ADR-0002, plan documents 01, 03–05, 11–12, 15, 19–20, 22–24.
 - Existing external dependency: none configured; `SOURCES.md` entries S-01–S-15 remain within their 2026-09-01 recheck window.
