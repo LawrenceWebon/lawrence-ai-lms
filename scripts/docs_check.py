@@ -15,8 +15,13 @@ LINK_PATTERN = re.compile(r"!?(?:\[[^\]]*\])\((?P<target>[^)]+)\)")
 
 def document_paths() -> list[Path]:
     paths = [REPO_ROOT / "README.md", *REPO_ROOT.joinpath("docs").rglob("*.md")]
+    # Match Sort-Object FullName in the authoritative PowerShell workflow, where
+    # the feature template directory sorts before numbered feature directories.
     return sorted(
-        paths, key=lambda path: path.relative_to(REPO_ROOT).as_posix().casefold()
+        paths,
+        key=lambda path: (
+            path.relative_to(REPO_ROOT).as_posix().casefold().replace("_", "\0")
+        ),
     )
 
 
