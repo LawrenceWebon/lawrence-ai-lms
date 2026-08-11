@@ -1,6 +1,6 @@
 # AI LMS Feature Inventory
 
-Status: **approved MVP sequence; F-001 ready for lane issue creation**
+Status: **approved MVP sequence; F-001 backend lanes A-C provisioned**
 
 Derived from: `docs/product/spec.md`
 

@@ -4,8 +4,9 @@
 
 Planning complete. Step 0 merged in PR #4 and the Docker-only workflow amendment
 merged in PR #6. The readiness audit passes against `develop` at
-`b34ba7ac377a6a12363b036ece3d682d0b0ecdd8`; lanes A-D are ready for issue creation
-and independently isolated implementation.
+`b34ba7ac377a6a12363b036ece3d682d0b0ecdd8`. Backend lanes A-C are provisioned as
+issues #9-#11 with independent branches and worktrees; frontend lane D remains ready
+for issue creation.
 
 ## Product reference
 
