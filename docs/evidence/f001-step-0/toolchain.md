@@ -26,6 +26,16 @@ and the workspace manifests. Transitive versions are frozen in `backend/uv.lock`
 | `python:3.14.7-slim-bookworm` | `sha256:23c59390fc717bf09f9336908199a0ae75d9c4264bf296123f94ad772fea3b52` |
 | `node:24.19.0-bookworm-slim` | `sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03` |
 | `postgres:18.4-bookworm` | `sha256:882236b897e39051d2368c5ccc6cda944904723506b2dfc97f2a8f5bc9afa382` |
+| `mcr.microsoft.com/playwright:v1.62.1-noble` | `sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e` |
+
+## Local execution amendment
+
+Issue #5 packages the pinned Python environment into the backend image and overlays
+the pinned Node runtime on the browser-ready Playwright image. Source paths are mounted
+without mounting the repository root, so image-owned `/opt/venv`, `node_modules`, and
+`/ms-playwright` never create dependency directories in a worktree. A task uses a
+unique Compose project and ports, starts it once with `docker compose up -d --build`,
+and reuses its healthy services for the stable checks.
 
 ## Capability disposition
 

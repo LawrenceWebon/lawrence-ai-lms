@@ -2,21 +2,21 @@
 
 Status: **NOT READY**
 
-Audited: 2026-08-09
+Audited: 2026-08-11 against `develop` at
+`ec4006fcfe45a1c9832f80704581fb1289dcde7f`
 
 ## BLOCKER
 
-1. The repository has no engineering scaffold, manifests, lockfiles, test runners,
-   application modules, OpenAPI generator, or executable commands. Step 0 must land
-   first and turn TD-006 from proposed into an evidenced decision before lanes A–D
-   are `READY FOR IMPLEMENTATION`.
+1. Step 0 merged and TD-006 is evidenced, but its local Python/Node commands still
+   install and execute project dependencies on the host. The project owner's latest
+   instruction requires worktrees under
+   `/home/lawrence/Project Neo/worktrees/ai-lms/`, no host `.venv`, and reusable Docker
+   services started by `docker compose up -d --build`. Issue #5 is the bounded
+   correction and must merge before lanes A-D are `READY FOR IMPLEMENTATION`.
 
-GitHub API and SSH/Git preflight pass. Issue #1 and branch
-`chore/LMS-1-foundation-contracts` exist from protected `develop` at
-`5551256ccd661b74233b5623d5de1b70c38db7f1`. Minimum change required: explicitly
-request Step 0 implementation and merge its independently reviewed scaffold/contracts
-PR into `develop` with the planned commands passing. Then re-run this audit for the
-exact base SHA.
+GitHub preflight passes; `develop` is the default branch and issue #5 is linked to
+`chore/LMS-5-docker-workflow` from the audited SHA. Minimum change required: merge its
+independently reviewed, green PR, then re-run this audit for the exact merge SHA.
 
 ## IMPORTANT
 
@@ -37,7 +37,7 @@ exact base SHA.
 | Gate | Result | Evidence |
 |---|---|---|
 | Product | pass | F-001 exists; flow, goals, non-goals and acceptance are explicit |
-| Architecture | blocked | target is approved, but no runnable scaffold or exact toolchain exists |
+| Architecture | blocked | scaffold/toolchain exist; owner-required Docker-only execution amendment #5 is not merged |
 | Security | pass for planning | JWT, RLS, tenant, invitation, privacy and mutation boundaries are explicit |
 | Reliability | pass for planning | fail-closed, replay, concurrency, rollback and provider-free behavior defined |
 | AI | not applicable | F-001 has no AI behavior |
@@ -48,5 +48,5 @@ exact base SHA.
 
 **NOT READY**
 
-Only the BLOCKER above prevents implementation handoff. No additional product decision
-is required for F-001.
+Only the BLOCKER above prevents lane implementation handoff. No additional product
+decision is required for F-001.

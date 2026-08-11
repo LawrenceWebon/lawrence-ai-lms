@@ -103,10 +103,21 @@ and one owning Django migration.
 
 ### TD-006 — Phase 0 toolchain selection is a controlled prerequisite
 
-- Status: proposed until the scaffold PR records current supported versions and locks.
+- Status: approved and evidenced by merged PR #4 and the pinned toolchain record.
 - Decision: use the approved Python/Node stacks and expose repository scripts for lint,
   typecheck, tests, migration drift, OpenAPI compatibility, and Playwright. Do not pin
   versions in this document or copy historical examples.
+
+### TD-008 — Local project dependencies execute only in Docker Compose
+
+- Status: approved by the project owner on 2026-08-11.
+- Decision: AI LMS worktrees live under the exact
+  `/home/lawrence/Project Neo/worktrees/ai-lms/` root. Each issue starts an isolated
+  Compose project with `docker compose up -d --build`; Python, Node, and Playwright
+  project dependencies remain in pinned images/containers and are reused. Host
+  `.venv` and host project dependency installation are prohibited.
+- Tradeoff: the first image build is larger, while later commands share exact runtime
+  layers and avoid worktree-specific dependency installation.
 
 ### TD-007 — Narrow pre-tenant bootstrap boundary
 

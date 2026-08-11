@@ -1,15 +1,18 @@
 # Implementation Plan — F-001 Minimal Identity and Tenant Context
 
-Status: **Step 0 implementation in progress; lanes not started**
+Status: **Docker workflow amendment in progress; lanes not started**
 
-GitHub issue #1 and its linked branch are active for Step 0. Lane and integration issue
-IDs remain local until the Step 0 PR merges and this feature passes a new readiness
-audit.
+Step 0 merged through PR #4 at
+`ec4006fcfe45a1c9832f80704581fb1289dcde7f`. Owner-required issue #5 now
+containerizes the local execution workflow. Lane and integration issue IDs remain
+local until issue #5 merges and this feature passes a new readiness audit.
 
 ## Dependency graph
 
 ```text
-Step 0 foundation/contracts
+Step 0 foundation/contracts (merged)
+        |
+Docker workflow amendment #5
         |
         +--> Lane A JWT/execution context ----+
         +--> Lane B tenancy domain/RLS -------+--> Step 5 integration
@@ -24,15 +27,19 @@ after lane PRs merge.
 | Step | Local issue | Owner | Branch template | Owned paths | Depends on | PR order |
 |---|---|---|---|---|---|---|
 | 0 | [#1](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/1) | Integration owner | `chore/LMS-1-foundation-contracts` | root manifests/locks, scaffold/composition, CI, base profile/platform migrations, contracts and fixtures | docs | 1 |
-| A | LOCAL-F001-A | Agent A | `feature/LMS-<issue>-jwt-context` | identity module, JWT/API auth dependency, identity tests | Step 0 contracts | 2–5 |
-| B | LOCAL-F001-B | Agent B | `feature/LMS-<issue>-tenant-membership` | tenancy domain/services/policies/migrations/RLS and tests | Step 0 contracts | 2–5 |
-| C | LOCAL-F001-C | Agent C | `feature/LMS-<issue>-membership-api-admin` | membership/invitation FastAPI routers/schemas and adapter-only Admin plus tests | Step 0 service fakes | 2–5 |
-| D | LOCAL-F001-D | Agent D | `feature/LMS-<issue>-tenant-context-web` | web auth/tenant-context features and isolated E2E fixture/spec paths | Step 0 TS fixtures | 2–5 |
-| 5 | LOCAL-F001-I | Integration owner | `feature/LMS-<issue>-identity-integration` | composition, OpenAPI/client regeneration, shared migration order, full E2E/evidence | A–D merged | 6 |
+| 0a | [#5](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/5) | Integration owner | `chore/LMS-5-docker-workflow` | Compose/tooling images, Make/CI execution, workflow/readiness records | Step 0 merged | 2 |
+| A | LOCAL-F001-A | Agent A | `feature/LMS-<issue>-jwt-context` | identity module, JWT/API auth dependency, identity tests | #5 merged and readiness pass | 3–6 |
+| B | LOCAL-F001-B | Agent B | `feature/LMS-<issue>-tenant-membership` | tenancy domain/services/policies/migrations/RLS and tests | #5 merged and readiness pass | 3–6 |
+| C | LOCAL-F001-C | Agent C | `feature/LMS-<issue>-membership-api-admin` | membership/invitation FastAPI routers/schemas and adapter-only Admin plus tests | #5 merged and readiness pass | 3–6 |
+| D | LOCAL-F001-D | Agent D | `feature/LMS-<issue>-tenant-context-web` | web auth/tenant-context features and isolated E2E fixture/spec paths | #5 merged and readiness pass | 3–6 |
+| 5 | LOCAL-F001-I | Integration owner | `feature/LMS-<issue>-identity-integration` | composition, OpenAPI/client regeneration, shared migration order, full E2E/evidence | A–D merged | 7 |
 
 ## Isolation contract
 
 - One issue, owner, branch, worktree, local database/schema, ports, and PR.
+- Worktrees use `/home/lawrence/Project Neo/worktrees/ai-lms/`; dependencies execute
+  only in the task's reusable Docker Compose services, never a host `.venv` or host
+  `node_modules`.
 - Agents stage only owned paths and never edit root locks, common settings, OpenAPI,
   generated client, CI, or the documentation manifest.
 - Each lane tests against committed v1 schemas/fakes; no cherry-picking sibling work.
@@ -99,7 +106,7 @@ after lane PRs merge.
 
 ## Planned commands
 
-Step 0 must expose these stable repository commands before lane implementation:
+The Docker workflow amendment preserves these stable repository commands before lane implementation:
 
 ```text
 make lint
@@ -116,6 +123,6 @@ The Make targets wrap pinned tools; agents do not replace them with ad hoc comma
 
 ## Dry-run result
 
-The predicted implementation follows existing planned boundaries and does not require
-a new provider or architecture. Issue #1 and its server-side linked branch exist. The
-remaining material prerequisite is its reviewed runnable scaffold/contracts PR.
+The merged scaffold and frozen contracts follow the approved boundaries and require no
+provider or architecture change. The only remaining material prerequisite is merged
+issue #5 evidence proving the owner-approved Docker-only execution contract.

@@ -137,6 +137,11 @@ Each issue must declare:
 - Each lane uses unique local resources: Compose project name, ports, test database or
   schema, queue/bucket prefixes, and temporary directories. One agent must not stop,
   migrate, truncate, or reseed another agent's resources.
+- Repository worktrees live only under
+  `/home/lawrence/Project Neo/worktrees/ai-lms/`. Project Python/Node dependencies
+  execute only in the lane's reusable Docker Compose services; agents do not create a
+  host `.venv`, install host `node_modules`, place worktrees inside the repository, or
+  use `/tmp` for worktrees.
 - No agent reviews or approves its own PR. A different agent/context reviews it.
 - If all agents use one GitHub identity, an agent review is recorded as a PR comment;
   any required GitHub approval must come from a distinct authorized reviewer.
@@ -225,7 +230,7 @@ Copy the verified values into explicit task variables:
 ```bash
 REPO=OWNER/REPOSITORY
 BASE=develop
-AI_LMS_WT_ROOT=/absolute/path/to/ai-lms-worktrees
+AI_LMS_WT_ROOT="/home/lawrence/Project Neo/worktrees/ai-lms"
 ```
 
 Stop if authentication, `origin`, GitHub's default `develop`, or canonical checkout
@@ -263,10 +268,27 @@ gh issue comment "$ISSUE" --repo "$REPO" \
 ```
 
 If the branch or path already exists, inspect and stop. Never reset or opportunistically
-reuse it. If the execution environment already provides isolated repository clones,
-use those instead of creating nested worktrees.
+reuse it. An environment-provided isolated checkout must still use the exact
+`/home/lawrence/Project Neo/worktrees/ai-lms/` root.
 
 ### 3. Implement and commit inside the assigned worktree
+
+Assign a unique Compose project name and ports, then build/start the task services once:
+
+```bash
+COMPOSE_PROJECT_NAME=ai-lms-lms-123
+AI_LMS_POSTGRES_PORT=55123
+AI_LMS_UID="$(id -u)"
+AI_LMS_GID="$(id -g)"
+export COMPOSE_PROJECT_NAME AI_LMS_POSTGRES_PORT AI_LMS_UID AI_LMS_GID
+docker compose up -d --build
+docker compose ps
+```
+
+Reuse those running services for every project command. Stable Make targets delegate
+to `docker compose exec -T`; do not run `uv sync`, create a worktree `.venv`, run
+`npm ci` on the host, or stop another task's Compose project. Rebuild only when an
+owned dependency manifest or Docker build input changes.
 
 Before every commit:
 
