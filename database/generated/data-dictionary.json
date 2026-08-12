@@ -1,5 +1,5 @@
 {
-  "x-generated": "GENERATED for F-001 Steps 0 and Lane B from reviewed Django models/migrations",
+  "x-generated": "GENERATED for F-001 Steps 0 and Lane B from reviewed Django models/migrations; DO NOT EDIT outside the owning workflow",
   "schema_version": 2,
   "objects": [
     {
