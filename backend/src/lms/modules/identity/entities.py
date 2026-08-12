@@ -16,6 +16,7 @@ class VerifiedAccessToken:
     session_id: UUID
     authentication_time: datetime
     assurance_level: AssuranceLevel
+    verified_email: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,3 +35,4 @@ class IdentityCandidate:
     session_id: UUID
     authentication_time: datetime
     assurance_level: AssuranceLevel
+    verified_email: str

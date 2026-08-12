@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 import pytest
+from django.db import DatabaseError, connection, transaction
 
 from lms.modules.identity.entities import IdentityProfile, VerifiedAccessToken
 from lms.modules.identity.models import UserProfile
@@ -26,6 +27,7 @@ class StaticVerifier:
             session_id=SESSION_ID,
             authentication_time=datetime(2026, 8, 11, tzinfo=UTC),
             assurance_level="aal1",
+            verified_email="synthetic-instructor@example.invalid",
         )
 
 
@@ -65,6 +67,7 @@ def test_active_profile_and_session_produce_identity_candidate() -> None:
     assert candidate.profile_id == PROFILE_ID
     assert candidate.session_id == SESSION_ID
     assert candidate.assurance_level == "aal1"
+    assert candidate.verified_email == "synthetic-instructor@example.invalid"
 
 
 @pytest.mark.parametrize(
@@ -108,3 +111,24 @@ def test_django_profile_reader_returns_current_security_state() -> None:
         provider_subject=SUBJECT,
         status="inactive",
     )
+
+
+@pytest.mark.rls
+@pytest.mark.django_db(transaction=True)
+def test_runtime_profile_reader_uses_narrow_helper_without_table_select() -> None:
+    profile = UserProfile.objects.create(provider_subject=SUBJECT, status="active")
+
+    with connection.cursor() as cursor:
+        cursor.execute("SET ROLE lms_api_runtime")
+    try:
+        assert DjangoIdentityProfileReader().get_by_provider_subject(SUBJECT) == IdentityProfile(
+            id=profile.id,
+            provider_subject=SUBJECT,
+            status="active",
+        )
+        with pytest.raises(DatabaseError), transaction.atomic():
+            UserProfile.objects.filter(provider_subject=SUBJECT).exists()
+    finally:
+        with connection.cursor() as cursor:
+            cursor.execute("RESET ROLE")
+        profile.delete()

@@ -19,6 +19,7 @@ class AdminActorContext:
     """Trusted identity and explicit tenant/JIT selectors from Django Admin."""
 
     actor_id: UUID
+    verified_email: str
     tenant_id: UUID | None
     privileged_access_grant_id: UUID | None = None
 
@@ -71,6 +72,7 @@ class TenancyAdminActions:
     ) -> MembershipSummaryResponse:
         result = self._service.accept_invitation(
             actor_id=context.actor_id,
+            verified_email=context.verified_email,
             invitation_token=request.invitation_token.get_secret_value(),
         )
         return MembershipSummaryResponse.model_validate(result, from_attributes=True)

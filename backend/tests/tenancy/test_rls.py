@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+from datetime import timedelta
+
 import pytest
 from django.db import DatabaseError, connection, transaction
+from django.utils import timezone
 
-from lms.modules.tenancy.models import EntitlementPeriod, TenantMembership
+from lms.modules.tenancy.errors import TenancyError
+from lms.modules.tenancy.models import EntitlementPeriod, TenantInvitation, TenantMembership
 from lms.modules.tenancy.services import (
     accept_invitation,
     create_invitation,
@@ -137,5 +141,67 @@ def test_public_invitation_services_work_under_runtime_role(
         "runtime-role-invite-0001",
     )
     assert receipt.delivery_token is not None
-    membership = accept_invitation(invitee_actor, receipt.delivery_token)
+    membership = accept_invitation(
+        invitee_actor, "runtime-invitee@example.invalid", receipt.delivery_token
+    )
     assert membership.role_codes == ("instructor",)
+
+
+def test_runtime_invitation_rejects_wrong_verified_email_before_write(
+    tenancy_seed: dict, runtime_role: None
+) -> None:
+    alpha = tenancy_seed["alpha"]
+    receipt = create_invitation(
+        tenancy_seed["profiles"]["admin"].provider_subject,
+        alpha.id,
+        "runtime-invitee@example.invalid",
+        ["instructor"],
+        "runtime-wrong-identity-0001",
+    )
+
+    with pytest.raises(TenancyError, match="INVITATION_INVALID"):
+        accept_invitation(
+            tenancy_seed["profiles"]["outsider"].provider_subject,
+            "outsider@example.invalid",
+            receipt.delivery_token,
+        )
+
+    set_context(tenancy_seed["profiles"]["outsider"].provider_subject, None)
+    assert not TenantMembership.objects.filter(
+        user_profile=tenancy_seed["profiles"]["outsider"]
+    ).exists()
+
+
+def test_runtime_invitation_expiry_transition_is_persisted(
+    tenancy_seed: dict, runtime_role: None
+) -> None:
+    receipt = create_invitation(
+        tenancy_seed["profiles"]["admin"].provider_subject,
+        tenancy_seed["alpha"].id,
+        "invitee@example.invalid",
+        ["instructor"],
+        "runtime-expired-invite-0001",
+    )
+    with connection.cursor() as cursor:
+        cursor.execute("RESET ROLE")
+        TenantInvitation.objects.filter(id=receipt.id).update(
+            expires_at=timezone.now() - timedelta(seconds=1)
+        )
+        cursor.execute("SET LOCAL ROLE lms_api_runtime")
+
+    with pytest.raises(TenancyError, match="INVITATION_EXPIRED"):
+        accept_invitation(
+            tenancy_seed["profiles"]["invitee"].provider_subject,
+            "invitee@example.invalid",
+            receipt.delivery_token,
+        )
+
+    set_context(tenancy_seed["profiles"]["admin"].provider_subject, tenancy_seed["alpha"].id)
+    assert TenantInvitation.objects.get(id=receipt.id).status == "expired"
+
+    with pytest.raises(TenancyError, match="INVITATION_EXPIRED"):
+        accept_invitation(
+            tenancy_seed["profiles"]["invitee"].provider_subject,
+            "invitee@example.invalid",
+            receipt.delivery_token,
+        )
