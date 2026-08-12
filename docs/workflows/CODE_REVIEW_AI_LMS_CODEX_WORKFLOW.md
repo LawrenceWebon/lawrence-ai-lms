@@ -22,6 +22,11 @@ branch. Use `gh pr view`, `gh pr diff`, and `gh pr checks`, then record the verd
 with `gh pr review` or, when all agents share one GitHub identity, a PR comment plus
 the required distinct human/GitHub approval.
 
+The active ruleset separately requires `quality`, `rls`, `e2e-f001`, and
+`documentation` from GitHub Actions on the latest base. Green checks do not replace
+review, and a repository-role bypass does not convert a same-identity comment into the
+required distinct approval.
+
 An agent never reviews its own PR and never pushes fixes to the author's branch. Four
 implementation lanes may continue while a different lane is reviewed. A new push
 invalidates the prior reviewed SHA and requires re-review. `docs/plan`, the approved

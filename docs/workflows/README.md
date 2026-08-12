@@ -201,14 +201,18 @@ and deployment still require the gates in the Merge/Deploy workflow. Never use
 - The active repository ruleset `Protect long-lived branches` protects `develop`,
   `master`, `staging`, and `production`. For non-bypass actors it requires a pull
   request, one approval, dismissal of stale approvals, resolved conversations, squash
-  merge, and linear history; force-pushes and deletion are disabled.
-- The repository-admin role is the only bypass actor and its bypass mode is
-  `pull_request`. An administrator may therefore merge a reviewed, green PR when the
-  author cannot self-approve, but may not use the bypass for direct pushes. Classic
-  branch protections are intentionally removed so this ruleset is the single branch
-  protection authority.
-- Required status-check names remain unset until Step 0 commits stable CI jobs. The
-  protection policy must be extended with those checks when their names are frozen.
+  merge, linear history, and the strict GitHub Actions checks `quality`, `rls`,
+  `e2e-f001`, and `documentation`; force-pushes and deletion are disabled. Each check
+  must pass on the latest base before merge.
+- The repository-admin role remains the only bypass actor and its bypass mode is
+  `pull_request`, so it cannot authorize a direct push. That technical capability is
+  not workflow authorization: never use it to replace an independent exact-SHA review,
+  the required distinct GitHub approval, or a required check. When an author cannot
+  self-approve, the PR waits for a distinct authorized reviewer. A same-identity agent
+  review comment is evidence, not the required GitHub approval.
+- Classic branch protections are intentionally removed so this ruleset is the single
+  branch-protection authority. Read back the effective rules after any settings change;
+  workflow/config changes require their own issue, PR, independent review, and checks.
 - `master`, `staging`, and `production` remain release/environment branches. Promotion
   between them follows the separately authorized merge/deploy workflow; task branches
   never target them directly.
