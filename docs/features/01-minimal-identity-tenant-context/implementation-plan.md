@@ -1,13 +1,13 @@
 # Implementation Plan — F-001 Minimal Identity and Tenant Context
 
-Status: **READY FOR IMPLEMENTATION; lane issues not started**
+Status: **READY FOR IMPLEMENTATION; backend lanes A-C provisioned**
 
 Step 0 merged through PR #4 at
 `ec4006fcfe45a1c9832f80704581fb1289dcde7f`. Owner-required issue #5 and PR #6
 containerized the local execution workflow and merged at
 `b34ba7ac377a6a12363b036ece3d682d0b0ecdd8`. The readiness audit passes at that exact
-base. Lane and integration IDs remain local until each bounded GitHub issue and linked
-branch is created.
+base. Backend lanes A-C are provisioned as issues #9-#11. Lane D and the integration
+issue remain local until their bounded GitHub issues and linked branches are created.
 
 ## Dependency graph
 
@@ -30,11 +30,16 @@ after lane PRs merge.
 |---|---|---|---|---|---|---|
 | 0 | [#1](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/1) | Integration owner | `chore/LMS-1-foundation-contracts` | root manifests/locks, scaffold/composition, CI, base profile/platform migrations, contracts and fixtures | docs | 1 |
 | 0a | [#5](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/5) | Integration owner | `chore/LMS-5-docker-workflow` | Compose/tooling images, Make/CI execution, workflow/readiness records | Step 0 merged | 2 |
-| A | LOCAL-F001-A | Agent A | `feature/LMS-<issue>-jwt-context` | identity module, JWT/API auth dependency, identity tests | merged `b34ba7a` readiness pass | 3–6 |
-| B | LOCAL-F001-B | Agent B | `feature/LMS-<issue>-tenant-membership` | tenancy domain/services/policies/migrations/RLS and tests | merged `b34ba7a` readiness pass | 3–6 |
-| C | LOCAL-F001-C | Agent C | `feature/LMS-<issue>-membership-api-admin` | membership/invitation FastAPI routers/schemas and adapter-only Admin plus tests | merged `b34ba7a` readiness pass | 3–6 |
+| A | [#9](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/9) | Agent A | `feature/LMS-9-jwt-context` | identity module, JWT/API auth dependency, identity tests | merged `b34ba7a` readiness pass | 3–6 |
+| B | [#10](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/10) | Agent B | `feature/LMS-10-tenant-membership` | tenancy domain/services/policies/migrations/RLS and tests | merged `b34ba7a` readiness pass | 3–6 |
+| C | [#11](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/11) | Agent C | `feature/LMS-11-membership-api-admin` | membership/invitation FastAPI routers/schemas and adapter-only Admin plus tests | merged `b34ba7a` readiness pass | 3–6 |
 | D | LOCAL-F001-D | Agent D | `feature/LMS-<issue>-tenant-context-web` | web auth/tenant-context features and isolated E2E fixture/spec paths | merged `b34ba7a` readiness pass | 3–6 |
 | 5 | LOCAL-F001-I | Integration owner | `feature/LMS-<issue>-identity-integration` | composition, OpenAPI/client regeneration, shared migration order, full E2E/evidence | A–D merged | 7 |
+
+Provisioned worktrees are
+`/home/lawrence/Project Neo/worktrees/ai-lms/agent-a-LMS-9`,
+`/home/lawrence/Project Neo/worktrees/ai-lms/agent-b-LMS-10`, and
+`/home/lawrence/Project Neo/worktrees/ai-lms/agent-c-LMS-11`.
 
 ## Isolation contract
 

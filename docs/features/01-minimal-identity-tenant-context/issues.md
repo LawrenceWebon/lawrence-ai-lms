@@ -5,8 +5,8 @@ merged through PR #4 at `ec4006fcfe45a1c9832f80704581fb1289dcde7f`.
 [GitHub issue #5](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/5) and PR
 #6 merged the owner-required Docker-only workflow at
 `b34ba7ac377a6a12363b036ece3d682d0b0ecdd8`. The readiness audit passes at that exact
-base. Lanes A-D are ready to create as bounded GitHub issues; replace each local ID
-with its returned GitHub issue number before implementation starts.
+base. Backend lanes A-C are provisioned as bounded GitHub issues #9-#11. Lane D and
+the integration issue remain local plans until provisioned.
 
 ## #1 — Foundation and frozen contracts
 
@@ -28,26 +28,35 @@ with its returned GitHub issue number before implementation starts.
   `.venv` or `node_modules`; second build reuses dependency layers.
 - Non-goals: F-001 business behavior, dependency upgrades, providers, schema changes.
 
-## LOCAL-F001-A — JWT identity and execution context
+## #9 — JWT identity and execution context
 
 - Outcome: verified identity candidate and transaction-local context fail closed.
 - Owner/paths: Agent A; identity module, API authentication dependency, identity tests.
+- Base/branch: `develop` -> `feature/LMS-9-jwt-context`.
+- Worktree: `/home/lawrence/Project Neo/worktrees/ai-lms/agent-a-LMS-9`.
+- Compose: `ai-lms-lms-9`; PostgreSQL host port `55109`.
 - Contract: auth-context v1 plus tenant-authorizer fake.
 - Acceptance: JWT/key/revocation/context-reset matrix passes.
 
-## LOCAL-F001-B — Tenancy membership, roles, entitlement and RLS
+## #10 — Tenancy membership, roles, entitlement and RLS
 
 - Outcome: PostgreSQL-authoritative tenant access and role policy.
 - Owner/paths: Agent B; tenancy domain/services/policies/migrations/RLS/tests.
+- Base/branch: `develop` -> `feature/LMS-10-tenant-membership`.
+- Worktree: `/home/lawrence/Project Neo/worktrees/ai-lms/agent-b-LMS-10`.
+- Compose: `ai-lms-lms-10`; PostgreSQL host port `55110`.
 - Contract: tenancy public service/selectors and synthetic Alpha/Beta fixtures.
 - Acceptance: dictionary, migration, constraints, production-role RLS, concurrency,
   audit/outbox and rollback tests pass.
 
-## LOCAL-F001-C — Membership/invitation API and Admin
+## #11 — Membership/invitation API and Admin
 
 - Outcome: frozen HTTP contract and adapter-only trusted Admin actions.
 - Owner/paths: Agent C; membership/invitation FastAPI schemas/routers, Admin adapters,
   contract tests.
+- Base/branch: `develop` -> `feature/LMS-11-membership-api-admin`.
+- Worktree: `/home/lawrence/Project Neo/worktrees/ai-lms/agent-c-LMS-11`.
+- Compose: `ai-lms-lms-11`; PostgreSQL host port `55111`.
 - Contract: tenancy service fake and Problem Details codes.
 - Acceptance: IDOR/permissions/replay/idempotency/version/API/Admin parity pass.
 
