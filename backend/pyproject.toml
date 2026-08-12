@@ -7,6 +7,7 @@ dependencies = [
   "Django==6.1",
   "fastapi==0.141.1",
   "psycopg[binary]==3.3.4",
+  "PyJWT[crypto]==2.13.0",
   "pydantic-settings==2.15.0",
   "uvicorn[standard]==0.52.1",
 ]
