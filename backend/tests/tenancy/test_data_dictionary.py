@@ -42,3 +42,8 @@ def test_executable_dictionary_covers_lane_b_migration() -> None:
             assert tenant_column["nullable"] is False
             assert "UNIQUE (tenant_id,id)" in item["keys"]
             assert "FORCE" in item["access"]["rls"]
+
+    assert (
+        objects[("app", "tenant_invitations")]["verification"]["security_migration"]
+        == "tenancy.0002_secure_invitation_bootstrap"
+    )

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
 from django.db import close_old_connections
+from django.utils import timezone
 
 from lms.modules.tenancy.errors import TenancyError
 from lms.modules.tenancy.models import (
@@ -140,10 +142,12 @@ def test_invitation_and_idempotency_are_single_effect_and_token_safe(tenancy_see
 
     accepted = accept_invitation(
         tenancy_seed["profiles"]["invitee"].provider_subject,
+        "invitee@example.invalid",
         first.delivery_token,
     )
     accepted_replay = accept_invitation(
         tenancy_seed["profiles"]["invitee"].provider_subject,
+        "invitee@example.invalid",
         first.delivery_token,
     )
     assert accepted == accepted_replay
@@ -154,6 +158,89 @@ def test_invitation_and_idempotency_are_single_effect_and_token_safe(tenancy_see
         ).count()
         == 1
     )
+
+
+def test_invitation_rejects_wrong_verified_identity_without_side_effects(
+    tenancy_seed: dict,
+) -> None:
+    alpha = tenancy_seed["alpha"]
+    receipt = create_invitation(
+        tenancy_seed["profiles"]["admin"].provider_subject,
+        alpha.id,
+        "invitee@example.invalid",
+        ["instructor"],
+        "wrong-identity-invite-0001",
+    )
+    audit_count = AuditFact.objects.count()
+    outbox_count = OutboxFact.objects.count()
+
+    with pytest.raises(TenancyError, match="INVITATION_INVALID"):
+        accept_invitation(
+            tenancy_seed["profiles"]["outsider"].provider_subject,
+            "outsider@example.invalid",
+            receipt.delivery_token,
+        )
+
+    assert not TenantMembership.objects.filter(
+        tenant=alpha, user_profile=tenancy_seed["profiles"]["outsider"]
+    ).exists()
+    assert AuditFact.objects.count() == audit_count
+    assert OutboxFact.objects.count() == outbox_count
+
+
+@pytest.mark.parametrize(
+    ("tenant_status", "entitlement_status"),
+    [("suspended", "active"), ("active", "expired"), ("active", "suspended")],
+)
+def test_invitation_rechecks_tenant_and_entitlement_before_mutation(
+    tenancy_seed: dict, tenant_status: str, entitlement_status: str
+) -> None:
+    alpha = tenancy_seed["alpha"]
+    receipt = create_invitation(
+        tenancy_seed["profiles"]["admin"].provider_subject,
+        alpha.id,
+        "invitee@example.invalid",
+        ["instructor"],
+        f"lifecycle-{tenant_status}-{entitlement_status}-0001",
+    )
+    alpha.status = tenant_status
+    alpha.save(update_fields=("status", "updated_at"))
+    alpha.entitlements.update(status=entitlement_status)
+
+    with pytest.raises(TenancyError, match="INVITATION_INVALID"):
+        accept_invitation(
+            tenancy_seed["profiles"]["invitee"].provider_subject,
+            "invitee@example.invalid",
+            receipt.delivery_token,
+        )
+
+    assert not TenantMembership.objects.filter(
+        tenant=alpha, user_profile=tenancy_seed["profiles"]["invitee"]
+    ).exists()
+
+
+def test_expired_invitation_status_is_persisted_before_error(tenancy_seed: dict) -> None:
+    receipt = create_invitation(
+        tenancy_seed["profiles"]["admin"].provider_subject,
+        tenancy_seed["alpha"].id,
+        "invitee@example.invalid",
+        ["instructor"],
+        "expired-state-invite-0001",
+    )
+    TenantInvitation.objects.filter(id=receipt.id).update(
+        expires_at=timezone.now() - timedelta(seconds=1)
+    )
+
+    with pytest.raises(TenancyError, match="INVITATION_EXPIRED"):
+        accept_invitation(
+            tenancy_seed["profiles"]["invitee"].provider_subject,
+            "invitee@example.invalid",
+            receipt.delivery_token,
+        )
+
+    invitation = TenantInvitation.objects.get(id=receipt.id)
+    assert invitation.status == "expired"
+    assert invitation.row_version == 2
 
 
 def test_audit_and_outbox_rollback_with_failed_mutation_fact(tenancy_seed: dict) -> None:

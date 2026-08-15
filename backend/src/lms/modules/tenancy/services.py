@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import re
 import secrets
 import uuid
 from collections.abc import Iterable
@@ -61,6 +62,11 @@ ROLE_PERMISSION_CODES = {
     "reviewer": (),
     "learner": (),
 }
+_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+class _InvitationNeedsExpiryError(Exception):
+    pass
 
 
 def _digest(value: str) -> str:
@@ -74,7 +80,11 @@ def _request_hash(payload: object) -> str:
 
 
 def _set_transaction_context(
-    *, actor_id: UUID, tenant_id: UUID | None, invitation_digest: str = ""
+    *,
+    actor_id: UUID,
+    tenant_id: UUID | None,
+    invitation_digest: str = "",
+    verified_email: str = "",
 ) -> None:
     request_id = uuid.uuid4()
     with connection.cursor() as cursor:
@@ -87,6 +97,10 @@ def _set_transaction_context(
         cursor.execute(
             "SELECT set_config('app.current_invitation_digest', %s, true)",
             [invitation_digest],
+        )
+        cursor.execute(
+            "SELECT set_config('app.current_verified_email', %s, true)",
+            [verified_email],
         )
 
 
@@ -112,6 +126,20 @@ def _current_entitlement(tenant_id: UUID) -> EntitlementPeriod | None:
         .order_by("-starts_at")
         .first()
     )
+
+
+def _has_current_invitation_access(tenant_id: UUID) -> bool:
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT app.has_invitation_access(%s)", [tenant_id])
+        row = cursor.fetchone()
+    return row is not None and row[0] is True
+
+
+def _has_current_invitation_identity_match(tenant_id: UUID) -> bool:
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT app.has_invitation_identity_match(%s)", [tenant_id])
+        row = cursor.fetchone()
+    return row is not None and row[0] is True
 
 
 def models_valid_until(now: object) -> Q:
@@ -170,6 +198,13 @@ def _normalized_role_codes(role_codes: Iterable[str]) -> tuple[str, ...]:
     normalized = tuple(sorted(set(role_codes)))
     if not normalized or any(code not in ROLE_CODES for code in normalized):
         raise denied("Only declared fixed tenant roles may be assigned.")
+    return normalized
+
+
+def _normalized_verified_email(email: str) -> str:
+    normalized = email.strip().casefold()
+    if len(normalized) > 254 or _EMAIL_PATTERN.fullmatch(normalized) is None:
+        raise TenancyError("INVITATION_INVALID")
     return normalized
 
 
@@ -398,91 +433,130 @@ def create_invitation(
         )
 
 
-def accept_invitation(actor_id: UUID, invitation_token: str) -> MembershipSummary:
+def accept_invitation(
+    actor_id: UUID, verified_email: str, invitation_token: str
+) -> MembershipSummary:
     if not (32 <= len(invitation_token) <= 512):
         raise TenancyError("INVITATION_INVALID")
+    normalized_email = _normalized_verified_email(verified_email)
     token_digest = _digest(invitation_token)
-    with transaction.atomic():
-        _set_transaction_context(actor_id=actor_id, tenant_id=None, invitation_digest=token_digest)
-        profile_id = _actor_profile_id(actor_id)
-        try:
-            invitation = TenantInvitation.objects.select_for_update().get(token_digest=token_digest)
-        except TenantInvitation.DoesNotExist as error:
-            raise TenancyError("INVITATION_INVALID") from error
+    try:
+        with transaction.atomic():
+            _set_transaction_context(
+                actor_id=actor_id,
+                tenant_id=None,
+                invitation_digest=token_digest,
+                verified_email=normalized_email,
+            )
+            profile_id = _actor_profile_id(actor_id)
+            try:
+                invitation = TenantInvitation.objects.get(token_digest=token_digest)
+            except TenantInvitation.DoesNotExist as error:
+                raise TenancyError("INVITATION_INVALID") from error
 
-        _set_transaction_context(
-            actor_id=actor_id,
-            tenant_id=invitation.tenant_id,
-            invitation_digest=token_digest,
-        )
-        if invitation.status == "accepted":
-            if invitation.accepted_by_id != profile_id or invitation.accepted_membership is None:
+            _set_transaction_context(
+                actor_id=actor_id,
+                tenant_id=invitation.tenant_id,
+                invitation_digest=token_digest,
+                verified_email=normalized_email,
+            )
+            if invitation.email != normalized_email:
                 raise TenancyError("INVITATION_INVALID")
-            return _membership_summary(invitation.accepted_membership)
-        if invitation.status == "expired" or invitation.expires_at <= timezone.now():
-            if invitation.status == "active":
+            if invitation.status == "expired":
+                if not _has_current_invitation_identity_match(invitation.tenant_id):
+                    raise TenancyError("INVITATION_INVALID")
+                raise TenancyError("INVITATION_EXPIRED")
+            try:
+                invitation = TenantInvitation.objects.select_for_update().get(id=invitation.id)
+            except TenantInvitation.DoesNotExist as error:
+                raise TenancyError("INVITATION_INVALID") from error
+            if invitation.email != normalized_email:
+                raise TenancyError("INVITATION_INVALID")
+            if not _has_current_invitation_access(invitation.tenant_id):
+                raise TenancyError("INVITATION_INVALID")
+            if invitation.status == "accepted":
+                if (
+                    invitation.accepted_by_id != profile_id
+                    or invitation.accepted_membership is None
+                ):
+                    raise TenancyError("INVITATION_INVALID")
+                return _membership_summary(invitation.accepted_membership)
+            if invitation.expires_at <= timezone.now():
+                raise _InvitationNeedsExpiryError
+            if invitation.status != "active":
+                raise TenancyError("INVITATION_INVALID")
+
+            membership, created = TenantMembership.objects.get_or_create(
+                tenant_id=invitation.tenant_id,
+                user_profile_id=profile_id,
+                defaults={"status": "active"},
+            )
+            if not created and membership.status != "active":
+                membership.status = "active"
+                membership.row_version += 1
+                membership.save(update_fields=("status", "row_version", "updated_at"))
+
+            invited_role_ids = invitation.role_links.values_list("role_id", flat=True)
+            roles = list(
+                Role.objects.filter(
+                    tenant_id=invitation.tenant_id,
+                    id__in=invited_role_ids,
+                ).order_by("code")
+            )
+            MembershipRole.objects.filter(
+                tenant_id=invitation.tenant_id, membership=membership
+            ).delete()
+            MembershipRole.objects.bulk_create(
+                [
+                    MembershipRole(tenant_id=invitation.tenant_id, membership=membership, role=role)
+                    for role in roles
+                ]
+            )
+            invitation.status = "accepted"
+            invitation.accepted_by_id = profile_id
+            invitation.accepted_membership = membership
+            invitation.accepted_at = timezone.now()
+            invitation.row_version += 1
+            invitation.save(
+                update_fields=(
+                    "status",
+                    "accepted_by",
+                    "accepted_membership",
+                    "accepted_at",
+                    "row_version",
+                    "updated_at",
+                )
+            )
+            summary = _membership_summary(membership)
+            _record_facts(
+                actor_id=actor_id,
+                tenant_id=invitation.tenant_id,
+                event_type="tenant.membership.activated.v1",
+                aggregate_type="tenant_membership",
+                aggregate_id=membership.id,
+                payload=_fact_payload(
+                    status=summary.status,
+                    role_codes=summary.role_codes,
+                    row_version=summary.row_version,
+                ),
+            )
+            return summary
+    except _InvitationNeedsExpiryError:
+        with transaction.atomic():
+            _set_transaction_context(
+                actor_id=actor_id,
+                tenant_id=None,
+                invitation_digest=token_digest,
+                verified_email=normalized_email,
+            )
+            invitation = TenantInvitation.objects.select_for_update().get(token_digest=token_digest)
+            if invitation.email != normalized_email:
+                raise TenancyError("INVITATION_INVALID") from None
+            if invitation.status == "active" and invitation.expires_at <= timezone.now():
                 invitation.status = "expired"
                 invitation.row_version += 1
                 invitation.save(update_fields=("status", "row_version", "updated_at"))
-            raise TenancyError("INVITATION_EXPIRED")
-        if invitation.status != "active":
-            raise TenancyError("INVITATION_INVALID")
-
-        membership, created = TenantMembership.objects.get_or_create(
-            tenant_id=invitation.tenant_id,
-            user_profile_id=profile_id,
-            defaults={"status": "active"},
-        )
-        if not created and membership.status != "active":
-            membership.status = "active"
-            membership.row_version += 1
-            membership.save(update_fields=("status", "row_version", "updated_at"))
-
-        invited_role_ids = invitation.role_links.values_list("role_id", flat=True)
-        roles = list(
-            Role.objects.filter(
-                tenant_id=invitation.tenant_id,
-                id__in=invited_role_ids,
-            ).order_by("code")
-        )
-        MembershipRole.objects.filter(
-            tenant_id=invitation.tenant_id, membership=membership
-        ).delete()
-        MembershipRole.objects.bulk_create(
-            [
-                MembershipRole(tenant_id=invitation.tenant_id, membership=membership, role=role)
-                for role in roles
-            ]
-        )
-        invitation.status = "accepted"
-        invitation.accepted_by_id = profile_id
-        invitation.accepted_membership = membership
-        invitation.accepted_at = timezone.now()
-        invitation.row_version += 1
-        invitation.save(
-            update_fields=(
-                "status",
-                "accepted_by",
-                "accepted_membership",
-                "accepted_at",
-                "row_version",
-                "updated_at",
-            )
-        )
-        summary = _membership_summary(membership)
-        _record_facts(
-            actor_id=actor_id,
-            tenant_id=invitation.tenant_id,
-            event_type="tenant.membership.activated.v1",
-            aggregate_type="tenant_membership",
-            aggregate_id=membership.id,
-            payload=_fact_payload(
-                status=summary.status,
-                role_codes=summary.role_codes,
-                row_version=summary.row_version,
-            ),
-        )
-        return summary
+        raise TenancyError("INVITATION_EXPIRED") from None
 
 
 def update_membership(

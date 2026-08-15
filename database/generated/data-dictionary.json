@@ -20,10 +20,10 @@
       "keys": ["PRIMARY KEY (id)", "UNIQUE (provider_subject)"],
       "relationships": [],
       "invariants": ["ck_user_profiles_status: status IN ('active','inactive')"],
-      "access": { "owner": "lms_object_owner", "runtime_roles": [], "rls": "not_applicable_global_table; accessed only through fixed security-definer actor lookup" },
-      "performance": [{ "index": "user_profiles_provider_subject_key", "columns": ["provider_subject"], "workload": "verified actor lookup", "threshold": "one row", "explain_evidence": "backend/tests/tenancy/test_rls.py" }],
+      "access": { "owner": "lms_object_owner", "runtime_roles": ["lms_api_runtime:EXECUTE identity_profile_for_subject(uuid)"], "rls": "not_applicable_global_table; exact-subject reads only through fixed security-definer lookup; direct table SELECT denied" },
+      "performance": [{ "index": "user_profiles_provider_subject_key", "columns": ["provider_subject"], "workload": "verified actor lookup", "threshold": "one row", "explain_evidence": "backend/tests/identity/test_service.py" }],
       "lifecycle": { "insert_owner": "identity", "update_owner": "identity", "delete_behavior": "RESTRICT from memberships; deletion coordinator pending documents 25/26", "immutability_point": "provider_subject after insert", "partition_rule": "not partitioned" },
-      "verification": { "migration": "lms_identity.0001_initial", "model": "lms.modules.identity.models.UserProfile", "tests": ["backend/tests/database/test_runtime_role.py", "backend/tests/tenancy/test_services.py"] }
+      "verification": { "migration": "lms_identity.0001_initial", "security_migration": "lms_identity.0002_runtime_profile_lookup", "model": "lms.modules.identity.models.UserProfile", "tests": ["backend/tests/database/test_runtime_role.py", "backend/tests/identity/test_service.py", "backend/tests/tenancy/test_services.py"] }
     },
     {
       "schema": "app",
@@ -206,11 +206,11 @@
       ],
       "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (token_digest)"],
       "relationships": [{ "cardinality": "tenant 1:N invitations", "foreign_key": "tenant_id -> tenants.id", "deferrable": false, "on_delete": "RESTRICT", "on_update": "NO ACTION", "index": "ix_invites_active" }, { "cardinality": "invitation 0:1 accepted membership", "foreign_key": "(tenant_id,accepted_membership_id) -> tenant_memberships(tenant_id,id)", "deferrable": false, "on_delete": "RESTRICT", "on_update": "NO ACTION", "index": "tenant_invitations_accepted_membership_id" }],
-      "invariants": ["status IN ('active','accepted','expired','revoked')", "raw token is never persisted, logged, audited, or placed in outbox"],
-      "access": { "owner": "lms_object_owner", "runtime_roles": ["lms_api_runtime:SELECT,INSERT,UPDATE"], "rls": "ENABLE + FORCE; tenant-admin create or keyed-digest token acceptance" },
+      "invariants": ["status IN ('active','accepted','expired','revoked')", "raw token is never persisted, logged, audited, or placed in outbox", "acceptance requires the provider-verified normalized email to match the immutable intended email", "acceptance requires an active tenant and current active entitlement"],
+      "access": { "owner": "lms_object_owner", "runtime_roles": ["lms_api_runtime:SELECT,INSERT,UPDATE"], "rls": "ENABLE + FORCE; tenant-admin create or actor + verified-email + keyed-digest + active-tenant/entitlement acceptance" },
       "performance": [{ "index": "tenant_invitations_token_digest_key", "columns": ["token_digest"], "workload": "single-use token acceptance", "threshold": "one row", "explain_evidence": "backend/tests/tenancy/test_services.py" }, { "index": "ix_invites_active", "columns": ["tenant_id", "status", "expires_at"], "workload": "tenant invitation lifecycle", "threshold": "bounded active set", "explain_evidence": "backend/tests/tenancy/test_services.py" }],
       "lifecycle": { "insert_owner": "create_invitation", "update_owner": "accept/revoke/expire service", "delete_behavior": "RESTRICT; status transition and retention coordinator", "immutability_point": "tenant/email/token digest/expiry after insert", "partition_rule": "not partitioned" },
-      "verification": { "migration": "tenancy.0001_initial", "model": "lms.modules.tenancy.models.TenantInvitation", "tests": ["backend/tests/tenancy/test_services.py", "backend/tests/tenancy/test_rls.py"] }
+      "verification": { "migration": "tenancy.0001_initial", "security_migration": "tenancy.0002_secure_invitation_bootstrap", "model": "lms.modules.tenancy.models.TenantInvitation", "tests": ["backend/tests/tenancy/test_services.py", "backend/tests/tenancy/test_rls.py"] }
     },
     {
       "schema": "app",

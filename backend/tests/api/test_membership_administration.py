@@ -15,6 +15,7 @@ from lms.api.routers.tenancy import create_tenancy_router
 from lms.api.schemas.tenancy import MembershipAdministrationError
 from tests.contract_fakes.f001_membership_admin import (
     ACTIVE_TOKEN,
+    ALPHA_ADMIN_EMAIL,
     ALPHA_ADMIN_ID,
     ALPHA_TENANT_ID,
     BETA_TENANT_ID,
@@ -22,9 +23,11 @@ from tests.contract_fakes.f001_membership_admin import (
     CROSS_TENANT_TOKEN,
     EXPIRED_TOKEN,
     MEMBERSHIP_ID,
+    OUTSIDER_EMAIL,
     OUTSIDER_ID,
     REVOKED_TOKEN,
     RecordingMembershipAdministrationServiceFake,
+    VerifiedActorValue,
 )
 
 IDEMPOTENCY_KEY: Final = "fixture-create-invitation-0001"
@@ -33,13 +36,14 @@ IDEMPOTENCY_KEY: Final = "fixture-create-invitation-0001"
 def make_app(
     service: RecordingMembershipAdministrationServiceFake,
     *,
-    actor_dependency: Callable[[], UUID] | None = None,
+    actor_dependency: Callable[[], VerifiedActorValue] | None = None,
 ) -> FastAPI:
     app = FastAPI()
     app.include_router(
         create_tenancy_router(
             service=service,
-            actor_dependency=actor_dependency or (lambda: ALPHA_ADMIN_ID),
+            actor_dependency=actor_dependency
+            or (lambda: VerifiedActorValue(ALPHA_ADMIN_ID, ALPHA_ADMIN_EMAIL)),
         )
     )
     return app
@@ -100,6 +104,7 @@ def test_successful_api_operations_delegate_verified_actor_and_untrusted_selecto
     ]
     assert all(call.actor_id == ALPHA_ADMIN_ID for call in service.calls)
     assert service.calls[0].tenant_selector == ALPHA_TENANT_ID
+    assert service.calls[2].verified_email == ALPHA_ADMIN_EMAIL
 
 
 def test_same_invitation_idempotency_key_replays_and_changed_request_conflicts() -> None:
@@ -274,7 +279,10 @@ def test_unusable_invitations_fail_neutrally_without_echoing_token(
     response = send(
         make_app(
             RecordingMembershipAdministrationServiceFake(),
-            actor_dependency=lambda: actor_id,
+            actor_dependency=lambda: VerifiedActorValue(
+                actor_id,
+                OUTSIDER_EMAIL if actor_id == OUTSIDER_ID else ALPHA_ADMIN_EMAIL,
+            ),
         ),
         "POST",
         "/api/v1/tenant-invitations/accept",
@@ -298,7 +306,7 @@ def test_openapi_fragment_declares_problem_details_media_type() -> None:
 
 
 def test_missing_authentication_is_problem_details() -> None:
-    def unauthenticated() -> UUID:
+    def unauthenticated() -> VerifiedActorValue:
         raise MembershipAdministrationError(
             code="AUTHENTICATION_REQUIRED",
             status=401,

@@ -25,6 +25,7 @@ class StubIdentityService:
             session_id=UUID("10000000-0000-4000-8000-000000000001"),
             authentication_time=datetime(2026, 8, 11, tzinfo=UTC),
             assurance_level="aal1",
+            verified_email="synthetic-instructor@example.invalid",
         )
 
 

@@ -53,11 +53,17 @@ def verifier(source: MutableJwksSource, *, monotonic: list[float] | None = None)
 
 
 def test_valid_rs256_token_returns_only_identity_claims() -> None:
-    verified = verifier(MutableJwksSource(jwks(PRIMARY_KEY))).verify(access_token(now=NOW))
+    verified = verifier(MutableJwksSource(jwks(PRIMARY_KEY))).verify(
+        access_token(
+            now=NOW,
+            claim_overrides={"email": " Synthetic-Instructor@Example.Invalid "},
+        )
+    )
 
     assert str(verified.subject) == "00000000-0000-4000-8000-000000000102"
     assert str(verified.session_id) == "10000000-0000-4000-8000-000000000001"
     assert verified.assurance_level == "aal1"
+    assert verified.verified_email == "synthetic-instructor@example.invalid"
     assert int(verified.authentication_time.timestamp()) == NOW - 30
     assert not hasattr(verified, "role")
     assert not hasattr(verified, "tenant_id")
@@ -81,6 +87,10 @@ def test_valid_rs256_token_returns_only_identity_claims() -> None:
         ({}, {"sub": "not-a-uuid"}),
         ({}, {"session_id": "not-a-uuid"}),
         ({}, {"aal": "aal3"}),
+        ({}, {"email": ""}),
+        ({}, {"email": "not-an-email"}),
+        ({}, {"email": "bad address@example.invalid"}),
+        ({}, {"email": f"{'a' * 244}@example.invalid"}),
     ],
 )
 def test_token_matrix_fails_closed(header: dict[str, object], claims: dict[str, object]) -> None:
