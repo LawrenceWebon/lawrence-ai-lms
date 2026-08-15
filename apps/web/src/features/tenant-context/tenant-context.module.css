@@ -1,0 +1,205 @@
+.shell {
+  --ink: #14213d;
+  --muted: #526176;
+  --line: #ccd5e0;
+  --surface: #ffffff;
+  --surface-soft: #f4f7fb;
+  --accent: #2356a8;
+  --accent-dark: #173f7d;
+  color: var(--ink);
+  display: grid;
+  gap: 1rem;
+  margin: 2rem auto;
+  max-width: 64rem;
+  min-width: 0;
+  padding: 0 1rem 3rem;
+}
+
+.shell h1,
+.shell h2,
+.shell p {
+  margin-top: 0;
+}
+
+.card,
+.activeTenant {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  box-shadow: 0 1rem 3rem rgb(20 33 61 / 8%);
+  min-width: 0;
+  padding: clamp(1.25rem, 4vw, 2rem);
+}
+
+.workspace {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.workspaceHeader,
+.activeTenant,
+.tenantList li {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.eyebrow {
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+}
+
+.intro {
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 44rem;
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.field label {
+  font-weight: 700;
+}
+
+.field input {
+  background: var(--surface-soft);
+  border: 1px solid #9baabd;
+  border-radius: 0.6rem;
+  color: var(--ink);
+  font: inherit;
+  min-width: 0;
+  padding: 0.75rem;
+  width: 100%;
+}
+
+.field input[aria-invalid="true"] {
+  border-color: #a51d2d;
+}
+
+.fieldError {
+  color: #861525;
+  font-size: 0.9rem;
+}
+
+.primaryButton,
+.secondaryButton {
+  border: 2px solid transparent;
+  border-radius: 0.65rem;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 750;
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+}
+
+.primaryButton {
+  background: var(--accent);
+  color: #ffffff;
+  justify-self: start;
+}
+
+.primaryButton:hover {
+  background: var(--accent-dark);
+}
+
+.secondaryButton {
+  background: var(--surface);
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible,
+.field input:focus-visible {
+  outline: 3px solid #f2b134;
+  outline-offset: 3px;
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.tenantList {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+
+.tenantList li {
+  background: var(--surface-soft);
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.slug {
+  color: var(--muted);
+  display: block;
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+.activeTenant {
+  background: #eef6ff;
+  border-color: #86a8d8;
+}
+
+.alert,
+.statusRegion {
+  border-radius: 0.7rem;
+  line-height: 1.5;
+  padding: 0.85rem 1rem;
+}
+
+.alert {
+  background: #fff0f1;
+  border: 1px solid #d98b94;
+  color: #701321;
+}
+
+.statusRegion {
+  background: #eef6ff;
+  border: 1px solid #afc6e5;
+  color: #173f7d;
+  min-height: 1.5rem;
+}
+
+@media (max-width: 40rem) {
+  .shell {
+    margin-top: 1rem;
+    padding-inline: 0.5rem;
+  }
+
+  .workspaceHeader,
+  .activeTenant,
+  .tenantList li {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    justify-self: stretch;
+    width: 100%;
+  }
+}
