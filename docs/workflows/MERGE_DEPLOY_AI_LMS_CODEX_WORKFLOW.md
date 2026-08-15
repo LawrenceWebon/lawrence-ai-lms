@@ -25,6 +25,10 @@ checks, approvals, mergeability, migrations/contracts, and any integration retes
 Use `gh pr checks` and SHA-locked `gh pr merge --match-head-commit` with the
 repository-approved merge strategy. Never use `--admin`, bypass protection, merge an
 agent's own unreviewed PR, or treat merge permission as deployment authorization.
+The enforced contexts are `quality`, `rls`, `e2e-f001`, and `documentation`; all four
+must be successful on the current reviewed head and latest base. The repository-role
+pull-request bypass is not permission to substitute for either those checks or the
+distinct GitHub approval.
 After each merge, remaining PRs incorporate the new base, rerun checks, and receive
 review for their new SHA. This serializes shared integration, not implementation.
 
