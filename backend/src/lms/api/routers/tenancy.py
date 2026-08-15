@@ -18,9 +18,10 @@ from lms.api.schemas.tenancy import (
     MembershipSummaryResponse,
     ProblemDetails,
     UpdateMembershipRequest,
+    VerifiedActorResult,
 )
 
-ActorDependency = Callable[..., UUID]
+ActorDependency = Callable[..., VerifiedActorResult]
 RouteHandler = Callable[[Request], Coroutine[Any, Any, Response]]
 
 _SAFE_SERVICE_PROBLEMS: dict[str, tuple[int, str, str]] = {
@@ -174,7 +175,7 @@ def create_tenancy_router(
     """Build the Lane C router without owning application composition."""
 
     router = APIRouter(prefix="/api/v1", route_class=ProblemDetailsRoute)
-    actor = Annotated[UUID, Depends(actor_dependency)]
+    actor = Annotated[VerifiedActorResult, Depends(actor_dependency)]
     header_selector = Annotated[UUID | None, Header(alias="X-Tenant-ID")]
 
     @router.get(
@@ -185,7 +186,7 @@ def create_tenancy_router(
     )
     def list_memberships(
         tenant_id: UUID,
-        actor_id: actor,
+        verified_actor: actor,
         x_tenant_id: header_selector = None,
     ) -> list[MembershipSummaryResponse]:
         tenant_selector = _require_matching_selector(
@@ -194,7 +195,7 @@ def create_tenancy_router(
         return [
             _membership_response(result)
             for result in service.list_memberships(
-                actor_id=actor_id, tenant_selector=tenant_selector
+                actor_id=verified_actor.principal_id, tenant_selector=tenant_selector
             )
         ]
 
@@ -208,7 +209,7 @@ def create_tenancy_router(
     def create_invitation(
         tenant_id: UUID,
         request: CreateInvitationRequest,
-        actor_id: actor,
+        verified_actor: actor,
         idempotency_key: Annotated[
             str,
             Header(alias="Idempotency-Key", min_length=16, max_length=128),
@@ -219,7 +220,7 @@ def create_tenancy_router(
             tenant_id=tenant_id, header_tenant_id=x_tenant_id
         )
         result = service.create_invitation(
-            actor_id=actor_id,
+            actor_id=verified_actor.principal_id,
             tenant_selector=tenant_selector,
             email=request.email,
             role_codes=tuple(request.role_codes),
@@ -235,10 +236,11 @@ def create_tenancy_router(
     )
     def accept_invitation(
         request: AcceptInvitationRequest,
-        actor_id: actor,
+        verified_actor: actor,
     ) -> MembershipSummaryResponse:
         result = service.accept_invitation(
-            actor_id=actor_id,
+            actor_id=verified_actor.principal_id,
+            verified_email=verified_actor.verified_email,
             invitation_token=request.invitation_token.get_secret_value(),
         )
         return _membership_response(result)
@@ -253,14 +255,14 @@ def create_tenancy_router(
         tenant_id: UUID,
         membership_id: UUID,
         request: UpdateMembershipRequest,
-        actor_id: actor,
+        verified_actor: actor,
         x_tenant_id: header_selector = None,
     ) -> MembershipSummaryResponse:
         tenant_selector = _require_matching_selector(
             tenant_id=tenant_id, header_tenant_id=x_tenant_id
         )
         result = service.update_membership(
-            actor_id=actor_id,
+            actor_id=verified_actor.principal_id,
             tenant_selector=tenant_selector,
             membership_id=membership_id,
             status=request.status,

@@ -14,6 +14,7 @@ from lms.api.schemas.tenancy import (
 )
 from tests.contract_fakes.f001_membership_admin import (
     ACTIVE_TOKEN,
+    ALPHA_ADMIN_EMAIL,
     ALPHA_ADMIN_ID,
     ALPHA_TENANT_ID,
     MEMBERSHIP_ID,
@@ -24,7 +25,11 @@ from tests.contract_fakes.f001_membership_admin import (
 def test_admin_actions_delegate_to_the_same_service_operations_as_http() -> None:
     service = RecordingMembershipAdministrationServiceFake()
     actions = TenancyAdminActions(service=service)
-    context = AdminActorContext(actor_id=ALPHA_ADMIN_ID, tenant_id=ALPHA_TENANT_ID)
+    context = AdminActorContext(
+        actor_id=ALPHA_ADMIN_ID,
+        verified_email=ALPHA_ADMIN_EMAIL,
+        tenant_id=ALPHA_TENANT_ID,
+    )
 
     actions.list_memberships(context=context)
     invitation = actions.create_invitation(
@@ -35,7 +40,11 @@ def test_admin_actions_delegate_to_the_same_service_operations_as_http() -> None
         idempotency_key="fixture-create-invitation-0001",
     )
     actions.accept_invitation(
-        context=AdminActorContext(actor_id=ALPHA_ADMIN_ID, tenant_id=None),
+        context=AdminActorContext(
+            actor_id=ALPHA_ADMIN_ID,
+            verified_email=ALPHA_ADMIN_EMAIL,
+            tenant_id=None,
+        ),
         request=AcceptInvitationRequest(invitation_token=ACTIVE_TOKEN),
     )
     actions.update_membership(
@@ -58,7 +67,11 @@ def test_admin_actions_delegate_to_the_same_service_operations_as_http() -> None
 @pytest.mark.parametrize("operation", ["list", "create", "update"])
 def test_tenant_scoped_admin_actions_require_explicit_tenant_context(operation: str) -> None:
     actions = TenancyAdminActions(service=RecordingMembershipAdministrationServiceFake())
-    context = AdminActorContext(actor_id=ALPHA_ADMIN_ID, tenant_id=None)
+    context = AdminActorContext(
+        actor_id=ALPHA_ADMIN_ID,
+        verified_email=ALPHA_ADMIN_EMAIL,
+        tenant_id=None,
+    )
 
     with pytest.raises(MembershipAdministrationError) as caught:
         if operation == "list":

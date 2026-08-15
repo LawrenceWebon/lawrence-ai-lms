@@ -172,6 +172,7 @@ def identity_candidate() -> IdentityCandidate:
         session_id=SESSION_ID,
         authentication_time=datetime(2026, 8, 11, tzinfo=UTC),
         assurance_level="aal1",
+        verified_email="synthetic-instructor@example.invalid",
     )
 
 

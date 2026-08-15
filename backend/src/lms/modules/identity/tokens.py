@@ -23,6 +23,7 @@ _BASE64URL = re.compile(r"^[A-Za-z0-9_-]+$")
 _MAX_TOKEN_BYTES = 16_384
 _MAX_JWKS_BYTES = 65_536
 _SUPPORTED_KEY_TYPES = {"ES256": "EC", "RS256": "RSA"}
+_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 class TokenInvalidError(Exception):
@@ -216,7 +217,7 @@ class JwtVerifier:
             raise TokenInvalidError
         if decoded.get("is_anonymous") is not False:
             raise TokenInvalidError
-        _required_text(decoded, "email")
+        verified_email = _normalized_email(decoded)
         _required_text(decoded, "phone")
 
         subject = _required_uuid(decoded, "sub")
@@ -233,6 +234,7 @@ class JwtVerifier:
             session_id=session_id,
             authentication_time=authentication_time,
             assurance_level=cast(AssuranceLevel, assurance),
+            verified_email=verified_email,
         )
 
 
@@ -333,6 +335,13 @@ def _parse_jwk(jwk: Mapping[str, object], *, algorithm: str) -> _VerificationKey
 def _required_text(values: Mapping[str, object], name: str) -> str:
     value = values.get(name)
     if not isinstance(value, str):
+        raise TokenInvalidError
+    return value
+
+
+def _normalized_email(values: Mapping[str, object]) -> str:
+    value = _required_string(values, "email").strip().casefold()
+    if len(value) > 254 or _EMAIL_PATTERN.fullmatch(value) is None:
         raise TokenInvalidError
     return value
 

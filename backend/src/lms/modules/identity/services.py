@@ -3,8 +3,9 @@ from __future__ import annotations
 from typing import Protocol
 from uuid import UUID
 
+from django.db import connection
+
 from .entities import IdentityCandidate, IdentityProfile, VerifiedAccessToken
-from .models import UserProfile
 from .tokens import TokenInvalidError
 
 
@@ -26,17 +27,21 @@ class IdentityAuthenticationRejectedError(Exception):
 
 class DjangoIdentityProfileReader:
     def get_by_provider_subject(self, subject: UUID) -> IdentityProfile | None:
-        row = (
-            UserProfile.objects.filter(provider_subject=subject)
-            .values("id", "provider_subject", "status")
-            .first()
-        )
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, provider_subject, status
+                  FROM app.identity_profile_for_subject(%s)
+                """,
+                [subject],
+            )
+            row = cursor.fetchone()
         if row is None:
             return None
         return IdentityProfile(
-            id=row["id"],
-            provider_subject=row["provider_subject"],
-            status=row["status"],
+            id=row[0],
+            provider_subject=row[1],
+            status=row[2],
         )
 
 
@@ -75,4 +80,5 @@ class IdentityService:
             session_id=verified.session_id,
             authentication_time=verified.authentication_time,
             assurance_level=verified.assurance_level,
+            verified_email=verified.verified_email,
         )

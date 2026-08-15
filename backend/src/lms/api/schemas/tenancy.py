@@ -36,6 +36,11 @@ class InvitationReceiptResult(Protocol):
     expires_at: datetime
 
 
+class VerifiedActorResult(Protocol):
+    principal_id: UUID
+    verified_email: str
+
+
 class MembershipAdministrationServiceV1(Protocol):
     """Structural port shared by the HTTP and trusted Admin adapters."""
 
@@ -54,7 +59,7 @@ class MembershipAdministrationServiceV1(Protocol):
     ) -> InvitationReceiptResult: ...
 
     def accept_invitation(
-        self, *, actor_id: UUID, invitation_token: str
+        self, *, actor_id: UUID, verified_email: str, invitation_token: str
     ) -> MembershipSummaryResult: ...
 
     def update_membership(

@@ -13,6 +13,8 @@ BETA_TENANT_ID: Final = UUID("00000000-0000-4000-8000-0000000000b1")
 ALPHA_ADMIN_ID: Final = UUID("00000000-0000-4000-8000-000000000101")
 ALPHA_LEARNER_ID: Final = UUID("00000000-0000-4000-8000-000000000103")
 OUTSIDER_ID: Final = UUID("00000000-0000-4000-8000-000000000105")
+ALPHA_ADMIN_EMAIL: Final = "instructor@example.invalid"
+OUTSIDER_EMAIL: Final = "outsider@example.invalid"
 MEMBERSHIP_ID: Final = UUID("00000000-0000-4000-8000-000000000301")
 INVITATION_ID: Final = UUID("00000000-0000-4000-8000-000000000201")
 ACTIVE_TOKEN: Final = "synthetic-active-token-000000000001"  # noqa: S105
@@ -40,6 +42,12 @@ class InvitationReceiptValue:
 
 
 @dataclass(frozen=True, slots=True)
+class VerifiedActorValue:
+    principal_id: UUID
+    verified_email: str
+
+
+@dataclass(frozen=True, slots=True)
 class ServiceCall:
     operation: str
     actor_id: UUID
@@ -49,6 +57,7 @@ class ServiceCall:
     role_codes: tuple[str, ...] | None = None
     idempotency_key: str | None = None
     invitation_token_digest: str | None = None
+    verified_email: str | None = None
     status: str | None = None
     row_version: int | None = None
 
@@ -131,12 +140,15 @@ class RecordingMembershipAdministrationServiceFake:
             )
         return previous[1]
 
-    def accept_invitation(self, *, actor_id: UUID, invitation_token: str) -> MembershipSummaryValue:
+    def accept_invitation(
+        self, *, actor_id: UUID, verified_email: str, invitation_token: str
+    ) -> MembershipSummaryValue:
         self.calls.append(
             ServiceCall(
                 operation="accept_invitation",
                 actor_id=actor_id,
                 invitation_token_digest=sha256(invitation_token.encode()).hexdigest(),
+                verified_email=verified_email,
             )
         )
         self._raise_scripted_problem("accept_invitation")
@@ -147,7 +159,11 @@ class RecordingMembershipAdministrationServiceFake:
                 title="Invitation unavailable",
                 detail="The invitation cannot be accepted.",
             )
-        if invitation_token != ACTIVE_TOKEN or actor_id != ALPHA_ADMIN_ID:
+        if (
+            invitation_token != ACTIVE_TOKEN
+            or actor_id != ALPHA_ADMIN_ID
+            or verified_email != ALPHA_ADMIN_EMAIL
+        ):
             raise MembershipAdministrationError(
                 code="INVITATION_INVALID",
                 status=404,
