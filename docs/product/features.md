@@ -1,6 +1,6 @@
 # AI LMS Feature Inventory
 
-Status: **approved MVP sequence; F-001 integration pending independent review**
+Status: **approved MVP sequence; F-001 complete; F-002 contract freeze in review**
 
 Derived from: `docs/product/spec.md`
 

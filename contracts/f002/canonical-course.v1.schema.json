@@ -1,0 +1,355 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-lms.local/f002/canonical-course.v1.schema.json",
+  "title": "F-002 canonical course snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "course", "version", "sections", "latest_review"],
+  "properties": {
+    "$schema": {
+      "const": "https://contracts.ai-lms.local/f002/canonical-course.v1.schema.json"
+    },
+    "course": { "$ref": "#/$defs/course" },
+    "version": { "$ref": "#/$defs/version" },
+    "sections": {
+      "type": "array",
+      "maxItems": 100,
+      "items": { "$ref": "#/$defs/section" }
+    },
+    "latest_review": {
+      "oneOf": [
+        { "$ref": "#/$defs/review" },
+        { "type": "null" }
+      ]
+    }
+  },
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "nullable_uuid": {
+      "oneOf": [
+        { "$ref": "#/$defs/uuid" },
+        { "type": "null" }
+      ]
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "nullable_hash": {
+      "oneOf": [
+        { "$ref": "#/$defs/hash" },
+        { "type": "null" }
+      ]
+    },
+    "course": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "tenant_id",
+        "slug",
+        "reviewer_policy",
+        "current_published_version_id",
+        "instructor_membership_ids",
+        "row_version"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "tenant_id": { "$ref": "#/$defs/uuid" },
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "minLength": 1,
+          "maxLength": 63
+        },
+        "reviewer_policy": {
+          "enum": ["self_review_allowed", "separate_reviewer_required"]
+        },
+        "current_published_version_id": { "$ref": "#/$defs/nullable_uuid" },
+        "instructor_membership_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/uuid" }
+        },
+        "row_version": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "version": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "tenant_id",
+        "course_id",
+        "version_number",
+        "status",
+        "origin_type",
+        "primary_locale",
+        "title",
+        "description",
+        "content_hash",
+        "submitted_hash",
+        "approved_hash",
+        "row_version"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "tenant_id": { "$ref": "#/$defs/uuid" },
+        "course_id": { "$ref": "#/$defs/uuid" },
+        "version_number": { "type": "integer", "minimum": 1 },
+        "status": {
+          "enum": [
+            "draft",
+            "under_review",
+            "changes_requested",
+            "approved",
+            "scheduled",
+            "published",
+            "withdrawn",
+            "archived"
+          ]
+        },
+        "origin_type": { "enum": ["manual", "ai_assisted"] },
+        "primary_locale": {
+          "type": "string",
+          "pattern": "^[a-z]{2}(?:-[A-Z]{2})?$",
+          "maxLength": 10
+        },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "description": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "content_hash": { "$ref": "#/$defs/hash" },
+        "submitted_hash": { "$ref": "#/$defs/nullable_hash" },
+        "approved_hash": { "$ref": "#/$defs/nullable_hash" },
+        "row_version": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "tenant_id",
+        "course_version_id",
+        "title",
+        "position",
+        "row_version",
+        "lessons"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "tenant_id": { "$ref": "#/$defs/uuid" },
+        "course_version_id": { "$ref": "#/$defs/uuid" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "position": { "type": "integer", "minimum": 1 },
+        "row_version": { "type": "integer", "minimum": 1 },
+        "lessons": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 200,
+          "items": { "$ref": "#/$defs/lesson" }
+        }
+      }
+    },
+    "lesson": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "tenant_id",
+        "course_version_id",
+        "section_id",
+        "title",
+        "position",
+        "is_required",
+        "row_version",
+        "content_blocks"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "tenant_id": { "$ref": "#/$defs/uuid" },
+        "course_version_id": { "$ref": "#/$defs/uuid" },
+        "section_id": { "$ref": "#/$defs/uuid" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "position": { "type": "integer", "minimum": 1 },
+        "is_required": { "type": "boolean" },
+        "row_version": { "type": "integer", "minimum": 1 },
+        "content_blocks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/content_block" }
+        }
+      }
+    },
+    "content_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "tenant_id",
+        "course_version_id",
+        "lesson_id",
+        "kind",
+        "position",
+        "row_version",
+        "document"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "tenant_id": { "$ref": "#/$defs/uuid" },
+        "course_version_id": { "$ref": "#/$defs/uuid" },
+        "lesson_id": { "$ref": "#/$defs/uuid" },
+        "kind": { "const": "rich_text" },
+        "position": { "type": "integer", "minimum": 1 },
+        "row_version": { "type": "integer", "minimum": 1 },
+        "document": { "$ref": "#/$defs/rich_text_document" }
+      }
+    },
+    "rich_text_document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "content"],
+      "properties": {
+        "type": { "const": "document" },
+        "content": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 500,
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/paragraph" },
+              { "$ref": "#/$defs/heading" },
+              { "$ref": "#/$defs/bullet_list" },
+              { "$ref": "#/$defs/ordered_list" }
+            ]
+          }
+        }
+      }
+    },
+    "paragraph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "content"],
+      "properties": {
+        "type": { "const": "paragraph" },
+        "content": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 500,
+          "items": { "$ref": "#/$defs/text_node" }
+        }
+      }
+    },
+    "heading": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "level", "content"],
+      "properties": {
+        "type": { "const": "heading" },
+        "level": { "type": "integer", "minimum": 2, "maximum": 4 },
+        "content": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/text_node" }
+        }
+      }
+    },
+    "bullet_list": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "items"],
+      "properties": {
+        "type": { "const": "bullet_list" },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/list_item" }
+        }
+      }
+    },
+    "ordered_list": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "items"],
+      "properties": {
+        "type": { "const": "ordered_list" },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/list_item" }
+        }
+      }
+    },
+    "list_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "content"],
+      "properties": {
+        "type": { "const": "list_item" },
+        "content": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "items": { "$ref": "#/$defs/paragraph" }
+        }
+      }
+    },
+    "text_node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text", "marks"],
+      "properties": {
+        "type": { "const": "text" },
+        "text": { "type": "string", "minLength": 1, "maxLength": 10000 },
+        "marks": {
+          "type": "array",
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": { "enum": ["strong", "emphasis", "code"] }
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "tenant_id",
+        "course_version_id",
+        "decision",
+        "reviewed_hash",
+        "reviewer_id",
+        "self_review",
+        "reason_codes",
+        "decided_at"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "tenant_id": { "$ref": "#/$defs/uuid" },
+        "course_version_id": { "$ref": "#/$defs/uuid" },
+        "decision": { "enum": ["changes_requested", "approved"] },
+        "reviewed_hash": { "$ref": "#/$defs/hash" },
+        "reviewer_id": { "$ref": "#/$defs/uuid" },
+        "self_review": { "type": "boolean" },
+        "reason_codes": {
+          "type": "array",
+          "maxItems": 20,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]{2,63}$"
+          }
+        },
+        "decided_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}
