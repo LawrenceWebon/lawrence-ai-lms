@@ -65,14 +65,38 @@ services:
       - ./tests:/workspace/tests
     working_dir: /workspace
 
+  f001-api:
+    extends:
+      service: backend
+    command: ["python", "-m", "tests.integration.f001_server"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PYTHONPATH: /workspace/backend/src
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/health', timeout=2)",
+        ]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    working_dir: /workspace/backend
+
   web:
     build:
       context: .
       dockerfile: docker/web.Dockerfile
     command: ["sleep", "infinity"]
     environment:
+      AI_LMS_API_INTERNAL_URL: http://f001-api:8000
       HOME: /tmp/ai-lms-home
       NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_AI_LMS_LOCAL_F001_FIXTURE: "1"
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
       XDG_CACHE_HOME: /tmp/xdg-cache
     healthcheck:
@@ -81,6 +105,9 @@ services:
       timeout: 3s
       retries: 3
     init: true
+    depends_on:
+      f001-api:
+        condition: service_healthy
     user: "${AI_LMS_UID:-1000}:${AI_LMS_GID:-1000}"
     volumes:
       - ./.dockerignore:/workspace/.dockerignore:ro

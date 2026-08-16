@@ -32,6 +32,7 @@ class MembershipSummary:
     status: str
     row_version: int
     role_codes: tuple[str, ...]
+    permission_codes: tuple[str, ...]
 
 
 @dataclass(frozen=True, slots=True)

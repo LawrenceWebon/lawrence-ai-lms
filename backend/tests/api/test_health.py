@@ -5,7 +5,7 @@ import httpx
 from lms.api.main import app
 
 
-def test_health_endpoint_reports_only_foundation_readiness() -> None:
+def test_health_endpoint_reports_f001_integration_readiness() -> None:
     async def request() -> httpx.Response:
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
@@ -17,13 +17,14 @@ def test_health_endpoint_reports_only_foundation_readiness() -> None:
     assert response.json() == {
         "service": "ai-lms-api",
         "status": "ok",
-        "capabilities": [],
+        "capabilities": ["f001-identity-tenancy"],
     }
 
 
-def test_openapi_is_31_and_contains_no_f001_business_routes() -> None:
+def test_openapi_is_31_and_contains_f001_business_routes() -> None:
     schema = app.openapi()
 
     assert schema["openapi"].startswith("3.1.")
-    assert schema["paths"] == {"/health": schema["paths"]["/health"]}
+    assert "/api/v1/auth-context" in schema["paths"]
+    assert "/api/v1/tenant-invitations/accept" in schema["paths"]
     assert schema["paths"]["/health"]["get"]["operationId"] == "healthCheck"

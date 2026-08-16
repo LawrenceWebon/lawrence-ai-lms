@@ -21,32 +21,65 @@ MembershipMutationStatus = Literal["active", "inactive"]
 _EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
-class MembershipSummaryResult(Protocol):
+class AuthenticationMembershipResult(Protocol):
     id: UUID
-    tenant_id: UUID
     status: str
     row_version: int
     role_codes: Sequence[str]
+    permission_codes: Sequence[str]
 
 
-class InvitationReceiptResult(Protocol):
+class TenantSummaryResult(Protocol):
     id: UUID
-    tenant_id: UUID
+    slug: str
+    display_name: str
+
+
+class TenantCandidateResult(TenantSummaryResult, Protocol):
+    membership_status: str
+
+
+class EntitlementResult(Protocol):
     status: str
-    expires_at: datetime
+    valid_until: datetime | None
+
+
+class AuthenticationContextServiceResult(Protocol):
+    @property
+    def active_tenant(self) -> TenantSummaryResult | None: ...
+
+    @property
+    def membership(self) -> AuthenticationMembershipResult | None: ...
+
+    @property
+    def entitlement(self) -> EntitlementResult | None: ...
+
+    @property
+    def available_tenants(self) -> Sequence[TenantCandidateResult]: ...
 
 
 class VerifiedActorResult(Protocol):
-    principal_id: UUID
-    verified_email: str
+    @property
+    def principal_id(self) -> UUID: ...
+
+    @property
+    def verified_email(self) -> str: ...
+
+    @property
+    def authentication_time(self) -> datetime: ...
+
+    @property
+    def assurance_level(self) -> Literal["aal1", "aal2"]: ...
 
 
 class MembershipAdministrationServiceV1(Protocol):
     """Structural port shared by the HTTP and trusted Admin adapters."""
 
-    def list_memberships(
-        self, *, actor_id: UUID, tenant_selector: UUID
-    ) -> Sequence[MembershipSummaryResult]: ...
+    def get_authentication_context(
+        self, *, actor_id: UUID, tenant_selector: UUID | None
+    ) -> object: ...
+
+    def list_memberships(self, *, actor_id: UUID, tenant_selector: UUID) -> Sequence[object]: ...
 
     def create_invitation(
         self,
@@ -56,11 +89,11 @@ class MembershipAdministrationServiceV1(Protocol):
         email: str,
         role_codes: tuple[str, ...],
         idempotency_key: str,
-    ) -> InvitationReceiptResult: ...
+    ) -> object: ...
 
     def accept_invitation(
         self, *, actor_id: UUID, verified_email: str, invitation_token: str
-    ) -> MembershipSummaryResult: ...
+    ) -> object: ...
 
     def update_membership(
         self,
@@ -71,7 +104,7 @@ class MembershipAdministrationServiceV1(Protocol):
         status: str | None,
         role_codes: tuple[str, ...] | None,
         row_version: int,
-    ) -> MembershipSummaryResult: ...
+    ) -> object: ...
 
 
 class MembershipAdministrationError(Exception):
@@ -175,3 +208,53 @@ class ProblemDetails(StrictSchema):
     code: str = Field(pattern=r"^[A-Z][A-Z0-9_]+$")
     request_id: str = Field(min_length=1, max_length=128)
     errors: list[dict[str, object]] = Field(default_factory=list, max_length=100)
+
+
+class AuthenticationPrincipalResponse(StrictSchema):
+    user_id: UUID
+    authentication_time: datetime
+    assurance_level: Literal["aal1", "aal2"]
+
+
+class TenantSummaryResponse(StrictSchema):
+    model_config = ConfigDict(extra="forbid", from_attributes=True)
+
+    id: UUID
+    slug: str = Field(min_length=1, max_length=63)
+    display_name: str = Field(min_length=1, max_length=120)
+
+
+class TenantCandidateResponse(TenantSummaryResponse):
+    membership_status: Literal["active", "inactive"]
+
+
+class AuthenticationMembershipResponse(StrictSchema):
+    id: UUID
+    status: Literal["active", "inactive"]
+    row_version: int = Field(ge=1)
+    role_codes: list[str]
+    permission_codes: list[str]
+
+    @field_validator("role_codes", "permission_codes")
+    @classmethod
+    def require_sorted_unique_codes(cls, value: list[str]) -> list[str]:
+        if value != sorted(set(value)):
+            raise ValueError("codes must be sorted and unique")
+        return value
+
+
+class EntitlementResponse(StrictSchema):
+    status: Literal["active", "expired", "suspended"]
+    valid_until: datetime | None
+
+
+class AuthenticationContextResponse(StrictSchema):
+    schema_uri: Literal["https://contracts.ai-lms.local/f001/auth-context.v1.schema.json"] = Field(
+        default="https://contracts.ai-lms.local/f001/auth-context.v1.schema.json",
+        alias="$schema",
+    )
+    principal: AuthenticationPrincipalResponse
+    active_tenant: TenantSummaryResponse | None
+    membership: AuthenticationMembershipResponse | None
+    entitlement: EntitlementResponse | None
+    available_tenants: list[TenantCandidateResponse] = Field(max_length=100)
