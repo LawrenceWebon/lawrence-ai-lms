@@ -5,8 +5,9 @@ merged through PR #4 at `ec4006fcfe45a1c9832f80704581fb1289dcde7f`.
 [GitHub issue #5](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/5) and PR
 #6 merged the owner-required Docker-only workflow at
 `b34ba7ac377a6a12363b036ece3d682d0b0ecdd8`. The readiness audit passes at that exact
-base. Backend lanes A-C are provisioned as bounded GitHub issues #9-#11. Lane D and
-the integration issue remain local plans until provisioned.
+base. Backend lanes A-C merged through PRs #16, #15, and #14. Lane D merged through
+PR #24. The Step 5 integration is provisioned as GitHub issue #25 and remains pending
+independent review.
 
 ## #1 — Foundation and frozen contracts
 
@@ -60,17 +61,22 @@ the integration issue remain local plans until provisioned.
 - Contract: tenancy service fake and Problem Details codes.
 - Acceptance: IDOR/permissions/replay/idempotency/version/API/Admin parity pass.
 
-## LOCAL-F001-D — Web tenant-context journey
+## #23 — Web tenant-context journey
 
 - Outcome: accessible sign-in, invitation, tenant selection and denial states.
 - Owner/paths: Agent D; web auth/tenant-context features and isolated E2E fixtures.
+- Base/branch: `develop` -> `feature/LMS-23-f001-web-tenant-context`.
+- Delivery: merged through PR #24 at `465a3ba6370179927e5db72505ffb34d656fa34a`.
 - Contract: TypeScript auth-context v1 fixture; generated client is read-only.
 - Acceptance: lint/type/build/component and mock-transport Playwright checks pass.
 
-## LOCAL-F001-I — Integration and regeneration
+## #25 — Integration and regeneration
 
 - Outcome: merged lanes wired with ordered migrations, generated client and critical E2E.
 - Owner/paths: integration owner; shared hotspots only after A–D merge.
+- Base/branch: `develop` -> `feature/LMS-25-f001-integration`.
+- Worktree: `/home/lawrence/Project Neo/worktrees/ai-lms/integration-LMS-25`.
+- Compose: `ai-lms-lms-25`; PostgreSQL host port `55225`.
 - Acceptance: all Make targets, production-role matrix, compatibility, accessibility,
   secret scan and evidence checks pass at the reviewed SHA.
 - Non-goals: deploy, real data, email provider, course/PDF/AI behavior.

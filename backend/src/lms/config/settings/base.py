@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.sessions",
     "lms.modules.identity.apps.IdentityConfig",
+    "lms.modules.tenancy.apps.TenancyConfig",
     "lms.platform_database.apps.PlatformDatabaseConfig",
 ]
 

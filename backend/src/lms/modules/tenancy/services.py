@@ -155,6 +155,18 @@ def _role_codes(membership: TenantMembership) -> tuple[str, ...]:
     )
 
 
+def _permission_codes(membership: TenantMembership) -> tuple[str, ...]:
+    return tuple(
+        RolePermission.objects.filter(
+            tenant_id=membership.tenant_id,
+            role__membership_links__membership_id=membership.id,
+        )
+        .order_by("permission__code")
+        .values_list("permission__code", flat=True)
+        .distinct()
+    )
+
+
 def _membership_summary(membership: TenantMembership) -> MembershipSummary:
     return MembershipSummary(
         id=membership.id,
@@ -162,6 +174,7 @@ def _membership_summary(membership: TenantMembership) -> MembershipSummary:
         status=membership.status,
         row_version=membership.row_version,
         role_codes=_role_codes(membership),
+        permission_codes=_permission_codes(membership),
     )
 
 

@@ -3,11 +3,15 @@
 import { type FormEvent, useMemo, useRef, useState } from "react";
 
 import {
-  type ActiveTenant,
   MockTenantContextTransport,
-  MockTransportProblem,
-  type TenantCandidate,
 } from "./mock-transport";
+import { ApiTenantContextTransport } from "./api-transport";
+import {
+  type ActiveTenant,
+  TenantContextProblem,
+  type TenantCandidate,
+  type TenantContextTransport,
+} from "./transport";
 import styles from "./tenant-context.module.css";
 
 type FieldErrors = {
@@ -23,7 +27,15 @@ const genericInvitationError =
   "This invitation cannot be accepted. Ask a tenant administrator for a new invitation.";
 
 export function TenantContextExperience({ scenario }: TenantContextExperienceProps) {
-  const transport = useMemo(() => new MockTenantContextTransport(scenario), [scenario]);
+  const transport = useMemo<TenantContextTransport>(() => {
+    if (
+      scenario === "integration" &&
+      process.env.NEXT_PUBLIC_AI_LMS_LOCAL_F001_FIXTURE === "1"
+    ) {
+      return new ApiTenantContextTransport();
+    }
+    return new MockTenantContextTransport(scenario);
+  }, [scenario]);
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState("");
@@ -38,6 +50,7 @@ export function TenantContextExperience({ scenario }: TenantContextExperiencePro
   const [alertMessage, setAlertMessage] = useState("");
 
   function resetPrivateContext(message = "") {
+    transport.signOut();
     setSignedIn(false);
     setEmail("");
     setPassword("");
@@ -83,7 +96,7 @@ export function TenantContextExperience({ scenario }: TenantContextExperiencePro
           : "Access loaded. Choose a workspace to continue.",
       );
     } catch (error: unknown) {
-      if (error instanceof MockTransportProblem && error.code === "TRANSPORT_UNAVAILABLE") {
+      if (error instanceof TenantContextProblem && error.code === "TRANSPORT_UNAVAILABLE") {
         setAlertMessage(
           "We could not load your access. Try again without changing your sign-in details.",
         );
@@ -150,8 +163,12 @@ export function TenantContextExperience({ scenario }: TenantContextExperiencePro
       const tenants = await transport.refreshAccess(availableTenants);
       setAvailableTenants(tenants);
       setStatusMessage("Your access is up to date.");
-    } catch {
-      resetPrivateContext("Your session has expired. Sign in again.");
+    } catch (error: unknown) {
+      resetPrivateContext(
+        error instanceof TenantContextProblem && error.code === "AUTHENTICATION_REQUIRED"
+          ? "Your session has expired. Sign in again."
+          : "Your access is no longer active. Sign in again.",
+      );
     } finally {
       setBusy(false);
     }
@@ -231,14 +248,24 @@ export function TenantContextExperience({ scenario }: TenantContextExperiencePro
                 Selection does not grant access. The service verifies your current membership every time.
               </p>
             </div>
-            <button
-              className={styles.secondaryButton}
-              type="button"
-              disabled={busy}
-              onClick={() => resetPrivateContext()}
-            >
-              Sign out
-            </button>
+            <div className={styles.headerActions}>
+              <button
+                className={styles.secondaryButton}
+                type="button"
+                onClick={handleRefresh}
+                disabled={busy}
+              >
+                Refresh access
+              </button>
+              <button
+                className={styles.secondaryButton}
+                type="button"
+                disabled={busy}
+                onClick={() => resetPrivateContext()}
+              >
+                Sign out
+              </button>
+            </div>
           </header>
 
           {activeTenant ? (
@@ -248,9 +275,6 @@ export function TenantContextExperience({ scenario }: TenantContextExperiencePro
                 <h2 id="active-heading">{activeTenant.displayName}</h2>
                 <p>Authorized actions will be rechecked by the server.</p>
               </div>
-              <button className={styles.secondaryButton} type="button" onClick={handleRefresh} disabled={busy}>
-                Refresh access
-              </button>
             </section>
           ) : null}
 

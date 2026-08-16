@@ -162,7 +162,12 @@ test("tenant-context layout reflows at a narrow viewport and 200 percent zoom", 
 
 test("lane source has no browser core-table client or persistent authorization state", async () => {
   const featureRoot = path.resolve(import.meta.dirname, "../../web/src/features/tenant-context");
-  const files = ["tenant-context-experience.tsx", "mock-transport.ts"];
+  const files = [
+    "tenant-context-experience.tsx",
+    "transport.ts",
+    "mock-transport.ts",
+    "api-transport.ts",
+  ];
   const source = (
     await Promise.all(files.map((file) => readFile(path.join(featureRoot, file), "utf8")))
   ).join("\n");

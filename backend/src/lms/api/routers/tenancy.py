@@ -1,5 +1,5 @@
 from collections.abc import Callable, Coroutine
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, Header, status
@@ -9,14 +9,22 @@ from fastapi.routing import APIRoute
 from starlette.requests import Request
 from starlette.responses import Response
 
+from lms.api.dependencies.authentication import AuthenticationProblem
 from lms.api.schemas.tenancy import (
     AcceptInvitationRequest,
+    AuthenticationContextResponse,
+    AuthenticationContextServiceResult,
+    AuthenticationMembershipResponse,
+    AuthenticationPrincipalResponse,
     CreateInvitationRequest,
+    EntitlementResponse,
     InvitationReceiptResponse,
     MembershipAdministrationError,
     MembershipAdministrationServiceV1,
     MembershipSummaryResponse,
     ProblemDetails,
+    TenantCandidateResponse,
+    TenantSummaryResponse,
     UpdateMembershipRequest,
     VerifiedActorResult,
 )
@@ -75,6 +83,7 @@ def _problem_response(
     title: str,
     detail: str,
     errors: list[dict[str, object]] | None = None,
+    headers: dict[str, str] | None = None,
 ) -> JSONResponse:
     problem = ProblemDetails(
         type=f"https://api.ai-lms.local/problems/{code.casefold().replace('_', '-')}",
@@ -89,6 +98,7 @@ def _problem_response(
         status_code=status_code,
         content=problem.model_dump(mode="json"),
         media_type="application/problem+json",
+        headers=headers,
     )
 
 
@@ -118,6 +128,16 @@ class ProblemDetailsRoute(APIRoute):
                     status_code=status_code,
                     title=title,
                     detail=detail,
+                )
+            except AuthenticationProblem as problem:
+                status_code, title, detail = _SAFE_SERVICE_PROBLEMS[problem.code]
+                return _problem_response(
+                    request,
+                    code=problem.code,
+                    status_code=status_code,
+                    title=title,
+                    detail=detail,
+                    headers={"WWW-Authenticate": "Bearer"},
                 )
             except RequestValidationError as problem:
                 safe_errors = [
@@ -167,6 +187,43 @@ def _invitation_response(result: object) -> InvitationReceiptResponse:
     return InvitationReceiptResponse.model_validate(result, from_attributes=True)
 
 
+def _authentication_context_response(
+    result: AuthenticationContextServiceResult, *, verified_actor: VerifiedActorResult
+) -> AuthenticationContextResponse:
+    active_tenant = result.active_tenant
+    membership = result.membership
+    entitlement = result.entitlement
+    return AuthenticationContextResponse(
+        principal=AuthenticationPrincipalResponse(
+            user_id=verified_actor.principal_id,
+            authentication_time=verified_actor.authentication_time,
+            assurance_level=verified_actor.assurance_level,
+        ),
+        active_tenant=(
+            TenantSummaryResponse.model_validate(active_tenant, from_attributes=True)
+            if active_tenant is not None
+            else None
+        ),
+        membership=(
+            AuthenticationMembershipResponse.model_validate(
+                membership,
+                from_attributes=True,
+            )
+            if membership is not None
+            else None
+        ),
+        entitlement=(
+            EntitlementResponse.model_validate(entitlement, from_attributes=True)
+            if entitlement is not None
+            else None
+        ),
+        available_tenants=[
+            TenantCandidateResponse.model_validate(candidate, from_attributes=True)
+            for candidate in result.available_tenants
+        ],
+    )
+
+
 def create_tenancy_router(
     *,
     service: MembershipAdministrationServiceV1,
@@ -177,6 +234,25 @@ def create_tenancy_router(
     router = APIRouter(prefix="/api/v1", route_class=ProblemDetailsRoute)
     actor = Annotated[VerifiedActorResult, Depends(actor_dependency)]
     header_selector = Annotated[UUID | None, Header(alias="X-Tenant-ID")]
+
+    @router.get(
+        "/auth-context",
+        operation_id="getAuthenticationContext",
+        response_model=AuthenticationContextResponse,
+        responses=_problem_responses(401, 403, 404, 422, 500),
+    )
+    def get_authentication_context(
+        verified_actor: actor,
+        x_tenant_id: header_selector = None,
+    ) -> AuthenticationContextResponse:
+        result = cast(
+            AuthenticationContextServiceResult,
+            service.get_authentication_context(
+                actor_id=verified_actor.principal_id,
+                tenant_selector=x_tenant_id,
+            ),
+        )
+        return _authentication_context_response(result, verified_actor=verified_actor)
 
     @router.get(
         "/tenants/{tenant_id}/memberships",

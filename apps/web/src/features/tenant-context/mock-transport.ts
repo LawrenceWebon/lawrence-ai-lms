@@ -1,11 +1,11 @@
-export type TenantCandidate = {
-  id: string;
-  slug: string;
-  displayName: string;
-  membershipStatus: "active";
-};
+import {
+  type ActiveTenant,
+  TenantContextProblem,
+  type TenantCandidate,
+  type TenantContextTransport,
+} from "./transport";
 
-export type ActiveTenant = Pick<TenantCandidate, "id" | "slug" | "displayName">;
+export type { ActiveTenant, TenantCandidate } from "./transport";
 
 export type MockScenario =
   | "auth-error"
@@ -15,19 +15,6 @@ export type MockScenario =
   | "multi"
   | "session-expired"
   | "single";
-
-export type TransportProblemCode =
-  | "AUTHENTICATION_REQUIRED"
-  | "INVITATION_INVALID"
-  | "TENANT_ACCESS_DENIED"
-  | "TRANSPORT_UNAVAILABLE";
-
-export class MockTransportProblem extends Error {
-  constructor(readonly code: TransportProblemCode) {
-    super(code);
-    this.name = "MockTransportProblem";
-  }
-}
 
 const alpha: TenantCandidate = {
   id: "00000000-0000-4000-8000-0000000000a1",
@@ -63,7 +50,7 @@ async function waitForFixture(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 120));
 }
 
-export class MockTenantContextTransport {
+export class MockTenantContextTransport implements TenantContextTransport {
   readonly #acceptedInvitations = new Set<string>();
   readonly #scenario: MockScenario;
 
@@ -75,10 +62,10 @@ export class MockTenantContextTransport {
     await waitForFixture();
 
     if (!credentials.email || !credentials.password || this.#scenario === "auth-error") {
-      throw new MockTransportProblem("AUTHENTICATION_REQUIRED");
+      throw new TenantContextProblem("AUTHENTICATION_REQUIRED");
     }
     if (this.#scenario === "error") {
-      throw new MockTransportProblem("TRANSPORT_UNAVAILABLE");
+      throw new TenantContextProblem("TRANSPORT_UNAVAILABLE");
     }
     if (this.#scenario === "empty") {
       return [];
@@ -94,7 +81,7 @@ export class MockTenantContextTransport {
     const candidate = candidates.find((tenant) => tenant.id === selector);
 
     if (!candidate || this.#scenario === "denied") {
-      throw new MockTransportProblem("TENANT_ACCESS_DENIED");
+      throw new TenantContextProblem("TENANT_ACCESS_DENIED");
     }
 
     return { id: candidate.id, slug: candidate.slug, displayName: candidate.displayName };
@@ -104,7 +91,7 @@ export class MockTenantContextTransport {
     await waitForFixture();
 
     if (token !== activeInvitation) {
-      throw new MockTransportProblem("INVITATION_INVALID");
+      throw new TenantContextProblem("INVITATION_INVALID");
     }
     if (this.#acceptedInvitations.has(token)) {
       return "already-accepted";
@@ -117,8 +104,12 @@ export class MockTenantContextTransport {
   async refreshAccess(candidates: TenantCandidate[]): Promise<TenantCandidate[]> {
     await waitForFixture();
     if (this.#scenario === "session-expired") {
-      throw new MockTransportProblem("AUTHENTICATION_REQUIRED");
+      throw new TenantContextProblem("AUTHENTICATION_REQUIRED");
     }
     return candidates;
+  }
+
+  signOut(): void {
+    this.#acceptedInvitations.clear();
   }
 }

@@ -47,6 +47,12 @@
   justify-content: space-between;
 }
 
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
 .eyebrow {
   color: var(--accent);
   font-size: 0.78rem;
@@ -195,6 +201,12 @@
   .tenantList li {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .headerActions {
+    align-items: stretch;
+    flex-direction: column;
+    width: 100%;
   }
 
   .primaryButton,
