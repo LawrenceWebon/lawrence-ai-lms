@@ -1,6 +1,6 @@
 # F-002 — Canonical Course Lifecycle
 
-Status: **contract freeze pending independent review**
+Status: **corrective contract freeze pending independent review and merge**
 
 Feature ID: `F-002`
 
@@ -49,8 +49,10 @@ control is not authorization authority.
    permits an authorized instructor to review their own draft with an audit fact.
 7. An authorized human publishes the exact approved hash. One transaction freezes the
    version, updates the course publication pointer, and records audit/outbox facts.
-8. Any later material edit creates or uses a new draft version. The published version
-   remains unchanged.
+8. The instructor opens tenant-scoped version history and explicitly creates a
+   successor draft from the immutable version. The successor records its predecessor,
+   starts with new child identities and review state, and leaves the predecessor
+   unchanged.
 
 ## Requirements
 
@@ -67,6 +69,12 @@ control is not authorization authority.
   publication compare the exact canonical content hash.
 - Published content and its curriculum children are immutable at service and database
   boundaries. A new version is required for material change.
+- Snapshot reads select an exact course/version pair. Version history is ordered by
+  descending `version_number`, cursor-paginated, tenant/course scoped, and never
+  treats a cursor or path tenant as authorization authority.
+- Successor creation compares the course row, source-version row, and source content
+  hash; it deep-copies product content into a mutable `draft`, resets review fields and
+  child row versions, and records `predecessor_version_id` without changing the source.
 - Every tenant-owned table has `UNIQUE (tenant_id, id)`, composite same-tenant foreign
   keys, forced RLS, explicit grants, named constraints/indexes, and rollback evidence.
 - Section, lesson, and block positions are positive and unique inside their parent.
@@ -85,6 +93,7 @@ control is not authorization authority.
 | Missing active tenant selector | `400 TENANT_CONTEXT_REQUIRED` |
 | Stale expected version | `409 VERSION_CONFLICT`; no partial mutation |
 | Invalid structure, empty required content, or duplicate positions | `422 COURSE_VALIDATION_FAILED` with bounded field errors |
+| Existing curriculum ID without its row version, unknown parent, or wrong-parent edge | `422 COURSE_VALIDATION_FAILED` for shape; otherwise neutral `404 RESOURCE_NOT_FOUND` |
 | Submit/approve/publish hash mismatch | `409 CONTENT_HASH_MISMATCH`; approval is not reused |
 | Separate reviewer required but same actor reviews | `403 REVIEWER_SEPARATION_REQUIRED` |
 | AI/service actor attempts approval/publication | `403 HUMAN_ACTION_REQUIRED` |
@@ -103,6 +112,8 @@ control is not authorization authority.
   AI/service principals cannot approve or publish.
 - Published rows reject direct and service-level mutation. A new draft version can be
   created without altering the published snapshot.
+- Exact snapshot and descending cursor history reads expose only authorized versions;
+  successor creation is idempotent and preserves its immutable predecessor byte for byte.
 - API and Admin contract tests prove parity through fakes; the integration issue proves
   real service/database composition and the critical browser journey.
 - Production-role RLS and composite-FK tests cover missing context, wrong tenant,

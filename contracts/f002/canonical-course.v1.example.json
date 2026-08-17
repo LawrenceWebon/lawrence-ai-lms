@@ -15,6 +15,7 @@
     "id": "00000000-0000-4000-8000-00000000c101",
     "tenant_id": "00000000-0000-4000-8000-0000000000a1",
     "course_id": "00000000-0000-4000-8000-00000000c001",
+    "predecessor_version_id": null,
     "version_number": 1,
     "status": "draft",
     "origin_type": "manual",
