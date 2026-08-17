@@ -4,11 +4,15 @@
 
 ### Contract
 
-- Validate the Draft 2020-12 schema and shared example.
+- Validate both Draft 2020-12 schemas, the shared snapshot, and every named public DTO
+  in the lifecycle example suite.
 - Reject unknown properties, HTML/URLs/embeds, unknown tree nodes or marks, invalid
   headings, duplicate marks, empty text, duplicate/zero positions, mismatched tenant
   IDs, noncanonical hashes, and unsupported states.
 - Prove all three parallel lanes consume the same fixture checksum.
+- Reject missing/partial curriculum identity pairs, null/empty metadata patches,
+  route/discriminator mismatches, invalid reason placement, body idempotency keys,
+  and missing course-pointer expectations.
 
 ### Unit and policy
 
@@ -35,14 +39,17 @@
 
 ### Service and transaction
 
-- Create course + v1 atomically; optimistic update and full curriculum replacement.
+- Create course + v1 atomically; optimistic update and full curriculum replacement
+  preserve existing identity only with matching child rows and issue new IDs otherwise.
 - Submit/approve/publish recompute rather than trust the supplied hash.
 - Request changes permits later mutation but preserves append-only review evidence.
 - Publish pointer, version state, audit, idempotency, and outbox commit together; injected
   failure rolls all facts back.
 - Same-key replay returns one effect; changed payload conflicts.
 - Simultaneous update/reorder/approve/publish produces one winner without partial state.
-- New draft version leaves the published snapshot byte-for-byte unchanged.
+- Exact snapshot/history reads preserve tenant/course scope and stable descending cursor
+  order. New successor draft resets mutable/review identity while leaving the published
+  predecessor byte-for-byte unchanged.
 
 ### API and Admin
 

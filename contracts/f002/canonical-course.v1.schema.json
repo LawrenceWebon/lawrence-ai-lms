@@ -86,6 +86,7 @@
         "id",
         "tenant_id",
         "course_id",
+        "predecessor_version_id",
         "version_number",
         "status",
         "origin_type",
@@ -101,6 +102,7 @@
         "id": { "$ref": "#/$defs/uuid" },
         "tenant_id": { "$ref": "#/$defs/uuid" },
         "course_id": { "$ref": "#/$defs/uuid" },
+        "predecessor_version_id": { "$ref": "#/$defs/nullable_uuid" },
         "version_number": { "type": "integer", "minimum": 1 },
         "status": {
           "enum": [

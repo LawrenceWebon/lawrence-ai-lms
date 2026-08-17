@@ -1,10 +1,11 @@
 # Readiness Audit — F-002 Canonical Course Lifecycle
 
-Status: **READY AFTER PLANNING PR MERGE**
+Status: **NOT READY — corrective issue #33 requires review and merge**
 
 - [x] Outcome and non-goals match `docs/product/spec.md` and F-002 inventory.
 - [x] P-012 closes Q-P04 with the smallest readable structured-text contract.
-- [x] API, DTO, lifecycle, hash, event-fact, permission, and fixture contracts are frozen.
+- [x] Snapshot/history, successor, request/response DTO, lifecycle, hash, event-fact,
+  permission, and fixture contracts are executable.
 - [x] Authorization, tenant, human-review, immutability, privacy, and publication rules are explicit.
 - [x] Failure, idempotency, concurrency, rollback, and recovery behavior are explicit.
 - [x] Test plan covers contract, unit, database, RLS, API/Admin, browser, accessibility, and security behavior.
@@ -15,12 +16,12 @@ Status: **READY AFTER PLANNING PR MERGE**
 
 ## Readiness verdict
 
-The contracts are internally parallel-ready, but implementation branches must not be
-created from a base that lacks them. The external gate is therefore the independent
-approval and merge of planning issue #27's PR. After that merge, the coordinator may
-replace the implementation issues' `BLOCKED ON #27` marker with
-`READY FOR IMPLEMENTATION`, create their linked branches from the exact merge SHA, and
-start Agents A–C simultaneously.
+The corrective contracts are internally parallel-ready, but the existing implementation
+branches still point at the pre-correction base. Issues #28–#30 remain blocked until
+issue #33's corrective PR receives a fresh independent exact-SHA review, a distinct
+authorized GitHub approval, and merges into `develop`. The coordinator may then update
+the three issue markers, merge that exact base into each published branch without
+rebasing, rerun the shared contract test, and start Agents A–C simultaneously.
 
 ## Known limitations
 

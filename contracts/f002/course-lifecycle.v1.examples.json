@@ -1,0 +1,321 @@
+{
+  "CreateCourseV1": {
+    "slug": "synthetic-safe-learning",
+    "primary_locale": "en",
+    "title": "Synthetic Safe Learning",
+    "description": "An invented course fixture containing no private or source-derived material."
+  },
+  "UpdateCourseVersionV1": {
+    "expected_version_row_version": 1,
+    "title": "Synthetic Safe Learning, revised"
+  },
+  "ReplaceCurriculumV1": {
+    "expected_version_row_version": 1,
+    "sections": [
+      {
+        "id": "00000000-0000-4000-8000-00000000c201",
+        "expected_row_version": 1,
+        "title": "Safe foundations",
+        "position": 1,
+        "lessons": [
+          {
+            "id": "00000000-0000-4000-8000-00000000c301",
+            "expected_row_version": 1,
+            "title": "A deterministic lesson",
+            "position": 1,
+            "is_required": true,
+            "content_blocks": [
+              {
+                "id": "00000000-0000-4000-8000-00000000c401",
+                "expected_row_version": 1,
+                "kind": "rich_text",
+                "position": 1,
+                "document": {
+                  "type": "document",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "This is synthetic replacement content.",
+                          "marks": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "TransitionCourseVersionV1": {
+    "transition": "submit_review",
+    "expected_version_row_version": 2,
+    "expected_content_hash": "sha256:f4e7e98f5fe8199a25ba5293d4a7a58e1f45b649941de8c0935282ae5845ec31"
+  },
+  "CourseSnapshotV1": {
+    "$schema": "https://contracts.ai-lms.local/f002/canonical-course.v1.schema.json",
+    "course": {
+      "id": "00000000-0000-4000-8000-00000000c001",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "slug": "synthetic-safe-learning",
+      "reviewer_policy": "self_review_allowed",
+      "current_published_version_id": null,
+      "instructor_membership_ids": [
+        "00000000-0000-4000-8000-000000000301"
+      ],
+      "row_version": 1
+    },
+    "version": {
+      "id": "00000000-0000-4000-8000-00000000c101",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "course_id": "00000000-0000-4000-8000-00000000c001",
+      "predecessor_version_id": null,
+      "version_number": 1,
+      "status": "draft",
+      "origin_type": "manual",
+      "primary_locale": "en",
+      "title": "Synthetic Safe Learning",
+      "description": "An invented course fixture containing no private or source-derived material.",
+      "content_hash": "sha256:f4e7e98f5fe8199a25ba5293d4a7a58e1f45b649941de8c0935282ae5845ec31",
+      "submitted_hash": null,
+      "approved_hash": null,
+      "row_version": 1
+    },
+    "sections": [
+      {
+        "id": "00000000-0000-4000-8000-00000000c201",
+        "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+        "course_version_id": "00000000-0000-4000-8000-00000000c101",
+        "title": "Safe foundations",
+        "position": 1,
+        "row_version": 1,
+        "lessons": [
+          {
+            "id": "00000000-0000-4000-8000-00000000c301",
+            "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+            "course_version_id": "00000000-0000-4000-8000-00000000c101",
+            "section_id": "00000000-0000-4000-8000-00000000c201",
+            "title": "A deterministic lesson",
+            "position": 1,
+            "is_required": true,
+            "row_version": 1,
+            "content_blocks": [
+              {
+                "id": "00000000-0000-4000-8000-00000000c401",
+                "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+                "course_version_id": "00000000-0000-4000-8000-00000000c101",
+                "lesson_id": "00000000-0000-4000-8000-00000000c301",
+                "kind": "rich_text",
+                "position": 1,
+                "row_version": 1,
+                "document": {
+                  "type": "document",
+                  "content": [
+                    {
+                      "type": "heading",
+                      "level": 2,
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Learning safely",
+                          "marks": []
+                        }
+                      ]
+                    },
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "This synthetic lesson demonstrates the canonical structured text contract.",
+                          "marks": ["strong"]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "bullet_list",
+                      "items": [
+                        {
+                          "type": "list_item",
+                          "content": [
+                            {
+                              "type": "paragraph",
+                              "content": [
+                                {
+                                  "type": "text",
+                                  "text": "Review the exact version before publication.",
+                                  "marks": []
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "latest_review": null
+  },
+  "CourseVersionHistoryV1": {
+    "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+    "course_id": "00000000-0000-4000-8000-00000000c001",
+    "current_published_version_id": "00000000-0000-4000-8000-00000000c101",
+    "versions": [
+      {
+        "id": "00000000-0000-4000-8000-00000000c102",
+        "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+        "course_id": "00000000-0000-4000-8000-00000000c001",
+        "predecessor_version_id": "00000000-0000-4000-8000-00000000c101",
+        "version_number": 2,
+        "status": "draft",
+        "title": "Synthetic Safe Learning",
+        "content_hash": "sha256:f4e7e98f5fe8199a25ba5293d4a7a58e1f45b649941de8c0935282ae5845ec31",
+        "row_version": 1,
+        "is_current_published": false
+      },
+      {
+        "id": "00000000-0000-4000-8000-00000000c101",
+        "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+        "course_id": "00000000-0000-4000-8000-00000000c001",
+        "predecessor_version_id": null,
+        "version_number": 1,
+        "status": "published",
+        "title": "Synthetic Safe Learning",
+        "content_hash": "sha256:f4e7e98f5fe8199a25ba5293d4a7a58e1f45b649941de8c0935282ae5845ec31",
+        "row_version": 4,
+        "is_current_published": true
+      }
+    ],
+    "next_cursor": null
+  },
+  "CreateSuccessorDraftV1": {
+    "expected_course_row_version": 4,
+    "expected_source_version_row_version": 4,
+    "expected_source_content_hash": "sha256:f4e7e98f5fe8199a25ba5293d4a7a58e1f45b649941de8c0935282ae5845ec31"
+  },
+  "SuccessorDraftResultV1": {
+    "source_version_id": "00000000-0000-4000-8000-00000000c101",
+    "successor_version_id": "00000000-0000-4000-8000-00000000c102",
+    "snapshot": {
+      "$schema": "https://contracts.ai-lms.local/f002/canonical-course.v1.schema.json",
+      "course": {
+        "id": "00000000-0000-4000-8000-00000000c001",
+        "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+        "slug": "synthetic-safe-learning",
+        "reviewer_policy": "self_review_allowed",
+        "current_published_version_id": "00000000-0000-4000-8000-00000000c101",
+        "instructor_membership_ids": [
+          "00000000-0000-4000-8000-000000000301"
+        ],
+        "row_version": 5
+      },
+      "version": {
+        "id": "00000000-0000-4000-8000-00000000c102",
+        "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+        "course_id": "00000000-0000-4000-8000-00000000c001",
+        "predecessor_version_id": "00000000-0000-4000-8000-00000000c101",
+        "version_number": 2,
+        "status": "draft",
+        "origin_type": "manual",
+        "primary_locale": "en",
+        "title": "Synthetic Safe Learning",
+        "description": "An invented course fixture containing no private or source-derived material.",
+        "content_hash": "sha256:f4e7e98f5fe8199a25ba5293d4a7a58e1f45b649941de8c0935282ae5845ec31",
+        "submitted_hash": null,
+        "approved_hash": null,
+        "row_version": 1
+      },
+      "sections": [
+        {
+          "id": "00000000-0000-4000-8000-00000000c202",
+          "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+          "course_version_id": "00000000-0000-4000-8000-00000000c102",
+          "title": "Safe foundations",
+          "position": 1,
+          "row_version": 1,
+          "lessons": [
+            {
+              "id": "00000000-0000-4000-8000-00000000c302",
+              "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+              "course_version_id": "00000000-0000-4000-8000-00000000c102",
+              "section_id": "00000000-0000-4000-8000-00000000c202",
+              "title": "A deterministic lesson",
+              "position": 1,
+              "is_required": true,
+              "row_version": 1,
+              "content_blocks": [
+                {
+                  "id": "00000000-0000-4000-8000-00000000c402",
+                  "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+                  "course_version_id": "00000000-0000-4000-8000-00000000c102",
+                  "lesson_id": "00000000-0000-4000-8000-00000000c302",
+                  "kind": "rich_text",
+                  "position": 1,
+                  "row_version": 1,
+                  "document": {
+                    "type": "document",
+                    "content": [
+                      {
+                        "type": "heading",
+                        "level": 2,
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "Learning safely",
+                            "marks": []
+                          }
+                        ]
+                      },
+                      {
+                        "type": "paragraph",
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "This synthetic lesson demonstrates the canonical structured text contract.",
+                            "marks": ["strong"]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "bullet_list",
+                        "items": [
+                          {
+                            "type": "list_item",
+                            "content": [
+                              {
+                                "type": "paragraph",
+                                "content": [
+                                  {
+                                    "type": "text",
+                                    "text": "Review the exact version before publication.",
+                                    "marks": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "latest_review": null
+    }
+  }
+}

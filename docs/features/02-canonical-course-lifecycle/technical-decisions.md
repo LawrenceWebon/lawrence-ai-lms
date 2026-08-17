@@ -1,6 +1,6 @@
 # Technical Decisions — F-002 Canonical Course Lifecycle
 
-Status: **frozen for planning issue #27; pending independent review**
+Status: **corrective freeze for issue #33; implementation blocked pending review and merge**
 
 ## Existing architecture to reuse
 
@@ -25,6 +25,10 @@ Status: **frozen for planning issue #27; pending independent review**
   approved, withdrawn, and archived snapshots are not edited in place.
 - A material change after approval creates a new draft version or returns the existing
   mutable successor; it never clears an immutable historical approval.
+- Every non-initial version records its same-tenant/course `predecessor_version_id`.
+  Successor creation deep-copies product content, assigns new section/lesson/block IDs,
+  resets their row versions to 1, resets submitted/approved/review state, recomputes the
+  copied content hash, and does not mutate the predecessor.
 
 ### F002-TD-002 — Q-P04 closes with a provider-neutral rich-text document tree
 
@@ -86,15 +90,24 @@ act without weakening ADR-0004.
 ### F002-TD-006 — Optimistic concurrency and idempotency
 
 - Status: frozen.
-- Every mutable aggregate/child has `row_version >= 1`. Commands compare caller
-  expectations and increment affected versions exactly once.
+- Every mutable aggregate/child has `row_version >= 1`. Metadata and curriculum writes
+  compare the version row; preserved curriculum IDs also compare their child row.
+  A successful curriculum replacement increments the version row once, increments
+  only changed preserved children, starts new children at 1, and deletes omitted
+  children atomically.
 - Reorder accepts the complete ordered child-ID list and expected parent/child versions;
   it validates set equality and renumbers atomically.
-- Create, submit, approve, publish, withdraw, and archive require `Idempotency-Key`.
-  Same key/request returns the stored result; changed request returns
+- Create, every lifecycle-transition POST, and successor-draft creation require the
+  `Idempotency-Key` HTTP header. The key is never a JSON field. Same key/request
+  returns the stored status/body; changed request returns
   `IDEMPOTENCY_CONFLICT`.
+- `PATCH` metadata and `PUT` curriculum do not use an idempotency key; their required
+  expected row versions are the concurrency boundary. GET operations use neither.
 - Simultaneous publish locks/compares the course pointer and version. At most one
   version becomes the current published version.
+- Successor creation compares the course row, source-version row, and source hash.
+  One mutable successor may exist for a predecessor: a later equivalent request returns
+  it unchanged, while a stale expectation or immutable successor conflicts.
 
 ### F002-TD-007 — Tenant-safe persistence and no alternate adapters
 
@@ -108,30 +121,38 @@ act without weakening ADR-0004.
 - FastAPI and Admin call the same public application service. The browser uses only the
   generated client after the integration issue regenerates OpenAPI.
 
-## Frozen DTO contract
+## Frozen executable DTO contract
 
-The executable source is
-`contracts/f002/canonical-course.v1.schema.json`; the example in the same directory is
-the shared fixture for all lanes. The versioned response names are:
+The snapshot schema/example remain
+`contracts/f002/canonical-course.v1.schema.json` and
+`contracts/f002/canonical-course.v1.example.json`. Every public request/response DTO is
+also addressable by name under `$defs` in
+`contracts/f002/course-lifecycle.v1.schema.json`; the corresponding synthetic values
+are committed in `contracts/f002/course-lifecycle.v1.examples.json`.
 
-| DTO | Required content |
-|---|---|
-| `CourseSnapshotV1` | stable course, one version, ordered curriculum, latest review, reviewer policy |
-| `CourseSummaryV1` | course/version IDs, slug, title, state, row versions, published pointer |
-| `MutationResultV1` | snapshot, changed row versions, content hash, idempotent replay flag |
-| `ValidationReportV1` | `valid`, bounded stable errors `{code,path,message}` |
-| `ReviewDecisionV1` | review ID, decision, reviewed hash, human actor ID, timestamp |
+| DTO | Direction | Required content |
+|---|---|---|
+| `CreateCourseV1` | request | non-null slug, primary locale, title, description |
+| `UpdateCourseVersionV1` | request | expected version row plus at least one present, non-null metadata field |
+| `ReplaceCurriculumV1` | request | expected version row and complete ordered curriculum tree |
+| `TransitionCourseVersionV1` | request | route-matching discriminator, expected version/hash, conditional course row/reasons |
+| `CourseSnapshotV1` | response | stable course, exact version, ordered curriculum, latest review and reviewer policy |
+| `CourseVersionHistoryV1` | response | course scope, publication pointer, descending version summaries and next cursor |
+| `CreateSuccessorDraftV1` | request | expected course/source rows and exact source content hash |
+| `SuccessorDraftResultV1` | response | source/successor IDs and the exact successor snapshot |
 
-Input DTOs reject unknown fields and include the explicit tenant selector in the
-header, never as authorization authority:
+Patch presence is semantic: omitted metadata remains unchanged; JSON `null` is never a
+valid title, description, or locale, and a patch with no changed field is invalid.
+Curriculum nodes either omit both `id` and `expected_row_version` (new node) or provide
+both (preserved node). Supplied IDs must already belong to the selected tenant,
+course-version, and immediate parent. Duplicate IDs/positions, wrong-parent edges, and
+partial identity pairs fail; omitted stored children are deleted only inside the same
+successful mutable-version transaction.
 
-- `CreateCourseV1`: slug, primary locale, title, and description. Reviewer policy is
-  returned but never caller-selected.
-- `UpdateCourseVersionV1`: expected version row version plus changed scalar fields.
-- `ReplaceCurriculumV1`: complete ordered section/lesson/block tree plus expected
-  version row version; this coarse endpoint is the frozen first-slice edit boundary.
-- `TransitionCourseVersionV1`: expected row version, expected content hash, optional
-  stable reason code, and idempotency key where required.
+The transition discriminator must match its route. `request_changes` alone requires
+non-empty `reason_codes`; `withdraw` and `archive` alone require `reason_code`.
+`publish` and `withdraw` also require `expected_course_row_version` because they change
+the publication pointer. Every transition carries the exact expected content hash.
 
 ## Frozen HTTP contract
 
@@ -139,20 +160,26 @@ The adapter lane owns schemas/routers but not application composition or generat
 artifacts. All paths are under `/api/v1/tenants/{tenant_id}` and require
 `Authorization` plus matching `X-Tenant-ID`.
 
-| Method/path | Operation ID | Success |
-|---|---|---|
-| `POST /courses` | `createCourse` | `201 CourseSnapshotV1` |
-| `GET /courses/{course_id}` | `getCourse` | `200 CourseSnapshotV1` |
-| `PATCH /courses/{course_id}/versions/{version_id}` | `updateCourseVersion` | `200 CourseSnapshotV1` |
-| `PUT /courses/{course_id}/versions/{version_id}/curriculum` | `replaceCourseCurriculum` | `200 CourseSnapshotV1` |
-| `POST /courses/{course_id}/versions/{version_id}/submit-review` | `submitCourseReview` | `200 CourseSnapshotV1` |
-| `POST /courses/{course_id}/versions/{version_id}/request-changes` | `requestCourseChanges` | `200 CourseSnapshotV1` |
-| `POST /courses/{course_id}/versions/{version_id}/approve` | `approveCourseVersion` | `200 CourseSnapshotV1` |
-| `POST /courses/{course_id}/versions/{version_id}/publish` | `publishCourseVersion` | `200 CourseSnapshotV1` |
-| `POST /courses/{course_id}/versions/{version_id}/withdraw` | `withdrawCourseVersion` | `200 CourseSnapshotV1` |
-| `POST /courses/{course_id}/versions/{version_id}/archive` | `archiveCourseVersion` | `200 CourseSnapshotV1` |
+| Method/path | Operation ID | Request | Success | Idempotency |
+|---|---|---|---|---|
+| `POST /courses` | `createCourse` | `CreateCourseV1` | `201 CourseSnapshotV1` | header required |
+| `GET /courses/{course_id}/versions/{version_id}` | `getCourseVersion` | none | `200 CourseSnapshotV1` | none |
+| `GET /courses/{course_id}/versions` | `listCourseVersions` | query only | `200 CourseVersionHistoryV1` | none |
+| `PATCH /courses/{course_id}/versions/{version_id}` | `updateCourseVersion` | `UpdateCourseVersionV1` | `200 CourseSnapshotV1` | row version |
+| `PUT /courses/{course_id}/versions/{version_id}/curriculum` | `replaceCourseCurriculum` | `ReplaceCurriculumV1` | `200 CourseSnapshotV1` | row versions |
+| `POST /courses/{course_id}/versions/{version_id}/submit-review` | `submitCourseReview` | `TransitionCourseVersionV1:submit_review` | `200 CourseSnapshotV1` | header required |
+| `POST /courses/{course_id}/versions/{version_id}/request-changes` | `requestCourseChanges` | `TransitionCourseVersionV1:request_changes` | `200 CourseSnapshotV1` | header required |
+| `POST /courses/{course_id}/versions/{version_id}/approve` | `approveCourseVersion` | `TransitionCourseVersionV1:approve` | `200 CourseSnapshotV1` | header required |
+| `POST /courses/{course_id}/versions/{version_id}/publish` | `publishCourseVersion` | `TransitionCourseVersionV1:publish` | `200 CourseSnapshotV1` | header required |
+| `POST /courses/{course_id}/versions/{version_id}/withdraw` | `withdrawCourseVersion` | `TransitionCourseVersionV1:withdraw` | `200 CourseSnapshotV1` | header required |
+| `POST /courses/{course_id}/versions/{version_id}/archive` | `archiveCourseVersion` | `TransitionCourseVersionV1:archive` | `200 CourseSnapshotV1` | header required |
+| `POST /courses/{course_id}/versions/{version_id}/successor-draft` | `createSuccessorCourseDraft` | `CreateSuccessorDraftV1` | `200 SuccessorDraftResultV1` | header required |
 
-There is no list/search/catalog endpoint in F-002. F-007 owns learner-visible reads.
+The history operation accepts `limit` (default 50, maximum 100) and an opaque `cursor`,
+orders by `(version_number DESC, id DESC)`, and re-authorizes every page. There is no
+course search/catalog or learner-visible read in F-002; F-007 owns those operations.
+All state-changing POST rows require `Idempotency-Key`; PATCH/PUT rely on their body
+row-version expectations. Request bodies never contain actor or tenant authority.
 
 ## Stable problem codes
 
@@ -180,6 +207,7 @@ tokens, or unrestricted actor data.
 | `course.version.published.v1` | same + nullable `previous_published_version_id` |
 | `course.version.withdrawn.v1` | same + `reason_code` |
 | `course.version.archived.v1` | same |
+| `course.version.successor_created.v1` | `course_id`, source/successor version IDs and numbers, source/content hash |
 
 ## Shared hotspots and owner
 

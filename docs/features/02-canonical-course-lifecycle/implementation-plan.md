@@ -1,26 +1,27 @@
 # Implementation Plan — F-002 Canonical Course Lifecycle
 
-Status: **issues provisioned; implementation blocked until planning PR merges**
+Status: **issues provisioned; implementation blocked until remediation #33 merges**
 
 ## Dependency graph
 
 ```text
-planning #27 merged
-       |
-       +--> Lane A persistence/RLS --------+
-       +--> Lane B lifecycle services -----+--> integration/web
-       +--> Lane C API/Admin adapters -----+
+planning #27 merged -> corrective contracts #33 merged
+                                      |
+                                      +--> Lane A persistence/RLS --------+
+                                      +--> Lane B lifecycle services -----+--> integration/web
+                                      +--> Lane C API/Admin adapters -----+
 ```
 
-Lanes A–C start together from the first `develop` SHA containing planning #27. They
-consume `contracts/f002/canonical-course.v1.*` and may not import an unmerged sibling
-branch. Integration starts only after A–C merge in the declared order.
+Lanes A–C start together from the first `develop` SHA containing the independently
+reviewed corrective issue #33. They consume both F-002 schema/example pairs and may not
+import an unmerged sibling branch. Integration starts only after A–C merge in the
+declared order.
 
 | Issue | Agent | Objective | Primary owned paths | Contracts/fixtures | Depends on | Merge order |
 |---|---|---|---|---|---|---|
-| [#28](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/28) | A | Course/curriculum persistence, migrations, permissions, constraints, RLS | course models/apps/migrations/repository plus DB tests | F-002 JSON schema/example; frozen repository method table | #27 merged | 1 |
-| [#29](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/29) | B | Lifecycle policies/services, hashing, validation, concurrency/idempotency ports | course types/errors/policies/services plus unit/service tests | F-002 JSON schema/example; fake repository/fact writer | #27 merged | 2 |
-| [#30](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/30) | C | Thin FastAPI and Admin adapters against a structural service fake | course API/Admin files and adapter tests | frozen HTTP/Problem Details contract | #27 merged | 3 |
+| [#28](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/28) | A | Course/curriculum persistence, migrations, permissions, constraints, RLS | course models/apps/migrations/repository plus DB tests | F-002 schemas/examples; frozen repository method table | #33 merged | 1 |
+| [#29](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/29) | B | Lifecycle policies/services, hashing, validation, concurrency/idempotency ports | course types/errors/policies/services plus unit/service tests | F-002 schemas/examples; fake repository/fact writer | #33 merged | 2 |
+| [#30](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/30) | C | Thin FastAPI and Admin adapters against a structural service fake | course API/Admin files and adapter tests | executable DTO/HTTP/Problem Details contract | #33 merged | 3 |
 | [#31](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/31) | Integration | Compose real lanes, OpenAPI/client, minimal editor and critical E2E | shared composition/generated/web/e2e/docs hotspots | merged A–C plus F-002 fixture | A–C merged | 4 |
 
 ## Isolation and shared ownership
@@ -51,14 +52,16 @@ structurally matching port and supplies fakes in focused tests:
 
 ```text
 create_course(actor_id, tenant_id, command, idempotency_key) -> CourseSnapshotV1
-get_course(actor_id, tenant_id, course_id) -> CourseSnapshotV1
+get_course_version(actor_id, tenant_id, course_id, version_id) -> CourseSnapshotV1
+list_course_versions(actor_id, tenant_id, course_id, cursor, limit) -> CourseVersionHistoryV1
 update_version(actor_id, tenant_id, course_id, version_id, command) -> CourseSnapshotV1
 replace_curriculum(actor_id, tenant_id, course_id, version_id, command) -> CourseSnapshotV1
 transition_version(actor_id, tenant_id, course_id, version_id, command, idempotency_key) -> CourseSnapshotV1
-create_successor_draft(actor_id, tenant_id, course_id, source_version_id, idempotency_key) -> CourseSnapshotV1
+create_successor_draft(actor_id, tenant_id, course_id, source_version_id, command, idempotency_key) -> SuccessorDraftResultV1
 ```
 
-Lane A implements storage behavior for: load one tenant-scoped aggregate/snapshot;
+Lane A implements storage behavior for: load one tenant-scoped aggregate/snapshot and
+cursor page of descending version summaries;
 atomically insert course plus v1; compare and replace mutable version/curriculum;
 append an immutable review; compare and transition state/publication pointer; create a
 successor draft; and reserve/complete idempotency plus audit/outbox facts in the calling
@@ -148,11 +151,14 @@ updating the contract and all consumer tests in one integration-owned change.
 
 Start Agents A–C only when all are true:
 
-1. the planning PR for #27 is independently approved and merged into `develop`;
-2. issues A–C say `READY FOR IMPLEMENTATION` and link the merge SHA;
-3. their linked branches are created from that exact `develop` SHA;
+1. the corrective PR for #33 receives a fresh independent exact-SHA review, a distinct
+   authorized GitHub approval, and merges into `develop`;
+2. issues A–C say `READY FOR IMPLEMENTATION` and link the #33 merge SHA;
+3. an unprovisioned lane branch is created from that SHA; any already-published lane
+   branch merges that exact `origin/develop` without rebasing before implementation;
 4. each worktree path is absent before provisioning and each Compose resource is unique;
-5. the F-002 JSON schema/example and contract test pass on the shared base.
+5. both F-002 schema/example pairs and the focused semantic contract test pass on the
+   shared base.
 
 Until then, implementation is blocked. Integration starts only after A–C merge and
 must merge the latest base, rerun all gates, and obtain a new exact-SHA review.
