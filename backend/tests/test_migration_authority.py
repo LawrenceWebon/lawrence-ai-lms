@@ -34,3 +34,17 @@ def test_f001_migration_graph_orders_platform_identity_and_tenancy() -> None:
         ("lms_identity", "0002_runtime_profile_lookup"),
         ("tenancy", "0001_initial"),
     }
+
+
+@pytest.mark.django_db
+def test_f002_course_migration_graph_follows_secure_tenancy() -> None:
+    graph = MigrationLoader(connection, ignore_no_migrations=True).graph
+
+    initial = graph.node_map[("courses", "0001_initial")]
+    security = graph.node_map[("courses", "0002_course_security")]
+    one_successor = graph.node_map[("courses", "0003_one_successor")]
+    assert {node.key for node in initial.parents} == {
+        ("tenancy", "0002_secure_invitation_bootstrap")
+    }
+    assert {node.key for node in security.parents} == {("courses", "0001_initial")}
+    assert {node.key for node in one_successor.parents} == {("courses", "0002_course_security")}
