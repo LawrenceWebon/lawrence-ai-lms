@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "authority": "Django",
+  "schema_fingerprint": "sha256:28946d97bc27a1dde04437dac4bda65d7b102a58083ef52cfaed8f811b3763f6",
+  "database_fingerprint": "sha256:441241c44786015ea47a9cd1780a88b03e31cd29ddf90661c400f8ca70b1dd1b",
+  "objects": [
+    {
+      "table": "courses",
+      "migration": "courses.0001_initial",
+      "security_migration": "courses.0002_course_security",
+      "columns": ["id", "tenant_id", "slug", "reviewer_policy", "current_published_version_id", "row_version", "created_at", "updated_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,slug)", "FOREIGN KEY (tenant_id,id,current_published_version_id) -> course_versions(tenant_id,course_id,id)"],
+      "checks": ["reviewer_policy is fixed", "row_version >= 1", "current pointer targets this course and a published version"],
+      "indexes": ["ix_courses_tenant_current (tenant_id,current_published_version_id)"],
+      "delete_behavior": "no runtime delete; versions RESTRICT course deletion",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "table": "course_versions",
+      "migration": "courses.0001_initial",
+      "security_migration": "courses.0002_course_security",
+      "successor_migration": "courses.0003_one_successor",
+      "columns": ["id", "tenant_id", "course_id", "predecessor_version_id", "version_number", "status", "origin_type", "primary_locale", "title", "description", "content_hash", "submitted_hash", "approved_hash", "row_version", "created_at", "updated_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,course_id,id)", "UNIQUE (tenant_id,course_id,version_number)", "UNIQUE (tenant_id,course_id,predecessor_version_id) WHERE predecessor_version_id IS NOT NULL", "FOREIGN KEY (tenant_id,course_id) -> courses(tenant_id,id)", "FOREIGN KEY (tenant_id,course_id,predecessor_version_id) -> course_versions(tenant_id,course_id,id)"],
+      "checks": ["fixed status", "fixed origin_type", "version_number >= 1", "row_version >= 1", "canonical sha256 hashes", "immutable product content outside mutable states", "historical publication states cannot return to an editable lifecycle", "runtime content updates require courses.drafts.write"],
+      "indexes": ["ix_versions_tenant_course_no (tenant_id,course_id,version_number DESC,id DESC)", "ix_versions_tenant_status (tenant_id,status,course_id)"],
+      "delete_behavior": "retained immutable history; all direct deletes rejected",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "table": "course_instructors",
+      "migration": "courses.0001_initial",
+      "security_migration": "courses.0002_course_security",
+      "columns": ["id", "tenant_id", "course_id", "membership_id", "row_version", "created_at", "updated_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,course_id,membership_id)", "FOREIGN KEY (tenant_id,course_id) -> courses(tenant_id,id)", "FOREIGN KEY (tenant_id,membership_id) -> tenant_memberships(tenant_id,id)"],
+      "checks": ["row_version >= 1"],
+      "indexes": ["ix_instructors_tenant_course (tenant_id,course_id,membership_id)"],
+      "delete_behavior": "CASCADE with course; membership deletion RESTRICT",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "table": "curriculum_sections",
+      "migration": "courses.0001_initial",
+      "security_migration": "courses.0002_course_security",
+      "columns": ["id", "tenant_id", "course_version_id", "title", "position", "row_version", "created_at", "updated_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,course_version_id,id)", "UNIQUE (tenant_id,course_version_id,position)", "FOREIGN KEY (tenant_id,course_version_id) -> course_versions(tenant_id,id)"],
+      "checks": ["position >= 1", "row_version >= 1", "parent version must be mutable for writes"],
+      "indexes": ["ix_sections_tenant_version (tenant_id,course_version_id,position)"],
+      "delete_behavior": "CASCADE from mutable version; immutable-version writes rejected",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "table": "lessons",
+      "migration": "courses.0001_initial",
+      "security_migration": "courses.0002_course_security",
+      "columns": ["id", "tenant_id", "course_version_id", "section_id", "title", "position", "is_required", "row_version", "created_at", "updated_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,course_version_id,id)", "UNIQUE (tenant_id,section_id,position)", "FOREIGN KEY (tenant_id,course_version_id,section_id) -> curriculum_sections(tenant_id,course_version_id,id)"],
+      "checks": ["position >= 1", "row_version >= 1", "parent version must be mutable for writes"],
+      "indexes": ["ix_lessons_tenant_section (tenant_id,section_id,position)"],
+      "delete_behavior": "CASCADE from mutable section; immutable-version writes rejected",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "table": "lesson_content_blocks",
+      "migration": "courses.0001_initial",
+      "security_migration": "courses.0002_course_security",
+      "columns": ["id", "tenant_id", "course_version_id", "lesson_id", "kind", "position", "document", "row_version", "created_at", "updated_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,lesson_id,position)", "FOREIGN KEY (tenant_id,course_version_id,lesson_id) -> lessons(tenant_id,course_version_id,id)"],
+      "checks": ["kind = rich_text", "position >= 1", "row_version >= 1", "document is a JSON object", "parent version must be mutable for writes"],
+      "indexes": ["ix_blocks_tenant_lesson (tenant_id,lesson_id,position)"],
+      "delete_behavior": "CASCADE from mutable lesson; immutable-version writes rejected",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "table": "course_publication_reviews",
+      "migration": "courses.0001_initial",
+      "security_migration": "courses.0002_course_security",
+      "columns": ["id", "tenant_id", "course_version_id", "decision", "reviewed_hash", "reviewer_id", "self_review", "reason_codes", "decided_at", "created_at", "updated_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "FOREIGN KEY (tenant_id,course_version_id) -> course_versions(tenant_id,id)"],
+      "checks": ["decision is changes_requested or approved", "canonical reviewed hash", "reason_codes is an array of at most 20 entries", "append-only trigger"],
+      "indexes": ["ix_reviews_tenant_version (tenant_id,course_version_id,decided_at DESC,id DESC)"],
+      "delete_behavior": "RESTRICT from version; update and delete rejected",
+      "rls": "ENABLE + FORCE"
+    }
+  ]
+}

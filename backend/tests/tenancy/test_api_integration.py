@@ -108,7 +108,12 @@ def test_real_auth_context_service_selects_explicit_tenant_and_denies_outsider(
     ]
     assert selected.status_code == 200
     assert selected.json()["membership"]["role_codes"] == ["instructor"]
-    assert selected.json()["membership"]["permission_codes"] == []
+    assert selected.json()["membership"]["permission_codes"] == [
+        "courses.drafts.write",
+        "courses.publish",
+        "courses.read",
+        "courses.review",
+    ]
     assert denied.status_code == 404
     assert denied.headers["content-type"].startswith("application/problem+json")
     assert denied.json()["code"] == "TENANT_ACCESS_DENIED"

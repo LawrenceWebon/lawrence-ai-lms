@@ -1,0 +1,22 @@
+F-002 course migration strategy
+
+Forward: apply courses.0001_initial, courses.0002_course_security, then
+courses.0003_one_successor as the direct migrator. The security migration uses a
+5-second lock timeout and 30-second statement
+timeout, seeds deterministic course permissions, installs same-tenant foreign keys,
+changes table ownership, and enables/forces RLS before runtime traffic is enabled.
+
+Rollback before production traffic: migrate courses to zero. The reverse security SQL
+restores the F-001 shared fact policies, removes grants/policies/triggers/composite
+constraints, and removes course permission edges before Django drops the empty tables.
+
+Roll forward after traffic or retained course data exists: disable the course capability,
+fix the failing invariant in a new Django migration, compare the canonical dictionary
+fingerprint, rerun production-role tests, and re-enable only after the exact graph passes.
+Do not reverse a data-bearing course migration merely to recover application traffic.
+
+Schema fingerprint: SHA-256 over RFC-style compact JSON with sorted object keys for the
+objects array in course_schema_v1.json. Tests reproduce and compare the value.
+Database fingerprint: SHA-256 over sorted PostgreSQL catalog rows for course columns,
+constraints, indexes, policies, triggers, owners, and FORCE RLS flags. The focused
+dictionary test regenerates it from a freshly migrated database and fails on drift.
