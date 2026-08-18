@@ -9,6 +9,9 @@ import httpx
 
 from lms.api.main import create_application
 from lms.modules.identity.entities import IdentityCandidate
+from tests.contract_fakes.f002_course_administration import (
+    RecordingCourseAdministrationServiceFake,
+)
 
 ACTOR_ID = UUID("00000000-0000-4000-8000-000000000102")
 PROFILE_ID = UUID("20000000-0000-4000-8000-000000000102")
@@ -101,6 +104,7 @@ def test_composed_auth_context_requires_explicit_selection_and_matches_frozen_sh
     app = create_application(
         identity_authenticator=StubIdentityAuthenticator(),
         tenancy_service=service,
+        course_service=RecordingCourseAdministrationServiceFake(),
     )
     authorization = {"Authorization": "Bearer synthetic-access-token"}
 
@@ -147,6 +151,7 @@ def test_composed_routes_share_neutral_authentication_and_openapi_contract() -> 
     app = create_application(
         identity_authenticator=StubIdentityAuthenticator(),
         tenancy_service=RecordingTenancyService(),
+        course_service=RecordingCourseAdministrationServiceFake(),
     )
 
     response = send(app, "/api/v1/auth-context")
@@ -162,4 +167,15 @@ def test_composed_routes_share_neutral_authentication_and_openapi_contract() -> 
         "/api/v1/tenants/{tenant_id}/invitations",
         "/api/v1/tenant-invitations/accept",
         "/api/v1/tenants/{tenant_id}/memberships/{membership_id}",
+        "/api/v1/tenants/{tenant_id}/courses",
+        "/api/v1/tenants/{tenant_id}/courses/{course_id}/versions",
+        "/api/v1/tenants/{tenant_id}/courses/{course_id}/versions/{version_id}",
+        "/api/v1/tenants/{tenant_id}/courses/{course_id}/versions/{version_id}/approve",
+        "/api/v1/tenants/{tenant_id}/courses/{course_id}/versions/{version_id}/archive",
+        "/api/v1/tenants/{tenant_id}/courses/{course_id}/versions/{version_id}/curriculum",
+        "/api/v1/tenants/{tenant_id}/courses/{course_id}/versions/{version_id}/publish",
+        "/api/v1/tenants/{tenant_id}/courses/{course_id}/versions/{version_id}/request-changes",
+        "/api/v1/tenants/{tenant_id}/courses/{course_id}/versions/{version_id}/submit-review",
+        "/api/v1/tenants/{tenant_id}/courses/{course_id}/versions/{version_id}/successor-draft",
+        "/api/v1/tenants/{tenant_id}/courses/{course_id}/versions/{version_id}/withdraw",
     }

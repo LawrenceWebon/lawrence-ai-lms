@@ -11,6 +11,9 @@ from lms.api.composition import DjangoTenancyService
 from lms.api.main import create_application
 from lms.modules.identity.entities import IdentityCandidate
 from lms.modules.tenancy.services import create_invitation
+from tests.contract_fakes.f002_course_administration import (
+    RecordingCourseAdministrationServiceFake,
+)
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
@@ -55,6 +58,7 @@ def app_for(identity: IdentityCandidate) -> object:
     return create_application(
         identity_authenticator=StaticIdentityAuthenticator(identity),
         tenancy_service=DjangoTenancyService(),
+        course_service=RecordingCourseAdministrationServiceFake(),
     )
 
 

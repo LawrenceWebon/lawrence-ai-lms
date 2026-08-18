@@ -1,6 +1,6 @@
 # Readiness Audit — F-002 Canonical Course Lifecycle
 
-Status: **NOT READY — corrective issue #33 requires review and merge**
+Status: **READY FOR CODE REVIEW — implementation gates pass locally**
 
 - [x] Outcome and non-goals match `docs/product/spec.md` and F-002 inventory.
 - [x] P-012 closes Q-P04 with the smallest readable structured-text contract.
@@ -16,12 +16,14 @@ Status: **NOT READY — corrective issue #33 requires review and merge**
 
 ## Readiness verdict
 
-The corrective contracts are internally parallel-ready, but the existing implementation
-branches still point at the pre-correction base. Issues #28–#30 remain blocked until
-issue #33's corrective PR receives a fresh independent exact-SHA review, a distinct
-authorized GitHub approval, and merges into `develop`. The coordinator may then update
-the three issue markers, merge that exact base into each published branch without
-rebasing, rerun the shared contract test, and start Agents A–C simultaneously.
+Corrective issue #33 and implementation issues #28–#30 merged into `develop` in the
+declared order. Integration issue #31 composes the real service and PostgreSQL adapter,
+publishes the frozen OpenAPI and event artifacts, generates the TypeScript client, and
+provides the minimal authoring browser journey. Focused API/database, API/Admin parity,
+event-contract, OpenAPI/client, F-001 regression, F-002 Playwright, accessibility,
+tenant-denial, immediate-revocation, and immutable-version checks pass locally. The
+remaining gate is independent review at the exact PR head SHA plus protected GitHub
+checks; merge and deployment are outside issue #31.
 
 ## Known limitations
 

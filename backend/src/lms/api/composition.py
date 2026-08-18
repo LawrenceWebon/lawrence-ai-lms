@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from lms.api.course_composition import DjangoCourseAdministrationService
 from lms.api.schemas.tenancy import MembershipAdministrationError
 from lms.modules.tenancy import services
 from lms.modules.tenancy.errors import TenancyError
@@ -10,6 +11,8 @@ from lms.modules.tenancy.types import (
     InvitationReceipt,
     MembershipSummary,
 )
+
+__all__ = ["DjangoCourseAdministrationService", "DjangoTenancyService"]
 
 _PROBLEM_STATUS = {
     "AUTHENTICATION_REQUIRED": 401,

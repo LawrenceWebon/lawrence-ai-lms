@@ -1,6 +1,6 @@
 # Technical Decisions — F-002 Canonical Course Lifecycle
 
-Status: **corrective freeze for issue #33; implementation blocked pending review and merge**
+Status: **frozen and implemented; independent code review pending**
 
 ## Existing architecture to reuse
 

@@ -1,0 +1,23 @@
+{
+  "event_id": "10000000-0000-4000-8000-000000000203",
+  "event_type": "course.version.approved.v1",
+  "event_version": 1,
+  "producer": "courses",
+  "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+  "aggregate_type": "course_version",
+  "aggregate_id": "00000000-0000-4000-8000-00000000c101",
+  "aggregate_version": 5,
+  "occurred_at": "2026-08-18T00:02:00Z",
+  "recorded_at": "2026-08-18T00:02:01Z",
+  "correlation_id": "30000000-0000-4000-8000-000000000203",
+  "causation_id": "40000000-0000-4000-8000-000000000203",
+  "privacy_class": "internal",
+  "payload": {
+    "course_id": "00000000-0000-4000-8000-00000000c001",
+    "course_version_id": "00000000-0000-4000-8000-00000000c101",
+    "content_hash": "sha256:f4e7e98f5fe8199a25ba5293d4a7a58e1f45b649941de8c0935282ae5845ec31",
+    "aggregate_version": 5,
+    "review_id": "00000000-0000-4000-8000-00000000c502",
+    "self_review": true
+  }
+}
