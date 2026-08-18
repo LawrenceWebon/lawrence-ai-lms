@@ -45,10 +45,18 @@ from .types import (
 PERMISSION_MEMBERSHIPS_READ = "tenancy.memberships.read"
 PERMISSION_INVITATIONS_CREATE = "tenancy.invitations.create"
 PERMISSION_MEMBERSHIPS_UPDATE = "tenancy.memberships.update"
+PERMISSION_COURSES_READ = "courses.read"
+PERMISSION_COURSE_DRAFTS_WRITE = "courses.drafts.write"
+PERMISSION_COURSES_REVIEW = "courses.review"
+PERMISSION_COURSES_PUBLISH = "courses.publish"
 FIXED_PERMISSIONS = {
     PERMISSION_MEMBERSHIPS_READ: "List tenant memberships",
     PERMISSION_INVITATIONS_CREATE: "Create tenant invitations",
     PERMISSION_MEMBERSHIPS_UPDATE: "Update membership state and fixed roles",
+    PERMISSION_COURSES_READ: "Read tenant courses",
+    PERMISSION_COURSE_DRAFTS_WRITE: "Create and edit tenant course drafts",
+    PERMISSION_COURSES_REVIEW: "Review tenant course versions",
+    PERMISSION_COURSES_PUBLISH: "Publish and withdraw tenant course versions",
 }
 ROLE_DISPLAY_NAMES = {
     "tenant_admin": "Tenant administrator",
@@ -58,8 +66,17 @@ ROLE_DISPLAY_NAMES = {
 }
 ROLE_PERMISSION_CODES = {
     "tenant_admin": tuple(sorted(FIXED_PERMISSIONS)),
-    "instructor": (),
-    "reviewer": (),
+    "instructor": tuple(
+        sorted(
+            (
+                PERMISSION_COURSES_READ,
+                PERMISSION_COURSE_DRAFTS_WRITE,
+                PERMISSION_COURSES_REVIEW,
+                PERMISSION_COURSES_PUBLISH,
+            )
+        )
+    ),
+    "reviewer": tuple(sorted((PERMISSION_COURSES_READ, PERMISSION_COURSES_REVIEW))),
     "learner": (),
 }
 _EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
