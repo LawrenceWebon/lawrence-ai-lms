@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-lms.local/events/course.version.submitted/v1.schema.json",
+  "title": "course.version.submitted.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "event_type", "event_version", "producer", "tenant_id", "aggregate_type", "aggregate_id", "aggregate_version", "occurred_at", "recorded_at", "correlation_id", "causation_id", "privacy_class", "payload"],
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "event_type": { "const": "course.version.submitted.v1" },
+    "event_version": { "const": 1 },
+    "producer": { "const": "courses" },
+    "tenant_id": { "type": "string", "format": "uuid" },
+    "aggregate_type": { "const": "course_version" },
+    "aggregate_id": { "type": "string", "format": "uuid" },
+    "aggregate_version": { "type": "integer", "minimum": 1 },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "recorded_at": { "type": "string", "format": "date-time" },
+    "correlation_id": { "type": "string", "format": "uuid" },
+    "causation_id": { "type": "string", "format": "uuid" },
+    "privacy_class": { "const": "internal" },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["course_id", "course_version_id", "content_hash", "aggregate_version"],
+      "properties": {
+        "course_id": { "type": "string", "format": "uuid" },
+        "course_version_id": { "type": "string", "format": "uuid" },
+        "content_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "aggregate_version": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}

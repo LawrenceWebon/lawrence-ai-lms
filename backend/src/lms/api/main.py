@@ -7,7 +7,9 @@ from django.apps import apps
 from fastapi import FastAPI
 
 from lms.api.dependencies.authentication import AuthenticationDependency, IdentityAuthenticator
+from lms.api.routers.courses import create_course_router
 from lms.api.routers.tenancy import create_tenancy_router
+from lms.api.schemas.courses import CourseAdministrationServiceV1
 from lms.api.schemas.tenancy import MembershipAdministrationServiceV1
 from lms.modules.identity.entities import IdentityCandidate
 from lms.modules.identity.services import IdentityAuthenticationRejectedError
@@ -15,7 +17,7 @@ from lms.modules.identity.services import IdentityAuthenticationRejectedError
 if not apps.ready:
     django.setup()
 
-from lms.api.composition import DjangoTenancyService
+from lms.api.composition import DjangoCourseAdministrationService, DjangoTenancyService
 
 
 class HealthResponse(TypedDict):
@@ -36,6 +38,7 @@ def create_application(
     *,
     identity_authenticator: IdentityAuthenticator,
     tenancy_service: MembershipAdministrationServiceV1,
+    course_service: CourseAdministrationServiceV1,
 ) -> FastAPI:
     application = FastAPI(
         title="AI LMS API",
@@ -50,12 +53,18 @@ def create_application(
         return {
             "service": "ai-lms-api",
             "status": "ok",
-            "capabilities": ["f001-identity-tenancy"],
+            "capabilities": ["f001-identity-tenancy", "f002-course-lifecycle"],
         }
 
     application.include_router(
         create_tenancy_router(
             service=tenancy_service,
+            actor_dependency=AuthenticationDependency(identity_authenticator),
+        )
+    )
+    application.include_router(
+        create_course_router(
+            service=course_service,
             actor_dependency=AuthenticationDependency(identity_authenticator),
         )
     )
@@ -65,4 +74,5 @@ def create_application(
 app = create_application(
     identity_authenticator=FailClosedIdentityAuthenticator(),
     tenancy_service=DjangoTenancyService(),
+    course_service=DjangoCourseAdministrationService(),
 )

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-lms.local/events/course.version.successor_created/v1.schema.json",
+  "title": "course.version.successor_created.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "event_type", "event_version", "producer", "tenant_id", "aggregate_type", "aggregate_id", "aggregate_version", "occurred_at", "recorded_at", "correlation_id", "causation_id", "privacy_class", "payload"],
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "event_type": { "const": "course.version.successor_created.v1" },
+    "event_version": { "const": 1 },
+    "producer": { "const": "courses" },
+    "tenant_id": { "type": "string", "format": "uuid" },
+    "aggregate_type": { "const": "course_version" },
+    "aggregate_id": { "type": "string", "format": "uuid" },
+    "aggregate_version": { "type": "integer", "minimum": 1 },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "recorded_at": { "type": "string", "format": "date-time" },
+    "correlation_id": { "type": "string", "format": "uuid" },
+    "causation_id": { "type": "string", "format": "uuid" },
+    "privacy_class": { "const": "internal" },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["course_id", "source_version_id", "successor_version_id", "source_version_number", "successor_version_number", "source_content_hash", "content_hash"],
+      "properties": {
+        "course_id": { "type": "string", "format": "uuid" },
+        "source_version_id": { "type": "string", "format": "uuid" },
+        "successor_version_id": { "type": "string", "format": "uuid" },
+        "source_version_number": { "type": "integer", "minimum": 1 },
+        "successor_version_number": { "type": "integer", "minimum": 1 },
+        "source_content_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "content_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    }
+  }
+}

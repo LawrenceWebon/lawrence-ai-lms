@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import uuid
 from collections.abc import Mapping, Sequence
+from datetime import datetime
 from typing import Any, cast
 from uuid import UUID
 
@@ -353,6 +354,8 @@ class CourseRepository:
         expected_row_version: int,
         updates: Mapping[str, str],
         content_hash: str,
+        submitted_hash: str | None = None,
+        approved_hash: str | None = None,
     ) -> Snapshot:
         allowed_fields = {"primary_locale", "title", "description"}
         if not updates or not set(updates) <= allowed_fields:
@@ -371,8 +374,19 @@ class CourseRepository:
             for field, value in updates.items():
                 setattr(version, field, value)
             version.content_hash = content_hash
+            version.submitted_hash = submitted_hash
+            version.approved_hash = approved_hash
             version.row_version += 1
-            version.save(update_fields=(*updates, "content_hash", "row_version", "updated_at"))
+            version.save(
+                update_fields=(
+                    *updates,
+                    "content_hash",
+                    "submitted_hash",
+                    "approved_hash",
+                    "row_version",
+                    "updated_at",
+                )
+            )
             return self._required_snapshot(tenant_uuid, course_uuid, version_uuid)
 
     def replace_curriculum(
@@ -384,6 +398,8 @@ class CourseRepository:
         expected_row_version: int,
         sections: Sequence[Mapping[str, Any]],
         content_hash: str,
+        submitted_hash: str | None = None,
+        approved_hash: str | None = None,
     ) -> Snapshot:
         tenant_uuid = _as_uuid(tenant_id)
         course_uuid = _as_uuid(course_id)
@@ -398,8 +414,18 @@ class CourseRepository:
                 raise CoursePersistenceConflictError("Course version row changed.")
             self._replace_curriculum_rows(tenant_uuid, version, sections)
             version.content_hash = content_hash
+            version.submitted_hash = submitted_hash
+            version.approved_hash = approved_hash
             version.row_version += 1
-            version.save(update_fields=("content_hash", "row_version", "updated_at"))
+            version.save(
+                update_fields=(
+                    "content_hash",
+                    "submitted_hash",
+                    "approved_hash",
+                    "row_version",
+                    "updated_at",
+                )
+            )
             return self._required_snapshot(tenant_uuid, course_uuid, version_uuid)
 
     def _replace_curriculum_rows(
@@ -564,6 +590,8 @@ class CourseRepository:
         reviewer_id: Identifier,
         self_review: bool,
         reason_codes: Sequence[str],
+        review_id: Identifier | None = None,
+        decided_at: datetime | None = None,
     ) -> Snapshot:
         tenant_uuid = _as_uuid(tenant_id)
         course_uuid = _as_uuid(course_id)
@@ -575,15 +603,20 @@ class CourseRepository:
                 raise CoursePersistenceConflictError(
                     "Course version is unavailable in this tenant."
                 )
+            review_values: dict[str, object] = {
+                "tenant_id": tenant_uuid,
+                "course_version_id": version_uuid,
+                "decision": decision,
+                "reviewed_hash": reviewed_hash,
+                "reviewer_id": _as_uuid(reviewer_id),
+                "self_review": self_review,
+                "reason_codes": list(reason_codes),
+                "decided_at": decided_at or timezone.now(),
+            }
+            if review_id is not None:
+                review_values["id"] = _as_uuid(review_id)
             CoursePublicationReview.objects.create(
-                tenant_id=tenant_uuid,
-                course_version_id=version_uuid,
-                decision=decision,
-                reviewed_hash=reviewed_hash,
-                reviewer_id=_as_uuid(reviewer_id),
-                self_review=self_review,
-                reason_codes=list(reason_codes),
-                decided_at=timezone.now(),
+                **review_values,
             )
             return self._required_snapshot(tenant_uuid, course_uuid, version_uuid)
 
@@ -776,6 +809,77 @@ class CourseRepository:
             course.row_version += 1
             course.save(update_fields=("row_version", "updated_at"))
             return self._required_snapshot(tenant_uuid, course_uuid, successor.id)
+
+    def find_successor_snapshot(
+        self,
+        tenant_id: Identifier,
+        course_id: Identifier,
+        source_version_id: Identifier,
+    ) -> Snapshot | None:
+        tenant_uuid = _as_uuid(tenant_id)
+        course_uuid = _as_uuid(course_id)
+        successor_id = (
+            CourseVersion.objects.filter(
+                tenant_id=tenant_uuid,
+                course_id=course_uuid,
+                predecessor_version_id=_as_uuid(source_version_id),
+            )
+            .order_by("version_number", "id")
+            .values_list("id", flat=True)
+            .first()
+        )
+        if successor_id is None:
+            return None
+        return self._required_snapshot(tenant_uuid, course_uuid, successor_id)
+
+    def next_version_number(self, tenant_id: Identifier, course_id: Identifier) -> int:
+        tenant_uuid = _as_uuid(tenant_id)
+        course_uuid = _as_uuid(course_id)
+        if not Course.objects.filter(tenant_id=tenant_uuid, id=course_uuid).exists():
+            raise CoursePersistenceConflictError("Course is unavailable in this tenant.")
+        maximum = CourseVersion.objects.filter(
+            tenant_id=tenant_uuid,
+            course_id=course_uuid,
+        ).aggregate(value=Max("version_number"))["value"]
+        return cast(int, maximum) + 1
+
+    def course_publication_pointer(
+        self, tenant_id: Identifier, course_id: Identifier
+    ) -> UUID | None:
+        result = (
+            Course.objects.filter(
+                tenant_id=_as_uuid(tenant_id),
+                id=_as_uuid(course_id),
+            )
+            .values_list("current_published_version_id", flat=True)
+            .first()
+        )
+        if (
+            result is None
+            and not Course.objects.filter(
+                tenant_id=_as_uuid(tenant_id),
+                id=_as_uuid(course_id),
+            ).exists()
+        ):
+            raise CoursePersistenceConflictError("Course is unavailable in this tenant.")
+        return result
+
+    def latest_submission_actor(
+        self,
+        tenant_id: Identifier,
+        version_id: Identifier,
+    ) -> UUID | None:
+        return (
+            AuditFact.objects.filter(
+                tenant_id=_as_uuid(tenant_id),
+                event_type="course.version.submitted.v1",
+                subject_type="course_version",
+                subject_id=_as_uuid(version_id),
+            )
+            .order_by("-occurred_at", "-id")
+            .values_list("actor_id", flat=True)
+            .first()
+        )
 
     def reserve_idempotency(
         self,

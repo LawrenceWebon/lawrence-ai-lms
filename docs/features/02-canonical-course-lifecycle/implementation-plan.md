@@ -1,6 +1,6 @@
 # Implementation Plan — F-002 Canonical Course Lifecycle
 
-Status: **issues provisioned; implementation blocked until remediation #33 merges**
+Status: **lanes A–C merged; integration implementation complete; independent code review pending**
 
 ## Dependency graph
 
@@ -12,10 +12,9 @@ planning #27 merged -> corrective contracts #33 merged
                                       +--> Lane C API/Admin adapters -----+
 ```
 
-Lanes A–C start together from the first `develop` SHA containing the independently
-reviewed corrective issue #33. They consume both F-002 schema/example pairs and may not
-import an unmerged sibling branch. Integration starts only after A–C merge in the
-declared order.
+Corrective issue #33 and implementation lanes A–C are merged into `develop` in the
+declared order. The integration implementation consumes those merged results and the
+frozen F-002 schema/example pairs; it does not import sibling branches.
 
 | Issue | Agent | Objective | Primary owned paths | Contracts/fixtures | Depends on | Merge order |
 |---|---|---|---|---|---|---|

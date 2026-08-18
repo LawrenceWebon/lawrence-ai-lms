@@ -19,7 +19,7 @@ from pydantic import BaseModel, ConfigDict, SecretStr
 
 django.setup()
 
-from lms.api.composition import DjangoTenancyService
+from lms.api.composition import DjangoCourseAdministrationService, DjangoTenancyService
 from lms.api.main import create_application
 from lms.modules.identity.services import DjangoIdentityProfileReader, IdentityService
 from lms.modules.identity.tokens import CachedJwks, JwtVerificationConfig, JwtVerifier
@@ -92,6 +92,7 @@ def _identity_service() -> IdentityService:
 app = create_application(
     identity_authenticator=_identity_service(),
     tenancy_service=DjangoTenancyService(),
+    course_service=DjangoCourseAdministrationService(),
 )
 fixture_router = APIRouter(prefix="/api/integration", include_in_schema=False)
 

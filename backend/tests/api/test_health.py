@@ -17,7 +17,7 @@ def test_health_endpoint_reports_f001_integration_readiness() -> None:
     assert response.json() == {
         "service": "ai-lms-api",
         "status": "ok",
-        "capabilities": ["f001-identity-tenancy"],
+        "capabilities": ["f001-identity-tenancy", "f002-course-lifecycle"],
     }
 
 

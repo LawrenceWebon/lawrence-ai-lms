@@ -1,6 +1,6 @@
 # F-002 — Canonical Course Lifecycle
 
-Status: **corrective contract freeze pending independent review and merge**
+Status: **implementation complete; independent code review pending**
 
 Feature ID: `F-002`
 
