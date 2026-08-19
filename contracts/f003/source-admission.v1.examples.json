@@ -1,0 +1,183 @@
+{
+  "CreateSourceAdmissionV1": {
+    "display_name": "Synthetic civic history source",
+    "declared_filename": "synthetic-civic-history.pdf",
+    "rights_declaration": {
+      "basis": "owned",
+      "attestation_version": "f003-source-rights-attestation-v1",
+      "attested": true,
+      "valid_until": null
+    }
+  },
+  "ReviewSourceStoreAuthorizationV1": {
+    "decision": "activate",
+    "expected_authorization_row_version": 1,
+    "decision_code": "RIGHTS_EVIDENCE_ACCEPTED"
+  },
+  "CancelSourceAdmissionV1": {
+    "expected_source_version_row_version": 4,
+    "reason_code": "USER_CANCELLED"
+  },
+  "AdmissionPolicyV1": {
+    "version": "f003-local-v1",
+    "accepted_media_types": ["application/pdf"],
+    "max_pdf_bytes": 6291456,
+    "max_page_count": 100,
+    "max_rendered_pixels_per_page": 25000000,
+    "max_rendered_pixels_total": 250000000,
+    "max_decoded_parser_bytes": 67108864,
+    "validation_cpu_seconds": 15,
+    "validation_wall_seconds": 30,
+    "upload_intent_ttl_seconds": 900,
+    "max_active_upload_intents_per_tenant": 2,
+    "max_upload_intents_per_tenant_24h": 10,
+    "max_upload_attempt_bytes_per_tenant_24h": 31457280,
+    "max_quarantine_objects_per_tenant": 20,
+    "max_quarantine_bytes_per_tenant": 62914560
+  },
+  "UploadIntentV1": {
+    "id": "00000000-0000-4000-8000-00000000c305",
+    "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+    "source_document_id": "00000000-0000-4000-8000-00000000c301",
+    "source_version_id": "00000000-0000-4000-8000-00000000c302",
+    "status": "active",
+    "target_url": "/api/v1/source-upload-targets/f003localuploadtoken0000000000000001",
+    "expires_at": "2026-08-19T01:15:00Z",
+    "max_bytes": 6291456,
+    "accepted_media_type": "application/pdf",
+    "row_version": 1
+  },
+  "AdmissionValidationResultV1": {
+    "outcome": "admitted",
+    "inspector_version": "synthetic-pdf-inspector-v1",
+    "content_sha256": "sha256:577a863e821823c16490e2acbc6c30b086a45c90d6efefea815b8bc4bd99fb1d",
+    "file_size_bytes": 4096,
+    "media_type": "application/pdf",
+    "page_count": 1,
+    "rendered_pixels_total": 1048576,
+    "decoded_parser_bytes": 8192,
+    "rejection_code": null
+  },
+  "AdmissionValidationJobV1": {
+    "job_id": "00000000-0000-4000-8000-00000000c307",
+    "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+    "source_document_id": "00000000-0000-4000-8000-00000000c301",
+    "source_version_id": "00000000-0000-4000-8000-00000000c302",
+    "storage_object_id": "00000000-0000-4000-8000-00000000c306",
+    "stage": "validate_admission",
+    "attempt_number": 1,
+    "lease_expires_at": "2026-08-19T01:02:00Z",
+    "idempotency_key": "f003-validation-c302-attempt-0001",
+    "correlation_id": "00000000-0000-4000-8000-00000000c308",
+    "policy": {
+      "version": "f003-local-v1",
+      "accepted_media_types": ["application/pdf"],
+      "max_pdf_bytes": 6291456,
+      "max_page_count": 100,
+      "max_rendered_pixels_per_page": 25000000,
+      "max_rendered_pixels_total": 250000000,
+      "max_decoded_parser_bytes": 67108864,
+      "validation_cpu_seconds": 15,
+      "validation_wall_seconds": 30,
+      "upload_intent_ttl_seconds": 900,
+      "max_active_upload_intents_per_tenant": 2,
+      "max_upload_intents_per_tenant_24h": 10,
+      "max_upload_attempt_bytes_per_tenant_24h": 31457280,
+      "max_quarantine_objects_per_tenant": 20,
+      "max_quarantine_bytes_per_tenant": 62914560
+    },
+    "input_manifest_sha256": "sha256:fbc582ef0af44750bf6e109308594d2fe74a1e2bbf6326a58676bb688e3d4dd3"
+  },
+  "SourceRemovalJobV1": {
+    "job_id": "00000000-0000-4000-8000-00000000c309",
+    "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+    "source_document_id": "00000000-0000-4000-8000-00000000c301",
+    "source_version_id": "00000000-0000-4000-8000-00000000c302",
+    "storage_object_id": "00000000-0000-4000-8000-00000000c306",
+    "stage": "remove_quarantine_object",
+    "reason_code": "RIGHTS_REVOKED",
+    "attempt_number": 1,
+    "lease_expires_at": "2026-08-19T01:05:00Z",
+    "idempotency_key": "f003-removal-c302-attempt-0001",
+    "correlation_id": "00000000-0000-4000-8000-00000000c308",
+    "impact_manifest_sha256": "sha256:28d68d9e2598931f1ef9a1f150aec728a73fe5b4f5d51965a67c1b61a2dbdb6c"
+  },
+  "SourceAdmissionEventV1": {
+    "event_id": "00000000-0000-4000-8000-00000000c310",
+    "event_type": "source.version.admitted.v1",
+    "event_version": 1,
+    "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+    "source_document_id": "00000000-0000-4000-8000-00000000c301",
+    "source_version_id": "00000000-0000-4000-8000-00000000c302",
+    "aggregate_version": 4,
+    "occurred_at": "2026-08-19T01:01:00Z",
+    "correlation_id": "00000000-0000-4000-8000-00000000c308",
+    "payload": {
+      "admission_status": "admitted",
+      "content_sha256": "sha256:577a863e821823c16490e2acbc6c30b086a45c90d6efefea815b8bc4bd99fb1d",
+      "reason_code": null
+    }
+  },
+  "SourceAdmissionV1": {
+    "source_document": {
+      "id": "00000000-0000-4000-8000-00000000c301",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "display_name": "Synthetic civic history source",
+      "current_version_id": "00000000-0000-4000-8000-00000000c302",
+      "row_version": 4
+    },
+    "source_version": {
+      "id": "00000000-0000-4000-8000-00000000c302",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "source_document_id": "00000000-0000-4000-8000-00000000c301",
+      "version_number": 1,
+      "admission_status": "admitted",
+      "declared_filename": "synthetic-civic-history.pdf",
+      "content_sha256": "sha256:577a863e821823c16490e2acbc6c30b086a45c90d6efefea815b8bc4bd99fb1d",
+      "derived_file_size_bytes": 4096,
+      "derived_media_type": "application/pdf",
+      "derived_page_count": 1,
+      "derived_rendered_pixels_total": 1048576,
+      "rejection_code": null,
+      "validation_attempt_count": 1,
+      "row_version": 4
+    },
+    "rights_declaration": {
+      "id": "00000000-0000-4000-8000-00000000c303",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "source_document_id": "00000000-0000-4000-8000-00000000c301",
+      "source_version_id": "00000000-0000-4000-8000-00000000c302",
+      "declared_by_actor_id": "00000000-0000-4000-8000-000000000102",
+      "basis": "owned",
+      "attestation_version": "f003-source-rights-attestation-v1",
+      "attested_at": "2026-08-19T00:00:00Z",
+      "valid_until": null,
+      "evidence_reference": null,
+      "row_version": 1
+    },
+    "store_authorization": {
+      "id": "00000000-0000-4000-8000-00000000c304",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "source_document_id": "00000000-0000-4000-8000-00000000c301",
+      "source_version_id": "00000000-0000-4000-8000-00000000c302",
+      "rights_declaration_id": "00000000-0000-4000-8000-00000000c303",
+      "operation": "store",
+      "status": "active",
+      "requested_by_actor_id": "00000000-0000-4000-8000-000000000102",
+      "reviewed_by_actor_id": "00000000-0000-4000-8000-000000000101",
+      "decision_code": "RIGHTS_EVIDENCE_ACCEPTED",
+      "valid_from": "2026-08-19T00:01:00Z",
+      "valid_until": null,
+      "row_version": 2
+    },
+    "upload_intent": {
+      "id": "00000000-0000-4000-8000-00000000c305",
+      "status": "consumed",
+      "expires_at": "2026-08-19T01:15:00Z"
+    },
+    "removal": {
+      "status": "not_required",
+      "reason_code": null
+    }
+  }
+}
