@@ -1,10 +1,17 @@
 # F-002 — Canonical Course Lifecycle
 
-Status: **implementation complete; independent code review pending**
+Status: **implementation merged; independent review and distinct approval evidence unrecorded**
 
 Feature ID: `F-002`
 
 Planning issue: [#27](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/27)
+
+The integration implementation merged through [PR #39](https://github.com/LawrenceWebon/lawrence-ai-lms/pull/39)
+at `99bd51beae9cad4774986dd797b245fd19da60a3`. Its required checks passed, but
+GitHub records `REVIEW_REQUIRED` with no submitted independent review or distinct
+approval. F-002 therefore remains incomplete as a delivery gate pending an
+evidence-based post-merge audit and project-owner disposition of that missing
+pre-merge approval record.
 
 ## Outcome
 

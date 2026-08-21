@@ -1,6 +1,11 @@
 # Technical Decisions — F-002 Canonical Course Lifecycle
 
-Status: **frozen and implemented; independent code review pending**
+Status: **frozen and merged; independent review/approval evidence unrecorded**
+
+The implementation merged through [PR #39](https://github.com/LawrenceWebon/lawrence-ai-lms/pull/39)
+at `99bd51beae9cad4774986dd797b245fd19da60a3`. The technical decisions remain frozen,
+but GitHub has no submitted independent review or distinct approval for that PR. This
+record must not be read as certifying the required delivery review gate.
 
 ## Existing architecture to reuse
 

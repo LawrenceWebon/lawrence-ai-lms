@@ -1,6 +1,6 @@
 # Implementation Plan — F-002 Canonical Course Lifecycle
 
-Status: **lanes A–C merged; integration implementation complete; independent code review pending**
+Status: **lanes A–C and integration merged; independent review/approval evidence unrecorded**
 
 ## Dependency graph
 
@@ -13,8 +13,11 @@ planning #27 merged -> corrective contracts #33 merged
 ```
 
 Corrective issue #33 and implementation lanes A–C are merged into `develop` in the
-declared order. The integration implementation consumes those merged results and the
-frozen F-002 schema/example pairs; it does not import sibling branches.
+declared order. The integration implementation merged as PR #39 at
+`99bd51beae9cad4774986dd797b245fd19da60a3`; it consumes those merged results and the
+frozen F-002 schema/example pairs without importing sibling branches. GitHub records
+no independent review or distinct approval for PR #39, so this merge does not close
+the documented review gate.
 
 | Issue | Agent | Objective | Primary owned paths | Contracts/fixtures | Depends on | Merge order |
 |---|---|---|---|---|---|---|
