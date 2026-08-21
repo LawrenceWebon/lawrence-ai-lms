@@ -76,6 +76,7 @@ The owner-input specifications are [retention/legal hold](plan/25-data-retention
 | [Product planning audit](product/product-audit.md) | Plan Product gate result and F-001 Plan Feature handoff |
 | [Feature workspace](features/README.md) | Optional durable feature-package template |
 | [Delivery workflows](workflows/README.md) | Four-agent worktree and GitHub CLI lifecycle |
+| [Debugging and performance workflow](workflows/DEBUGGING_PERFORMANCE_AI_LMS_CODEX_WORKFLOW.md) | Reproduction, root-cause, RED-to-GREEN, baseline, before/after, and cleanup gates |
 
 ### Product, architecture, and engineering boundaries
 
@@ -128,6 +129,7 @@ The owner-input specifications are [retention/legal hold](plan/25-data-retention
 | [Runbook catalog](runbooks/README.md) | Required incident/recovery procedures, format and safety rules |
 | [Evidence index](evidence/README.md) | Evidence schema, artifact rules and explicit pre-implementation state |
 | [Delivery workflows](workflows/README.md) | Repository-specific four-agent, worktree, GitHub issue/PR, review and merge workflow |
+| [Debugging and performance workflow](workflows/DEBUGGING_PERFORMANCE_AI_LMS_CODEX_WORKFLOW.md) | Cross-cutting evidence rules for defects, intermittent failures, performance work, and merged-task cleanup |
 
 AI relational entities are detailed in [06 — AI schema extension](plan/06-ai-schema-extension.md). All architecture decisions and their lifecycle are indexed in the [ADR guide](adr/README.md).
 
@@ -145,6 +147,9 @@ For implementation work:
 8. repository/coding standards and current official-source claims.
 
 AI agents additionally follow [the execution guide](plan/24-agent-execution-guide.md) and must state applicable decision, invariant/test, capability and evidence IDs before editing implementation.
+Defect and performance tasks also follow the
+[debugging and performance workflow](workflows/DEBUGGING_PERFORMANCE_AI_LMS_CODEX_WORKFLOW.md)
+before entering implementation or claiming a verified fix.
 
 ## Status vocabulary
 

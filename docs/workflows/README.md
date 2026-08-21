@@ -85,6 +85,12 @@ Planning is proportional to the change. Do not rerun the full product-planning
 workflow for an already documented feature. Use it only for a real product-scope
 decision. Normal delivery begins with a focused GitHub issue derived from the plan.
 
+Defect investigation and performance work use the cross-cutting
+[Debugging and Performance workflow](DEBUGGING_PERFORMANCE_AI_LMS_CODEX_WORKFLOW.md).
+That workflow may be entered from implementation, review, CI, support, or operations;
+once it produces a bounded fix, the normal issue/worktree/PR and independent-review
+rules below still apply.
+
 ## Codex skill routing
 
 Repository skills live in `.agents/skills`; `.codex/config.toml` is reserved for
@@ -99,6 +105,30 @@ project settings. Use the smallest skill matching the requested stage:
 
 The packaging examples in the longer workflow guides are design references, not
 additional skills that must be scaffolded. This table is the active repository set.
+
+The debugging/performance guide is workflow authority, not an installed repository
+skill. Use the existing implementation skill only after a defect has a valid
+reproduction and proven root cause, or after a performance task has a reproducible
+baseline and one measured bottleneck. Adding dedicated debugging/performance skills
+requires its own approved repository change.
+
+## Debugging and performance workflow
+
+Use [the cross-cutting guide](DEBUGGING_PERFORMANCE_AI_LMS_CODEX_WORKFLOW.md) with these
+repository-specific gates:
+
+| Work type | Required evidence before implementation | Verified handoff |
+|---|---|---|
+| Reproducible defect | Exact symptom, valid failing behavioral test when feasible, execution trace, and cause-level explanation | Original RED test is GREEN; adjacent, tenant/security, and applicable AI checks pass |
+| Intermittent defect | One hypothesis at a time, two or three privacy-safe observations, and a precise trigger flow | Confirmed hypothesis becomes a regression test; rejected diagnostics are removed |
+| Performance audit | User-visible symptom, representative data/flow, metric and stable baseline | Ranked evidence report only; no production-code optimization |
+| Performance fix | One measured bottleneck and a repeatable before scenario | Equivalent after measurement, material improvement, correctness evidence, and a stable guard where valuable |
+
+The guide's commerce, payment, AI companion/RAG, vector, and provider examples apply
+only when those capabilities are separately approved and enabled. They are not
+permission to add routes, schema, dependencies, credentials, test data, or production
+configuration. Never trade correctness, tenant isolation, source rights, privacy,
+accessibility, or approved AI quality for a passing test or faster-looking result.
 
 ## Four-agent execution model
 
@@ -384,22 +414,48 @@ Never merge with `--admin`. Merge concurrent PRs one at a time. After each merge
 remaining branch owners merge the latest base, rerun tests, push, and obtain review of
 the new SHA. This serializes integration, not feature development.
 
-### 7. Cleanup
+### 7. Mandatory post-merge cleanup
 
-Only the coordinator removes a task worktree, and only after GitHub reports the PR as
-merged and the worktree is clean. Closed-but-unmerged work is preserved until an
-explicit disposition.
+The coordinator performs cleanup after every task PR merges to `develop` and before
+provisioning the next task. A local handoff such as `READY FOR CODE REVIEW` or
+`APPROVED FOR MERGE` is not completion for cleanup purposes because review fixes may
+still be required. A closed-but-unmerged task is preserved unless the project owner
+explicitly records abandonment or another disposition.
+
+Resolve exact values from the issue/worktree record; do not use globs or guessed
+paths. Then:
 
 ```bash
-gh pr view "$PR" --repo "$REPO" --json state
+gh pr view "$PR" --repo "$REPO" --json state,mergedAt,mergeCommit,headRefName
 git -C "$WORKTREE" status --porcelain
+
+COMPOSE_PROJECT_NAME="$TASK_COMPOSE_PROJECT" \
+AI_LMS_POSTGRES_PORT="$TASK_POSTGRES_PORT" \
+docker compose -f "$WORKTREE/compose.yaml" down --volumes --remove-orphans
+
 git worktree remove "$WORKTREE"
+test ! -e "$WORKTREE"
+git worktree list --porcelain
+docker compose ls -a
 git fetch --prune origin
-git worktree prune
 ```
 
-Do not delete a non-merged branch or a dirty worktree. Do not run bulk formatting,
-branch cleanup, `git gc`, or `git worktree prune` while other agents are active.
+The required sequence is:
+
+1. verify GitHub reports `MERGED`, or cite the explicit owner-approved abandonment;
+2. verify the worktree has no tracked, staged, or untracked changes;
+3. stop only the task's recorded Compose project and remove its disposable volumes;
+4. remove the registered worktree with `git worktree remove`, which also removes its
+   directory;
+5. verify the directory, worktree registration, containers, networks, and disposable
+   volumes are gone; and
+6. record what was removed and whether any retained artifact remains recoverable.
+
+Stop on a dirty tree, unresolved PR state, unexpected path, or resource-name mismatch.
+Never use `rm -rf` as a substitute for `git worktree remove`; never remove an active,
+reviewing, open, or closed-unmerged task; and never stop another task's Compose project.
+Local branch deletion is a separate, explicit merged-branch action. Do not run bulk
+branch cleanup, `git gc`, or global `git worktree prune` while other agents are active.
 
 ## Workflow-stage responsibilities
 
@@ -407,9 +463,10 @@ branch cleanup, `git gc`, or `git worktree prune` while other agents are active.
 |---|---|---|---|
 | Plan Product | Narrow plan correction only when scope changes | planning issue/PR | scope synchronized |
 | Plan Feature | Issue DAG, frozen contracts, acceptance/test plan | create four bounded issues | `READY FOR IMPLEMENTATION` |
+| Debug / Performance | Reproduction and root cause, or baseline and ranked bottleneck | focused issue/PR after evidence gate | `BUG FIX VERIFIED`, `PERFORMANCE FIX VERIFIED`, or evidence blocker |
 | Implement | Code, tests, evidence, focused commits | push and open draft PR | `READY FOR CODE REVIEW` |
 | Code Review | Exact-SHA findings and verdict | PR review/comment | `APPROVED FOR MERGE` or changes |
-| Merge/Deploy | integration order, merge and release evidence | protected `gh pr merge` flow | verified merge/deploy state |
+| Merge/Deploy | integration order, merge/release evidence, and task cleanup | protected `gh pr merge` flow | verified merge/deploy state and removed merged-task worktree |
 
 ## Non-negotiable implementation boundaries
 

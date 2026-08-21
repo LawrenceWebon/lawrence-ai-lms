@@ -105,6 +105,7 @@ companion. That design is not part of the focused MVP.
 | `docs/runbooks/README.md` | Required operational runbook catalog and safety rules |
 | `docs/evidence/README.md` | Implementation/release evidence schema and current empty state |
 | `docs/workflows/README.md` | Four-agent delivery model and GitHub CLI issue/branch/PR workflow |
+| `docs/workflows/DEBUGGING_PERFORMANCE_AI_LMS_CODEX_WORKFLOW.md` | Evidence-first defect debugging, performance measurement, and verified post-merge cleanup |
 
 Documentation integrity is checked by `scripts/generate-document-manifest.ps1 -Check` and `scripts/validate-markdown-links.ps1`; CI fails on manifest drift or missing local Markdown targets (CHG-033/CHG-049).
 

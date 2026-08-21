@@ -58,6 +58,30 @@ explicitly requests implementation and the selected issue is ready.
 - Do not create a host `.venv` or install project Node dependencies on the host.
   Start each isolated task with `docker compose up -d --build`, then reuse that
   task's Compose services for project commands and dependency execution.
+- Before provisioning the next task, the coordinator audits prior task worktrees.
+  A worktree is cleanup-eligible only after GitHub reports its PR merged, or after
+  the project owner explicitly abandons the task. `READY FOR CODE REVIEW`, approval,
+  or a closed-but-unmerged PR is not cleanup eligibility.
+- For each cleanup-eligible task, verify the worktree is clean, stop only its recorded
+  Compose project, remove it with `git worktree remove`, and verify both its directory
+  and task-local resources are gone. Preserve active, dirty, or unmerged worktrees.
+
+## Debugging and performance
+
+- Follow `docs/workflows/DEBUGGING_PERFORMANCE_AI_LMS_CODEX_WORKFLOW.md` for defects,
+  intermittent failures, regressions, and performance work.
+- For a non-trivial defect, reproduce the reported behavior before changing production
+  code, prefer a failing behavioral regression test, confirm it fails for the reported
+  reason, and explain the root cause with repository evidence. Fix the cause minimally,
+  prove RED to GREEN, run adjacent and required security/tenant checks, and remove or
+  promote temporary instrumentation.
+- Performance work starts with a user-visible symptom, representative scenario, metric,
+  and recorded baseline. Rank measured bottlenecks, fix one bottleneck per focused task
+  by default, re-run the equivalent scenario, and record before/after results plus
+  correctness, tenant/security, cost, and AI-quality effects where applicable.
+- Examples for commerce, AI chat/RAG, vector search, or unapproved providers in the
+  cross-cutting guide are conditional diagnostics only; they do not enable deferred
+  capabilities or override the product contract.
 
 ## Architecture boundaries
 

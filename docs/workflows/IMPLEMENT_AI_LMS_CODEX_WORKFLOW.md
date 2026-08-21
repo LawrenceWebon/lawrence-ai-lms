@@ -29,6 +29,14 @@ issue. Create a durable `docs/features` folder only when the issue needs it. Pro
 belongs in issue/PR comments and evidence rather than a single shared status file that
 all four agents edit.
 
+When work begins from a defect, regression, intermittent failure, or performance
+symptom, enter the
+[Debugging and Performance workflow](DEBUGGING_PERFORMANCE_AI_LMS_CODEX_WORKFLOW.md)
+before changing production code. A defect reaches this implementation workflow only
+after valid reproduction and root-cause evidence; a performance change reaches it only
+after a repeatable baseline identifies one measured bottleneck. The issue, isolated
+worktree, owned-path, test, review, and merge rules remain unchanged.
+
 ---
 
 # 1. What This Workflow Solves
@@ -2051,6 +2059,12 @@ Give the next reviewer enough evidence to review without reconstructing the enti
 - `command` — PASS
 - `command` — PASS
 
+## Debugging Evidence
+- Not applicable / reproduction, root cause, and RED to GREEN proof
+
+## Performance Evidence
+- Not applicable / scenario, baseline, before/after, and regression guard
+
 ## Security / Tenant Verification
 - ...
 
@@ -2090,6 +2104,8 @@ The implementation step is complete only when this gate passes.
 - [ ] Feature Planning Gate passed.
 - [ ] Exact implementation step was selected.
 - [ ] Prerequisite steps are complete.
+- [ ] A defect has valid reproduction and proven root cause where applicable.
+- [ ] A performance change has a stable baseline and one measured bottleneck where applicable.
 
 ---
 
@@ -2185,6 +2201,7 @@ Where applicable:
 - [ ] Implementation summary prepared.
 - [ ] Known limitations documented.
 - [ ] Review focus documented.
+- [ ] Task Compose identifiers and the post-merge cleanup owner are recorded.
 - [ ] No merge/deploy action was performed.
 
 ---
