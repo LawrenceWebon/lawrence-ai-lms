@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-lms.local/f007/learner-events.v1.schema.json",
+  "title": "F-007 learning event example suite v1",
+  "description": "The top-level object validates the proposed event examples. Each named event is independently addressable through its $defs fragment.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "EnrollmentCreatedV1",
+    "EnrollmentRevokedV1",
+    "LessonProgressedV1",
+    "CourseCompletedV1",
+    "CourseReopenedV1"
+  ],
+  "properties": {
+    "EnrollmentCreatedV1": { "$ref": "#/$defs/EnrollmentCreatedV1" },
+    "EnrollmentRevokedV1": { "$ref": "#/$defs/EnrollmentRevokedV1" },
+    "LessonProgressedV1": { "$ref": "#/$defs/LessonProgressedV1" },
+    "CourseCompletedV1": { "$ref": "#/$defs/CourseCompletedV1" },
+    "CourseReopenedV1": { "$ref": "#/$defs/CourseReopenedV1" }
+  },
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reason_code": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{2,63}$"
+    },
+    "event_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "event_type",
+        "event_version",
+        "producer",
+        "tenant_id",
+        "aggregate_type",
+        "aggregate_id",
+        "aggregate_version",
+        "occurred_at",
+        "recorded_at",
+        "correlation_id",
+        "causation_id",
+        "privacy_class",
+        "payload"
+      ],
+      "properties": {
+        "event_id": { "$ref": "#/$defs/uuid" },
+        "event_type": { "type": "string" },
+        "event_version": { "const": 1 },
+        "producer": { "const": "learning" },
+        "tenant_id": { "$ref": "#/$defs/uuid" },
+        "aggregate_type": { "enum": ["enrollment", "enrollment_progress"] },
+        "aggregate_id": { "$ref": "#/$defs/uuid" },
+        "aggregate_version": { "type": "integer", "minimum": 1 },
+        "occurred_at": { "$ref": "#/$defs/timestamp" },
+        "recorded_at": { "$ref": "#/$defs/timestamp" },
+        "correlation_id": { "$ref": "#/$defs/uuid" },
+        "causation_id": { "$ref": "#/$defs/uuid" },
+        "privacy_class": { "const": "internal" },
+        "payload": { "type": "object" }
+      }
+    },
+    "EnrollmentCreatedV1": {
+      "allOf": [
+        { "$ref": "#/$defs/event_envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "learning.enrollment.created.v1" },
+            "aggregate_type": { "const": "enrollment" },
+            "payload": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "enrollment_id",
+                "learner_membership_id",
+                "course_id",
+                "course_version_id",
+                "admission_source",
+                "status",
+                "aggregate_version"
+              ],
+              "properties": {
+                "enrollment_id": { "$ref": "#/$defs/uuid" },
+                "learner_membership_id": { "$ref": "#/$defs/uuid" },
+                "course_id": { "$ref": "#/$defs/uuid" },
+                "course_version_id": { "$ref": "#/$defs/uuid" },
+                "admission_source": { "const": "manual_assignment" },
+                "status": { "const": "active" },
+                "aggregate_version": { "type": "integer", "minimum": 1 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "EnrollmentRevokedV1": {
+      "allOf": [
+        { "$ref": "#/$defs/event_envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "learning.enrollment.revoked.v1" },
+            "aggregate_type": { "const": "enrollment" },
+            "payload": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "enrollment_id",
+                "learner_membership_id",
+                "course_id",
+                "course_version_id",
+                "status",
+                "reason_code",
+                "aggregate_version"
+              ],
+              "properties": {
+                "enrollment_id": { "$ref": "#/$defs/uuid" },
+                "learner_membership_id": { "$ref": "#/$defs/uuid" },
+                "course_id": { "$ref": "#/$defs/uuid" },
+                "course_version_id": { "$ref": "#/$defs/uuid" },
+                "status": { "const": "revoked" },
+                "reason_code": { "$ref": "#/$defs/reason_code" },
+                "aggregate_version": { "type": "integer", "minimum": 1 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "LessonProgressedV1": {
+      "allOf": [
+        { "$ref": "#/$defs/event_envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "learning.lesson.progressed.v1" },
+            "aggregate_type": { "const": "enrollment_progress" },
+            "payload": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "enrollment_id",
+                "course_version_id",
+                "lesson_id",
+                "command",
+                "previous_lesson_state",
+                "lesson_state",
+                "aggregate_version"
+              ],
+              "properties": {
+                "enrollment_id": { "$ref": "#/$defs/uuid" },
+                "course_version_id": { "$ref": "#/$defs/uuid" },
+                "lesson_id": { "$ref": "#/$defs/uuid" },
+                "command": {
+                  "enum": ["open_lesson", "complete_lesson", "reopen_lesson"]
+                },
+                "previous_lesson_state": {
+                  "enum": ["not_started", "in_progress", "completed"]
+                },
+                "lesson_state": {
+                  "enum": ["in_progress", "completed"]
+                },
+                "aggregate_version": { "type": "integer", "minimum": 1 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "CourseCompletedV1": {
+      "allOf": [
+        { "$ref": "#/$defs/event_envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "learning.course.completed.v1" },
+            "aggregate_type": { "const": "enrollment_progress" },
+            "payload": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "enrollment_id",
+                "course_version_id",
+                "required_lesson_count",
+                "completed_required_lesson_count",
+                "aggregate_version"
+              ],
+              "properties": {
+                "enrollment_id": { "$ref": "#/$defs/uuid" },
+                "course_version_id": { "$ref": "#/$defs/uuid" },
+                "required_lesson_count": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 20000
+                },
+                "completed_required_lesson_count": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 20000
+                },
+                "aggregate_version": { "type": "integer", "minimum": 1 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "CourseReopenedV1": {
+      "allOf": [
+        { "$ref": "#/$defs/event_envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "learning.course.reopened.v1" },
+            "aggregate_type": { "const": "enrollment_progress" },
+            "payload": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "enrollment_id",
+                "course_version_id",
+                "lesson_id",
+                "required_lesson_count",
+                "completed_required_lesson_count",
+                "aggregate_version"
+              ],
+              "properties": {
+                "enrollment_id": { "$ref": "#/$defs/uuid" },
+                "course_version_id": { "$ref": "#/$defs/uuid" },
+                "lesson_id": { "$ref": "#/$defs/uuid" },
+                "required_lesson_count": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 20000
+                },
+                "completed_required_lesson_count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 20000
+                },
+                "aggregate_version": { "type": "integer", "minimum": 1 }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,412 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-lms.local/f007/learner-playback.v1.schema.json",
+  "title": "F-007 learner playback public DTO example suite v1",
+  "description": "The top-level object validates the committed example suite. Each named public HTTP DTO is independently addressable through its $defs fragment.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "CreateEnrollmentV1",
+    "RevokeEnrollmentV1",
+    "EnrollmentV1",
+    "LearnerDashboardV1",
+    "PlaybackSnapshotV1",
+    "LessonPlaybackV1",
+    "ProgressCommandV1",
+    "ProgressResultV1"
+  ],
+  "properties": {
+    "CreateEnrollmentV1": { "$ref": "#/$defs/CreateEnrollmentV1" },
+    "RevokeEnrollmentV1": { "$ref": "#/$defs/RevokeEnrollmentV1" },
+    "EnrollmentV1": { "$ref": "#/$defs/EnrollmentV1" },
+    "LearnerDashboardV1": { "$ref": "#/$defs/LearnerDashboardV1" },
+    "PlaybackSnapshotV1": { "$ref": "#/$defs/PlaybackSnapshotV1" },
+    "LessonPlaybackV1": { "$ref": "#/$defs/LessonPlaybackV1" },
+    "ProgressCommandV1": { "$ref": "#/$defs/ProgressCommandV1" },
+    "ProgressResultV1": { "$ref": "#/$defs/ProgressResultV1" }
+  },
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "nullable_uuid": {
+      "oneOf": [
+        { "$ref": "#/$defs/uuid" },
+        { "type": "null" }
+      ]
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "nullable_timestamp": {
+      "oneOf": [
+        { "$ref": "#/$defs/timestamp" },
+        { "type": "null" }
+      ]
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "locale": {
+      "type": "string",
+      "pattern": "^[a-z]{2}(?:-[A-Z]{2})?$",
+      "maxLength": 10
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "reason_code": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{2,63}$"
+    },
+    "cursor": {
+      "type": "string",
+      "minLength": 16,
+      "maxLength": 1024,
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "enrollment_status": {
+      "enum": ["active", "revoked"]
+    },
+    "lesson_progress_state": {
+      "enum": ["not_started", "in_progress", "completed"]
+    },
+    "course_progress_state": {
+      "enum": ["not_started", "in_progress", "completed"]
+    },
+    "CreateEnrollmentV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["learner_membership_id", "course_id"],
+      "properties": {
+        "learner_membership_id": { "$ref": "#/$defs/uuid" },
+        "course_id": { "$ref": "#/$defs/uuid" }
+      }
+    },
+    "RevokeEnrollmentV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expected_enrollment_row_version", "reason_code"],
+      "properties": {
+        "expected_enrollment_row_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "reason_code": { "$ref": "#/$defs/reason_code" }
+      }
+    },
+    "EnrollmentV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "tenant_id",
+        "learner_membership_id",
+        "course_id",
+        "course_version_id",
+        "admission_source",
+        "status",
+        "enrolled_at",
+        "revoked_at",
+        "row_version"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "tenant_id": { "$ref": "#/$defs/uuid" },
+        "learner_membership_id": { "$ref": "#/$defs/uuid" },
+        "course_id": { "$ref": "#/$defs/uuid" },
+        "course_version_id": { "$ref": "#/$defs/uuid" },
+        "admission_source": { "const": "manual_assignment" },
+        "status": { "$ref": "#/$defs/enrollment_status" },
+        "enrolled_at": { "$ref": "#/$defs/timestamp" },
+        "revoked_at": { "$ref": "#/$defs/nullable_timestamp" },
+        "row_version": { "type": "integer", "minimum": 1 }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "const": "active" } },
+            "required": ["status"]
+          },
+          "then": { "properties": { "revoked_at": { "type": "null" } } },
+          "else": {
+            "properties": {
+              "revoked_at": { "$ref": "#/$defs/timestamp" }
+            }
+          }
+        }
+      ]
+    },
+    "course_progress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "required_lesson_count",
+        "completed_required_lesson_count",
+        "resume_lesson_id",
+        "row_version"
+      ],
+      "properties": {
+        "state": { "$ref": "#/$defs/course_progress_state" },
+        "required_lesson_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20000
+        },
+        "completed_required_lesson_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20000
+        },
+        "resume_lesson_id": { "$ref": "#/$defs/nullable_uuid" },
+        "row_version": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "dashboard_card": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enrollment_id",
+        "course_id",
+        "course_version_id",
+        "course_version_number",
+        "primary_locale",
+        "title",
+        "description",
+        "content_hash",
+        "enrolled_at",
+        "progress"
+      ],
+      "properties": {
+        "enrollment_id": { "$ref": "#/$defs/uuid" },
+        "course_id": { "$ref": "#/$defs/uuid" },
+        "course_version_id": { "$ref": "#/$defs/uuid" },
+        "course_version_number": { "type": "integer", "minimum": 1 },
+        "primary_locale": { "$ref": "#/$defs/locale" },
+        "title": { "$ref": "#/$defs/title" },
+        "description": { "$ref": "#/$defs/description" },
+        "content_hash": { "$ref": "#/$defs/hash" },
+        "enrolled_at": { "$ref": "#/$defs/timestamp" },
+        "progress": { "$ref": "#/$defs/course_progress" }
+      }
+    },
+    "LearnerDashboardV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tenant_id", "items", "next_cursor"],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/uuid" },
+        "items": {
+          "type": "array",
+          "maxItems": 50,
+          "items": { "$ref": "#/$defs/dashboard_card" }
+        },
+        "next_cursor": {
+          "oneOf": [
+            { "$ref": "#/$defs/cursor" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "outline_lesson": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "position",
+        "is_required",
+        "progress_state"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "title": { "$ref": "#/$defs/title" },
+        "position": { "type": "integer", "minimum": 1 },
+        "is_required": { "type": "boolean" },
+        "progress_state": { "$ref": "#/$defs/lesson_progress_state" }
+      }
+    },
+    "outline_section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "position", "lessons"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "title": { "$ref": "#/$defs/title" },
+        "position": { "type": "integer", "minimum": 1 },
+        "lessons": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 200,
+          "items": { "$ref": "#/$defs/outline_lesson" }
+        }
+      }
+    },
+    "PlaybackSnapshotV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "enrollment_id",
+        "course_id",
+        "course_version_id",
+        "course_version_number",
+        "primary_locale",
+        "title",
+        "description",
+        "content_hash",
+        "sections",
+        "progress"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/uuid" },
+        "enrollment_id": { "$ref": "#/$defs/uuid" },
+        "course_id": { "$ref": "#/$defs/uuid" },
+        "course_version_id": { "$ref": "#/$defs/uuid" },
+        "course_version_number": { "type": "integer", "minimum": 1 },
+        "primary_locale": { "$ref": "#/$defs/locale" },
+        "title": { "$ref": "#/$defs/title" },
+        "description": { "$ref": "#/$defs/description" },
+        "content_hash": { "$ref": "#/$defs/hash" },
+        "sections": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/outline_section" }
+        },
+        "progress": { "$ref": "#/$defs/course_progress" }
+      }
+    },
+    "lesson_content_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "position", "document"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "kind": { "const": "rich_text" },
+        "position": { "type": "integer", "minimum": 1 },
+        "document": {
+          "$ref": "https://contracts.ai-lms.local/f002/canonical-course.v1.schema.json#/$defs/rich_text_document"
+        }
+      }
+    },
+    "lesson_detail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "section_id",
+        "title",
+        "position",
+        "is_required",
+        "progress_state",
+        "content_blocks"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "section_id": { "$ref": "#/$defs/uuid" },
+        "title": { "$ref": "#/$defs/title" },
+        "position": { "type": "integer", "minimum": 1 },
+        "is_required": { "type": "boolean" },
+        "progress_state": { "$ref": "#/$defs/lesson_progress_state" },
+        "content_blocks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/lesson_content_block" }
+        }
+      }
+    },
+    "LessonPlaybackV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "enrollment_id",
+        "course_version_id",
+        "primary_locale",
+        "content_hash",
+        "lesson",
+        "previous_lesson_id",
+        "next_lesson_id",
+        "progress"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/uuid" },
+        "enrollment_id": { "$ref": "#/$defs/uuid" },
+        "course_version_id": { "$ref": "#/$defs/uuid" },
+        "primary_locale": { "$ref": "#/$defs/locale" },
+        "content_hash": { "$ref": "#/$defs/hash" },
+        "lesson": { "$ref": "#/$defs/lesson_detail" },
+        "previous_lesson_id": { "$ref": "#/$defs/nullable_uuid" },
+        "next_lesson_id": { "$ref": "#/$defs/nullable_uuid" },
+        "progress": { "$ref": "#/$defs/course_progress" }
+      }
+    },
+    "ProgressCommandV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "lesson_id", "expected_progress_row_version"],
+      "properties": {
+        "command": {
+          "enum": ["open_lesson", "complete_lesson", "reopen_lesson"]
+        },
+        "lesson_id": { "$ref": "#/$defs/uuid" },
+        "expected_progress_row_version": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "ProgressResultV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "enrollment_id",
+        "course_version_id",
+        "lesson_id",
+        "lesson_state",
+        "course_state",
+        "required_lesson_count",
+        "completed_required_lesson_count",
+        "resume_lesson_id",
+        "progress_row_version",
+        "updated_at"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/uuid" },
+        "enrollment_id": { "$ref": "#/$defs/uuid" },
+        "course_version_id": { "$ref": "#/$defs/uuid" },
+        "lesson_id": { "$ref": "#/$defs/uuid" },
+        "lesson_state": { "$ref": "#/$defs/lesson_progress_state" },
+        "course_state": { "$ref": "#/$defs/course_progress_state" },
+        "required_lesson_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20000
+        },
+        "completed_required_lesson_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20000
+        },
+        "resume_lesson_id": { "$ref": "#/$defs/nullable_uuid" },
+        "progress_row_version": { "type": "integer", "minimum": 1 },
+        "updated_at": { "$ref": "#/$defs/timestamp" }
+      }
+    }
+  }
+}
