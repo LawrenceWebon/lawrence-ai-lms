@@ -1,0 +1,188 @@
+{
+  "fixture_version": 1,
+  "classification": "synthetic",
+  "description": "Invented F-007 learner playback fixtures containing no private, uploaded, or source-derived material.",
+  "tenants": {
+    "alpha": "00000000-0000-4000-8000-0000000000a1",
+    "beta": "00000000-0000-4000-8000-0000000000b2"
+  },
+  "memberships": {
+    "alpha_admin_active": {
+      "id": "00000000-0000-4000-8000-000000000301",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "status": "active",
+      "role": "tenant_admin"
+    },
+    "alpha_learner_active": {
+      "id": "00000000-0000-4000-8000-000000000302",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "status": "active",
+      "role": "learner"
+    },
+    "alpha_learner_empty": {
+      "id": "00000000-0000-4000-8000-000000000303",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "status": "active",
+      "role": "learner"
+    },
+    "alpha_learner_revoked": {
+      "id": "00000000-0000-4000-8000-000000000304",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "status": "revoked",
+      "role": "learner"
+    },
+    "beta_learner_active": {
+      "id": "00000000-0000-4000-8000-000000000402",
+      "tenant_id": "00000000-0000-4000-8000-0000000000b2",
+      "status": "active",
+      "role": "learner"
+    }
+  },
+  "courses": {
+    "pointer_advanced": {
+      "id": "00000000-0000-4000-8000-00000000c001",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "current_published_version_id": "00000000-0000-4000-8000-00000000c102",
+      "versions": {
+        "v1": {
+          "id": "00000000-0000-4000-8000-00000000c101",
+          "version_number": 1,
+          "status": "published",
+          "content_hash": "sha256:f4e7e98f5fe8199a25ba5293d4a7a58e1f45b649941de8c0935282ae5845ec31",
+          "lesson_ids": [
+            "00000000-0000-4000-8000-00000000c301",
+            "00000000-0000-4000-8000-00000000c302"
+          ]
+        },
+        "v2": {
+          "id": "00000000-0000-4000-8000-00000000c102",
+          "version_number": 2,
+          "status": "published",
+          "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "lesson_ids": [
+            "00000000-0000-4000-8000-00000000d301"
+          ]
+        }
+      }
+    },
+    "withdrawn": {
+      "id": "00000000-0000-4000-8000-00000000c002",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "current_published_version_id": null,
+      "versions": {
+        "v1": {
+          "id": "00000000-0000-4000-8000-00000000c103",
+          "version_number": 1,
+          "status": "withdrawn",
+          "content_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "lesson_ids": [
+            "00000000-0000-4000-8000-00000000c303"
+          ]
+        }
+      }
+    }
+  },
+  "enrollments": {
+    "active_pin_v1": {
+      "id": "00000000-0000-4000-8000-00000000e001",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "learner_membership_id": "00000000-0000-4000-8000-000000000302",
+      "course_id": "00000000-0000-4000-8000-00000000c001",
+      "course_version_id": "00000000-0000-4000-8000-00000000c101",
+      "status": "active",
+      "admission_source": "manual_assignment"
+    },
+    "revoked": {
+      "id": "00000000-0000-4000-8000-00000000e002",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "learner_membership_id": "00000000-0000-4000-8000-000000000302",
+      "course_id": "00000000-0000-4000-8000-00000000c001",
+      "course_version_id": "00000000-0000-4000-8000-00000000c101",
+      "status": "revoked",
+      "admission_source": "manual_assignment"
+    },
+    "inactive_membership": {
+      "id": "00000000-0000-4000-8000-00000000e003",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "learner_membership_id": "00000000-0000-4000-8000-000000000304",
+      "course_id": "00000000-0000-4000-8000-00000000c001",
+      "course_version_id": "00000000-0000-4000-8000-00000000c101",
+      "status": "active",
+      "admission_source": "manual_assignment"
+    },
+    "withdrawn_pin": {
+      "id": "00000000-0000-4000-8000-00000000e004",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "learner_membership_id": "00000000-0000-4000-8000-000000000302",
+      "course_id": "00000000-0000-4000-8000-00000000c002",
+      "course_version_id": "00000000-0000-4000-8000-00000000c103",
+      "status": "active",
+      "admission_source": "manual_assignment"
+    }
+  },
+  "scenarios": [
+    {
+      "id": "active_pin_survives_pointer_advance",
+      "actor_membership": "alpha_learner_active",
+      "tenant": "alpha",
+      "enrollment": "active_pin_v1",
+      "requested_lesson_id": "00000000-0000-4000-8000-00000000c302",
+      "expected_result": "allow",
+      "expected_course_version_id": "00000000-0000-4000-8000-00000000c101"
+    },
+    {
+      "id": "active_learner_empty_dashboard",
+      "actor_membership": "alpha_learner_empty",
+      "tenant": "alpha",
+      "enrollment": null,
+      "requested_lesson_id": null,
+      "expected_result": "empty_dashboard",
+      "expected_course_version_id": null
+    },
+    {
+      "id": "revoked_enrollment_denied",
+      "actor_membership": "alpha_learner_active",
+      "tenant": "alpha",
+      "enrollment": "revoked",
+      "requested_lesson_id": "00000000-0000-4000-8000-00000000c301",
+      "expected_result": "learning_resource_not_found",
+      "expected_course_version_id": null
+    },
+    {
+      "id": "revoked_membership_denied",
+      "actor_membership": "alpha_learner_revoked",
+      "tenant": "alpha",
+      "enrollment": "inactive_membership",
+      "requested_lesson_id": "00000000-0000-4000-8000-00000000c301",
+      "expected_result": "tenant_access_inactive",
+      "expected_course_version_id": null
+    },
+    {
+      "id": "wrong_tenant_denied",
+      "actor_membership": "beta_learner_active",
+      "tenant": "beta",
+      "enrollment": "active_pin_v1",
+      "requested_lesson_id": "00000000-0000-4000-8000-00000000c301",
+      "expected_result": "learning_resource_not_found",
+      "expected_course_version_id": null
+    },
+    {
+      "id": "guessed_lesson_denied",
+      "actor_membership": "alpha_learner_active",
+      "tenant": "alpha",
+      "enrollment": "active_pin_v1",
+      "requested_lesson_id": "00000000-0000-4000-8000-00000000d301",
+      "expected_result": "learning_resource_not_found",
+      "expected_course_version_id": null
+    },
+    {
+      "id": "withdrawn_pin_denied_under_recommended_policy",
+      "actor_membership": "alpha_learner_active",
+      "tenant": "alpha",
+      "enrollment": "withdrawn_pin",
+      "requested_lesson_id": "00000000-0000-4000-8000-00000000c303",
+      "expected_result": "pending_f007_q02_recommended_learning_resource_not_found",
+      "expected_course_version_id": null
+    }
+  ]
+}

@@ -1,0 +1,162 @@
+{
+  "CreateEnrollmentV1": {
+    "learner_membership_id": "00000000-0000-4000-8000-000000000302",
+    "course_id": "00000000-0000-4000-8000-00000000c001"
+  },
+  "RevokeEnrollmentV1": {
+    "expected_enrollment_row_version": 1,
+    "reason_code": "ADMIN_REVOKED"
+  },
+  "EnrollmentV1": {
+    "id": "00000000-0000-4000-8000-00000000e001",
+    "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+    "learner_membership_id": "00000000-0000-4000-8000-000000000302",
+    "course_id": "00000000-0000-4000-8000-00000000c001",
+    "course_version_id": "00000000-0000-4000-8000-00000000c101",
+    "admission_source": "manual_assignment",
+    "status": "active",
+    "enrolled_at": "2026-08-21T00:00:00Z",
+    "revoked_at": null,
+    "row_version": 1
+  },
+  "LearnerDashboardV1": {
+    "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+    "items": [
+      {
+        "enrollment_id": "00000000-0000-4000-8000-00000000e001",
+        "course_id": "00000000-0000-4000-8000-00000000c001",
+        "course_version_id": "00000000-0000-4000-8000-00000000c101",
+        "course_version_number": 1,
+        "primary_locale": "en",
+        "title": "Synthetic Safe Learning",
+        "description": "An invented learner fixture containing no private or source-derived material.",
+        "content_hash": "sha256:f4e7e98f5fe8199a25ba5293d4a7a58e1f45b649941de8c0935282ae5845ec31",
+        "enrolled_at": "2026-08-21T00:00:00Z",
+        "progress": {
+          "state": "in_progress",
+          "required_lesson_count": 2,
+          "completed_required_lesson_count": 1,
+          "resume_lesson_id": "00000000-0000-4000-8000-00000000c302",
+          "row_version": 3
+        }
+      }
+    ],
+    "next_cursor": null
+  },
+  "PlaybackSnapshotV1": {
+    "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+    "enrollment_id": "00000000-0000-4000-8000-00000000e001",
+    "course_id": "00000000-0000-4000-8000-00000000c001",
+    "course_version_id": "00000000-0000-4000-8000-00000000c101",
+    "course_version_number": 1,
+    "primary_locale": "en",
+    "title": "Synthetic Safe Learning",
+    "description": "An invented learner fixture containing no private or source-derived material.",
+    "content_hash": "sha256:f4e7e98f5fe8199a25ba5293d4a7a58e1f45b649941de8c0935282ae5845ec31",
+    "sections": [
+      {
+        "id": "00000000-0000-4000-8000-00000000c201",
+        "title": "Safe foundations",
+        "position": 1,
+        "lessons": [
+          {
+            "id": "00000000-0000-4000-8000-00000000c301",
+            "title": "A deterministic lesson",
+            "position": 1,
+            "is_required": true,
+            "progress_state": "completed"
+          },
+          {
+            "id": "00000000-0000-4000-8000-00000000c302",
+            "title": "A deliberate progress lesson",
+            "position": 2,
+            "is_required": true,
+            "progress_state": "in_progress"
+          }
+        ]
+      }
+    ],
+    "progress": {
+      "state": "in_progress",
+      "required_lesson_count": 2,
+      "completed_required_lesson_count": 1,
+      "resume_lesson_id": "00000000-0000-4000-8000-00000000c302",
+      "row_version": 3
+    }
+  },
+  "LessonPlaybackV1": {
+    "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+    "enrollment_id": "00000000-0000-4000-8000-00000000e001",
+    "course_version_id": "00000000-0000-4000-8000-00000000c101",
+    "primary_locale": "en",
+    "content_hash": "sha256:f4e7e98f5fe8199a25ba5293d4a7a58e1f45b649941de8c0935282ae5845ec31",
+    "lesson": {
+      "id": "00000000-0000-4000-8000-00000000c302",
+      "section_id": "00000000-0000-4000-8000-00000000c201",
+      "title": "A deliberate progress lesson",
+      "position": 2,
+      "is_required": true,
+      "progress_state": "in_progress",
+      "content_blocks": [
+        {
+          "id": "00000000-0000-4000-8000-00000000c402",
+          "kind": "rich_text",
+          "position": 1,
+          "document": {
+            "type": "document",
+            "content": [
+              {
+                "type": "heading",
+                "level": 2,
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Deliberate learner progress",
+                    "marks": []
+                  }
+                ]
+              },
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "This synthetic lesson changes progress only after an explicit learner command.",
+                    "marks": ["strong"]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "previous_lesson_id": "00000000-0000-4000-8000-00000000c301",
+    "next_lesson_id": null,
+    "progress": {
+      "state": "in_progress",
+      "required_lesson_count": 2,
+      "completed_required_lesson_count": 1,
+      "resume_lesson_id": "00000000-0000-4000-8000-00000000c302",
+      "row_version": 3
+    }
+  },
+  "ProgressCommandV1": {
+    "command": "complete_lesson",
+    "lesson_id": "00000000-0000-4000-8000-00000000c302",
+    "expected_progress_row_version": 3
+  },
+  "ProgressResultV1": {
+    "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+    "enrollment_id": "00000000-0000-4000-8000-00000000e001",
+    "course_version_id": "00000000-0000-4000-8000-00000000c101",
+    "lesson_id": "00000000-0000-4000-8000-00000000c302",
+    "lesson_state": "completed",
+    "course_state": "completed",
+    "required_lesson_count": 2,
+    "completed_required_lesson_count": 2,
+    "resume_lesson_id": "00000000-0000-4000-8000-00000000c302",
+    "progress_row_version": 4,
+    "updated_at": "2026-08-21T00:05:00Z"
+  }
+}
