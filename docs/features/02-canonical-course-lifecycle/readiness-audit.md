@@ -1,6 +1,6 @@
 # Readiness Audit — F-002 Canonical Course Lifecycle
 
-Status: **READY FOR CODE REVIEW — implementation gates pass locally**
+Status: **POST-MERGE AUDIT REQUIRED — implementation checks passed before merge**
 
 - [x] Outcome and non-goals match `docs/product/spec.md` and F-002 inventory.
 - [x] P-012 closes Q-P04 with the smallest readable structured-text contract.
@@ -17,13 +17,16 @@ Status: **READY FOR CODE REVIEW — implementation gates pass locally**
 ## Readiness verdict
 
 Corrective issue #33 and implementation issues #28–#30 merged into `develop` in the
-declared order. Integration issue #31 composes the real service and PostgreSQL adapter,
-publishes the frozen OpenAPI and event artifacts, generates the TypeScript client, and
-provides the minimal authoring browser journey. Focused API/database, API/Admin parity,
-event-contract, OpenAPI/client, F-001 regression, F-002 Playwright, accessibility,
-tenant-denial, immediate-revocation, and immutable-version checks pass locally. The
-remaining gate is independent review at the exact PR head SHA plus protected GitHub
-checks; merge and deployment are outside issue #31.
+declared order. Integration issue #31 composed the real service and PostgreSQL adapter,
+published the frozen OpenAPI and event artifacts, generated the TypeScript client, and
+provided the minimal authoring browser journey. Its PR #39 merged at
+`99bd51beae9cad4774986dd797b245fd19da60a3` after the documented check suites passed.
+
+GitHub now reports `REVIEW_REQUIRED` for PR #39 and contains no submitted independent
+review or distinct approval. The pre-merge review gate was therefore not recorded. An
+independent post-merge audit and explicit project-owner disposition are required before
+F-002 can be declared delivery-complete; this audit does not retrospectively replace a
+required GitHub approval.
 
 ## Known limitations
 
