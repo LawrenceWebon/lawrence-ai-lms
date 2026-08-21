@@ -1,6 +1,6 @@
 # Implementation Plan — F-007 Learner Course Playback and Progress
 
-Status: **BLOCKED — owner decisions and planning review/merge required**
+Status: **CONTRACT READY — correction #50 merge and #46 transition required**
 
 ## Dependency graph
 
@@ -8,7 +8,10 @@ Status: **BLOCKED — owner decisions and planning review/merge required**
 F-001 merged + F-002 implementation merged
                     |
                     v
-        planning #45 + F007-Q01–Q04
+                 planning #45
+                    |
+                    v
+       owner decisions + correction #50
                     |
           independent review + merge
                     |
@@ -18,12 +21,13 @@ F-001 merged + F-002 implementation merged
 
 F-007 depends on the completed F-001 tenant context and F-002 canonical publication
 base. It does not depend on F-003–F-006 and may be implemented independently after its
-own planning contract and owner decisions merge.
+planning contract and owner-approved decision correction merge.
 
 | Issue | Agent | Objective | Primary owned paths | Contracts/fixtures | Depends on | Merge order |
 |---|---|---|---|---|---|---|
 | [#45](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/45) | Planning | Resolve private enrollment/playback/progress scope and freeze executable contracts | F-007 feature docs/contracts/test/index/manifest only | F-007 schemas/examples/synthetic fixtures | F-001/F-002 merged | 1 |
-| [#46](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/46) | Vertical integration owner | Implement enrollment, pinned playback, explicit progress, generated client, minimal learner UI, and evidence | All declared F-007 code/migration/generated/web/test/status hotspots | Merged F-007 contract package | #45 approved and merged; F007-Q01–Q04 closed | 2 |
+| [#50](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/50) | Decision-correction owner | Freeze owner-approved Q01–Q04 behavior and exact executable acceptance | Declared product/locale/F-007 contract/test/manifest paths only | F-007 schemas/examples/synthetic fixtures | #45 merged; owner decisions approved | 2 |
+| [#46](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/46) | Vertical integration owner | Implement enrollment, pinned playback, explicit progress, generated client, minimal learner UI, and evidence | All declared F-007 code/migration/generated/web/test/status hotspots | Merged F-007 contract package | PRs for #45 and #50 independently approved and merged | 3 |
 
 Splitting this slice into concurrent persistence/service/adapter lanes would create
 avoidable contention in the permission catalog, migration graph, learning domain,
@@ -35,10 +39,12 @@ issue is the smallest safe delivery unit.
 | Lane | Branch | Worktree | Compose project | PostgreSQL port |
 |---|---|---|---|---|
 | Planning | `chore/LMS-45-f007-playback-contracts` | `/home/lawrence/Project Neo/worktrees/ai-lms/planning-LMS-45` | `ai-lms-lms-45` | `55245` |
+| Decision correction | `chore/LMS-50-f007-approved-decisions` | `/home/lawrence/Project Neo/worktrees/ai-lms/planning-correction-LMS-50` | `ai-lms-lms-50` | `55250` |
 | Implementation | `feature/LMS-46-f007-learner-playback` | `/home/lawrence/Project Neo/worktrees/ai-lms/learner-playback-LMS-46` | `ai-lms-lms-46` | `55246` |
 
-Issue #46 exists in an explicitly blocked state. Its branch and worktree must not be
-provisioned before the launch gate closes.
+Issue #46 remains blocked until the pull request for correction #50 independently
+passes review/checks and merges. Its branch and worktree must not be provisioned before
+the launch gate closes.
 
 ## Implementation issue ownership
 
@@ -162,14 +168,16 @@ their integration owner and dependency merge order.
 Do not create the implementation branch/worktree or write application code until all
 conditions are true:
 
-1. the project owner resolves F007-Q01, F007-Q02, F007-Q03, and Q-P08/F007-Q04 in an
-   approved repository decision;
-2. planning issue #45 contains the resulting exact contract changes and no hidden
-   product decision remains;
-3. the planning PR receives independent exact-SHA review, the required distinct
-   authorized approval, all protected checks pass, and it merges to `develop`;
-4. the implementation issue says `READY FOR IMPLEMENTATION` and links that merge SHA;
-5. its worktree path is absent, branch starts from the approved merge, and Compose
+1. P-014 records the owner-approved F007-Q01, F007-Q02, F007-Q03, and
+   Q-P08/F007-Q04 decisions and no hidden product decision remains;
+2. planning issue #45 and decision correction #50 contain the exact executable
+   contract and acceptance behavior;
+3. the pull request for correction issue #50 receives independent exact-SHA review,
+   the required distinct authorized approval, all protected checks pass, and it merges
+   to `develop`;
+4. implementation issue #46 says `READY FOR IMPLEMENTATION` and links the correction
+   merge SHA;
+5. its worktree path is absent, its branch starts from that exact merge, and Compose
    resources are unique; and
 6. F-001/F-002 regressions plus the F-007 contract suite pass on that shared base.
 

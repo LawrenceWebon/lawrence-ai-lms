@@ -1,6 +1,6 @@
 # F-007 — Learner Course Playback and Progress
 
-Status: **planning complete; owner decisions and independent review pending**
+Status: **owner-approved contract; implementation starts only after the #50 correction merges**
 
 Feature ID: `F-007`
 
@@ -15,24 +15,26 @@ source, generation, review, or another tenant's data.
 
 ## Actors and permissions
 
-| Actor | Proposed allowed behavior | Never implied |
+| Actor | Allowed behavior | Never implied |
 |---|---|---|
 | Learner | Read only their own active enrollment/playback records and issue explicit progress commands with `learning.playback.read` | Self-enrollment, access to a different learner's enrollment, source/generation/review data, unpublished content, or an enrollment-less course read |
-| Tenant administrator | Create or revoke a manual enrollment with `learning.enrollments.manage` under the pending F007-Q01 decision | Automatic playback access, learner impersonation, cross-tenant assignment, or a public catalog |
+| Tenant administrator | Create or revoke a manual enrollment with `learning.enrollments.manage` | Automatic playback access, learner impersonation, cross-tenant assignment, or a public catalog |
 | Instructor/reviewer | Continue to use F-002 authoring/review permissions; may play only when separately holding the learner role and an active enrollment | Implicit learner access from author/reviewer status |
 | Worker, AI, provider, or service identity | No learner playback or progress authority | Creating/revoking enrollment or acting as a learner |
 | Platform operator | No standing learner-content access | Broad support browsing or tenant impersonation |
 
-The proposed initial role grants are deliberately least-privilege: `learner` receives
+The initial role grants are deliberately least-privilege: `learner` receives
 `learning.playback.read`; `tenant_admin` receives
 `learning.enrollments.manage`; no other F-007 permission is implied. A current,
 tenant-scoped enrollment remains mandatory after the role check.
 
 ## User flow
 
-1. A tenant administrator manually assigns an active learner to a course under the
-   F007-Q01 decision. The service—not the browser—locks the course's current published
-   version and records that immutable version as the enrollment pin.
+1. A tenant administrator manually assigns an active learner to a course. The
+   service—not the browser—locks the course's current published version and records
+   that immutable version as the enrollment pin. Revocation is terminal; a later
+   re-enrollment creates a new record, pins the then-current published version, and
+   copies no historical progress.
 2. The learner authenticates and explicitly selects an active tenant.
 3. The learner dashboard lists only the learner's active enrollments in that tenant;
    an active learner with none sees an empty state instead of a catalog or self-enroll
@@ -42,13 +44,15 @@ tenant-scoped enrollment remains mandatory after the role check.
    playback outline.
 5. The learner opens a lesson and sends an explicit, idempotent progress command to
    record the resume position. A read request never mutates progress.
-6. The learner explicitly marks a lesson complete or reopens it under the F007-Q03
-   completion policy. The server derives course completion from required lessons.
+6. The learner explicitly marks a lesson complete or reopens it. The server marks the
+   course complete exactly when all required pinned-version lessons are complete and
+   reopens it when a required lesson reopens.
 7. On a later visit, the server returns the pinned version and the recorded resume
    lesson. A later publication pointer never rewrites that enrollment.
-8. Revoked membership/enrollment or a withdrawn pinned version fails closed for new
-   reads and commands under F007-Q02; the durable audit/progress history remains
-   available only to its authorized operational policy.
+8. Revoked membership/enrollment or a withdrawn/archived pinned version fails closed
+   for new reads and commands with neutral `404 LEARNING_RESOURCE_NOT_FOUND`; the
+   durable audit/progress history remains available only to its authorized operational
+   policy and no enrollment is automatically migrated.
 
 ## Requirements
 
@@ -81,7 +85,7 @@ tenant-scoped enrollment remains mandatory after the role check.
 | Guessed/wrong-tenant enrollment, lesson, course, or version | Neutral `404 LEARNING_RESOURCE_NOT_FOUND` |
 | Active membership without learner playback permission or enrollment | Neutral `404 LEARNING_RESOURCE_NOT_FOUND`; dashboard may still return an empty own-enrollment list |
 | Browser requests a lesson outside the enrollment's pinned version | Neutral `404 LEARNING_RESOURCE_NOT_FOUND` |
-| Pinned version is withdrawn/archived, or enrollment is revoked | F007-Q02 policy must choose the exact stable unavailable result before implementation; no new playback/progress succeeds |
+| Pinned version is withdrawn/archived, or enrollment is revoked | Neutral `404 LEARNING_RESOURCE_NOT_FOUND`; no new playback/progress succeeds and no version auto-migration occurs |
 | Stale progress row version | `409 PROGRESS_VERSION_CONFLICT`; no partial state change |
 | Duplicate idempotency key with a different command hash | `409 IDEMPOTENCY_CONFLICT`; same hash replays the stored result |
 | Invalid/unrecognized content block or response shape | Fail closed as `500 SERVICE_CONTRACT_ERROR`; do not render fallback HTML |
@@ -104,8 +108,9 @@ tenant-scoped enrollment remains mandatory after the role check.
   same-key requests conflict; stale multi-device writes preserve one recorded winner.
 - The player is keyboard-operable, has a visible focus order, semantic course/section/
   lesson headings and navigation, labelled progress controls, a live status/error
-  region, and reflows at 200% zoom. F007-Q04 must set the initial locale acceptance
-  before claiming localized UI coverage.
+  region, and reflows at 200% zoom. Initial pilot acceptance is exactly `en`; Unicode,
+  fallback/language metadata, and RTL-ready structure are preserved without claiming
+  another supported locale.
 
 ## Explicit non-goals
 
@@ -123,7 +128,8 @@ tenant-scoped enrollment remains mandatory after the role check.
 
 - Product: `docs/product/spec.md`
 - Inventory: `docs/product/features.md`
-- Decisions: P-001, P-002, P-003, P-005, P-007, P-009, P-010, P-011, P-012
+- Decisions: P-001, P-002, P-003, P-005, P-007, P-009, P-010, P-011, P-012,
+  P-014
 - Existing contracts: `contracts/f002/canonical-course.v1.schema.json` and
   `contracts/f002/course-lifecycle.v1.schema.json`
 - Plans: `docs/plan/04-domain-module-design.md`,

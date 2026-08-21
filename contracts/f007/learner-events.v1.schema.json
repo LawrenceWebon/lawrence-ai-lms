@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://contracts.ai-lms.local/f007/learner-events.v1.schema.json",
   "title": "F-007 learning event example suite v1",
-  "description": "The top-level object validates the proposed event examples. Each named event is independently addressable through its $defs fragment.",
+  "description": "The top-level object validates the frozen event examples. Each named event is independently addressable through its $defs fragment.",
   "type": "object",
   "additionalProperties": false,
   "required": [

@@ -10,14 +10,15 @@ Separate:
 1. Interface translation catalogs in version control.
 2. Dynamic tenant and course translations in PostgreSQL.
 
-Initial locales:
+Initial focused-pilot locale under P-014:
 
 ```text
-en-PH
-fil-PH
+en
 ```
 
-Design for future RTL locales such as Arabic.
+Do not claim `en-PH`, `fil-PH`, or another locale as supported pilot coverage without
+a later product decision and acceptance evidence. Preserve Unicode, locale metadata,
+the fallback boundary below, and structure for future RTL locales such as Arabic.
 
 ## Locale fallback
 

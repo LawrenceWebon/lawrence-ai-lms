@@ -1,6 +1,6 @@
 # Test Plan — F-007 Learner Course Playback and Progress
 
-Status: **planning proposal; implementation evidence does not exist**
+Status: **approved verification contract; implementation evidence does not exist**
 
 ## Software correctness
 
@@ -15,8 +15,8 @@ Status: **planning proposal; implementation evidence does not exist**
   `rich_text_document` reference; reject raw HTML, URL, image, embed, source,
   provenance, generation, or review fields.
 - Validate synthetic fixtures for active pin, empty dashboard, revoked enrollment,
-  revoked membership, wrong tenant, guessed lesson, publication-pointer advance, and
-  withdrawn pinned version.
+  revoked membership, fresh re-enrollment without progress copy, wrong tenant, guessed
+  lesson, publication-pointer advance, and withdrawn/archived pinned versions.
 - Prove event payloads contain only the allowlisted identifiers/state/version/count/
   reason/source fields and reject lesson/course text or source/provider content.
 
@@ -28,9 +28,10 @@ Status: **planning proposal; implementation evidence does not exist**
   never grants an enrollment-less or other learner's read.
 - Current active tenant, entitlement, membership, enrollment, course/version, and
   lesson relationship checks for every selector and command.
-- F007-Q01 accepted re-enrollment behavior and terminal old enrollment.
-- F007-Q02 accepted withdrawal/archive behavior and no auto-migration.
-- F007-Q03 transition table for unstarted/in-progress/completed lesson and course
+- P-014/F007-Q01 terminal old enrollment, new-record re-enrollment pinned to the
+  then-current published version, and no historical progress copy.
+- P-014/F007-Q02 neutral withdrawal/archive denial and no auto-migration.
+- P-014/F007-Q03 transition table for unstarted/in-progress/completed lesson and course
   progress, including repeated/no-op/forbidden transitions.
 - Required-versus-optional lesson completion and reopen derivation.
 - Publication-pointer advance leaves an existing pin and all progress semantics
@@ -96,8 +97,9 @@ Status: **planning proposal; implementation evidence does not exist**
   hash, outline, lesson IDs, content, or progress.
 - Beta, outsider, another Alpha learner, and an inactive/revoked member cannot discover
   or retrieve Alpha's enrollment/content/progress.
-- Enrollment revocation and the accepted withdrawn-pin policy clear rendered browser
-  content and show one accessible neutral unavailable state on the next request.
+- Enrollment revocation and the accepted withdrawn/archived-pin policy clear rendered
+  browser content and show one accessible neutral unavailable state on the next
+  request.
 - Two browser sessions exercising stale progress yield one winner and a recoverable
   conflict without silently overwriting completion.
 - No core LMS data is read directly from Supabase or stored as authorization state in
@@ -122,9 +124,9 @@ Status: **planning proposal; implementation evidence does not exist**
   controls, and announced loading/success/conflict/unavailable states.
 - Test 200% text zoom, 400% reflow, forced colors/high contrast, reduced motion, and
   responsive orientation for dashboard and player.
-- Verify the owner-approved initial locale, fallback chain, language metadata, and
-  preserved F-002 course primary locale. Run an RTL structural interaction check
-  without claiming an unapproved pilot locale.
+- Verify exactly `en` as the owner-approved initial locale, the fallback chain,
+  language metadata, and preserved F-002 course primary locale. Run an RTL structural
+  interaction check without claiming another supported pilot locale.
 - Record browser/OS/assistive-technology versions, tester, result, defects, and retest
   evidence for the critical learner journey.
 
