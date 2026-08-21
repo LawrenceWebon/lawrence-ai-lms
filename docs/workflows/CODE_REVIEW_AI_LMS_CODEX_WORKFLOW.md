@@ -32,6 +32,12 @@ implementation lanes may continue while a different lane is reviewed. A new push
 invalidates the prior reviewed SHA and requires re-review. `docs/plan`, the approved
 product contract, issue, and PR contract define expected behavior.
 
+For a defect or performance PR, also follow the evidence contract in the
+[Debugging and Performance workflow](DEBUGGING_PERFORMANCE_AI_LMS_CODEX_WORKFLOW.md).
+Review must verify the reported behavior was actually reproduced and its cause proven,
+or that the optimization targets a measured bottleneck with equivalent before/after
+scenarios. Green CI and suspicious-looking code are not substitutes for that evidence.
+
 ---
 
 # 1. Why This Workflow Exists
@@ -130,6 +136,7 @@ The formal Code Review workflow should receive:
 ```text
 AGENTS.md and REVIEW_GUIDE.md             # when present
 docs/workflows/README.md
+docs/workflows/DEBUGGING_PERFORMANCE_AI_LMS_CODEX_WORKFLOW.md when applicable
 docs/product/spec.md, features.md, and decisions.md
 relevant docs/plan/ADRs
 approved GitHub issue and frozen contracts
@@ -137,6 +144,8 @@ pull request body and implementation summary
 exact base/head names and headRefOid
 GitHub diff, reviews, and CI status
 local verification/evaluation evidence
+bug reproduction/root-cause/RED-to-GREEN evidence when applicable
+performance scenario/baseline/before-after/guard evidence when applicable
 ```
 
 For AI features, also read any approved:
@@ -1888,6 +1897,15 @@ Look for obvious regressions:
 
 Only block when impact is material.
 
+For a performance-labeled change, code inspection alone is insufficient. Confirm the
+same representative scenario, data, tool, warm-up policy, and metric were used before
+and after; the improvement exceeds measurement noise; and correctness, tenant/RLS,
+privacy, cost, memory, accessibility, and applicable AI quality remain acceptable.
+
+For a defect fix, confirm the regression test represented the report, failed for the
+right reason before the fix, the root-cause explanation matches the traced execution
+path, and the patch fixes that cause rather than merely hiding its symptom.
+
 ---
 
 # 33. Phase 22 — UI / UX / Accessibility Review
@@ -3616,6 +3634,8 @@ Code Review is complete only when:
 - [ ] Data/migrations reviewed where applicable.
 - [ ] External integrations reviewed where applicable.
 - [ ] Reliability/concurrency/performance reviewed where material.
+- [ ] Defect reproduction, root cause, and RED-to-GREEN evidence verified where applicable.
+- [ ] Performance baseline, equivalent after-measurement, and guardrail verified where applicable.
 - [ ] UI behavior reviewed where applicable.
 - [ ] Scope/architecture checked.
 - [ ] CI/automated review evidence reconciled.

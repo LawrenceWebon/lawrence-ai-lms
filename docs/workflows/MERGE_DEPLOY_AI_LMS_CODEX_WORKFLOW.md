@@ -32,6 +32,12 @@ distinct GitHub approval.
 After each merge, remaining PRs incorporate the new base, rerun checks, and receive
 review for their new SHA. This serializes shared integration, not implementation.
 
+Once GitHub confirms a task PR merged, the coordinator immediately performs the
+mandatory post-merge cleanup in [the repository workflow authority](README.md): verify
+the task tree is clean, stop only its recorded Compose project, remove the registered
+worktree and directory, and verify no task-local resources remain. Review handoff and
+approval states do not authorize early cleanup.
+
 ---
 
 # 1. Core Principle
@@ -250,6 +256,10 @@ Phase 27  Sync documentation
 Phase 28  Record deployment
 Phase 29  Production Verification Gate
 ```
+
+The mandatory task-cleanup gate runs immediately after Phase 14 confirms `MERGED`.
+Deployment and production verification use the merged commit and release evidence;
+they do not retain a completed implementation worktree by default.
 
 ---
 
@@ -1041,6 +1051,12 @@ gh pr view "$PR" --repo "$REPO" --json state,mergedAt,mergeCommit
 Use another merge strategy only when repository policy selects it. Never pass
 `--admin`. Concurrent feature development remains parallel, but the integration owner
 merges PRs one at a time and requires remaining PRs to retest after base updates.
+
+After GitHub returns `MERGED`, run the exact cleanup sequence in
+[`docs/workflows/README.md`](README.md#7-mandatory-post-merge-cleanup) and record the
+removed worktree path, Compose project, disposable resources, and verification. Stop
+instead of deleting when the tree is dirty, the PR state is ambiguous, or the resource
+identity does not match the issue record.
 
 ---
 
@@ -3016,6 +3032,7 @@ Merge / Deploy is complete only when:
 - [ ] Observability is ready.
 - [ ] Rollback plan exists.
 - [ ] Exact reviewed code was merged.
+- [ ] Merged task worktree and task-local Compose resources were cleanly removed and verified.
 - [ ] Exact intended SHA was deployed.
 - [ ] Migrations succeeded where applicable.
 - [ ] Application is healthy.
