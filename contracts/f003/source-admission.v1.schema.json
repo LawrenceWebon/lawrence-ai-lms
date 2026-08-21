@@ -1,0 +1,725 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-lms.local/contracts/f003/source-admission.v1.schema.json",
+  "title": "F-003 PDF source admission contract",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "Uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "Sha256": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "PositiveInteger": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "SourceAdmissionStatus": {
+      "type": "string",
+      "enum": [
+        "rights_pending",
+        "upload_pending",
+        "quarantined",
+        "validating",
+        "admitted",
+        "rejected",
+        "cancelled",
+        "blocked"
+      ]
+    },
+    "RemovalStatus": {
+      "type": "string",
+      "enum": ["not_required", "pending", "completed", "failed"]
+    },
+    "RightsBasis": {
+      "type": "string",
+      "enum": [
+        "owned",
+        "licensed",
+        "written_permission",
+        "public_domain",
+        "other_documented"
+      ]
+    },
+    "AuthorizationStatus": {
+      "type": "string",
+      "enum": ["requested", "active", "denied", "revoked", "expired", "disputed"]
+    },
+    "AdmissionPolicyV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "accepted_media_types",
+        "max_pdf_bytes",
+        "max_page_count",
+        "max_rendered_pixels_per_page",
+        "max_rendered_pixels_total",
+        "max_decoded_parser_bytes",
+        "validation_cpu_seconds",
+        "validation_wall_seconds",
+        "upload_intent_ttl_seconds",
+        "max_active_upload_intents_per_tenant",
+        "max_upload_intents_per_tenant_24h",
+        "max_upload_attempt_bytes_per_tenant_24h",
+        "max_quarantine_objects_per_tenant",
+        "max_quarantine_bytes_per_tenant"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "const": "f003-local-v1"
+        },
+        "accepted_media_types": {
+          "type": "array",
+          "const": ["application/pdf"]
+        },
+        "max_pdf_bytes": {
+          "type": "integer",
+          "const": 6291456
+        },
+        "max_page_count": {
+          "type": "integer",
+          "const": 100
+        },
+        "max_rendered_pixels_per_page": {
+          "type": "integer",
+          "const": 25000000
+        },
+        "max_rendered_pixels_total": {
+          "type": "integer",
+          "const": 250000000
+        },
+        "max_decoded_parser_bytes": {
+          "type": "integer",
+          "const": 67108864
+        },
+        "validation_cpu_seconds": {
+          "type": "integer",
+          "const": 15
+        },
+        "validation_wall_seconds": {
+          "type": "integer",
+          "const": 30
+        },
+        "upload_intent_ttl_seconds": {
+          "type": "integer",
+          "const": 900
+        },
+        "max_active_upload_intents_per_tenant": {
+          "type": "integer",
+          "const": 2
+        },
+        "max_upload_intents_per_tenant_24h": {
+          "type": "integer",
+          "const": 10
+        },
+        "max_upload_attempt_bytes_per_tenant_24h": {
+          "type": "integer",
+          "const": 31457280
+        },
+        "max_quarantine_objects_per_tenant": {
+          "type": "integer",
+          "const": 20
+        },
+        "max_quarantine_bytes_per_tenant": {
+          "type": "integer",
+          "const": 62914560
+        }
+      }
+    },
+    "CreateRightsDeclarationV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["basis", "attestation_version", "attested"],
+      "properties": {
+        "basis": {
+          "$ref": "#/$defs/RightsBasis"
+        },
+        "attestation_version": {
+          "type": "string",
+          "const": "f003-source-rights-attestation-v1"
+        },
+        "attested": {
+          "type": "boolean",
+          "const": true
+        },
+        "rights_holder_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "evidence_reference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9._:-]+$"
+        },
+        "valid_until": {
+          "anyOf": [{"$ref": "#/$defs/Timestamp"}, {"type": "null"}]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "basis": {
+                "enum": ["licensed", "written_permission", "other_documented"]
+              }
+            },
+            "required": ["basis"]
+          },
+          "then": {
+            "required": ["rights_holder_name", "evidence_reference"]
+          }
+        }
+      ]
+    },
+    "CreateSourceAdmissionV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["display_name", "declared_filename", "rights_declaration"],
+      "properties": {
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "declared_filename": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "pattern": "^[^/\\\\]+\\.[Pp][Dd][Ff]$"
+        },
+        "rights_declaration": {
+          "$ref": "#/$defs/CreateRightsDeclarationV1"
+        }
+      }
+    },
+    "RightsDeclarationV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "tenant_id",
+        "source_document_id",
+        "source_version_id",
+        "declared_by_actor_id",
+        "basis",
+        "attestation_version",
+        "attested_at",
+        "row_version"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/Uuid"},
+        "tenant_id": {"$ref": "#/$defs/Uuid"},
+        "source_document_id": {"$ref": "#/$defs/Uuid"},
+        "source_version_id": {"$ref": "#/$defs/Uuid"},
+        "declared_by_actor_id": {"$ref": "#/$defs/Uuid"},
+        "basis": {"$ref": "#/$defs/RightsBasis"},
+        "attestation_version": {
+          "type": "string",
+          "const": "f003-source-rights-attestation-v1"
+        },
+        "attested_at": {"$ref": "#/$defs/Timestamp"},
+        "valid_until": {
+          "anyOf": [{"$ref": "#/$defs/Timestamp"}, {"type": "null"}]
+        },
+        "evidence_reference": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120,
+              "pattern": "^[A-Za-z0-9._:-]+$"
+            },
+            {"type": "null"}
+          ]
+        },
+        "row_version": {"$ref": "#/$defs/PositiveInteger"}
+      }
+    },
+    "SourceUseAuthorizationV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "tenant_id",
+        "source_document_id",
+        "source_version_id",
+        "rights_declaration_id",
+        "operation",
+        "status",
+        "requested_by_actor_id",
+        "reviewed_by_actor_id",
+        "decision_code",
+        "valid_from",
+        "valid_until",
+        "row_version"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/Uuid"},
+        "tenant_id": {"$ref": "#/$defs/Uuid"},
+        "source_document_id": {"$ref": "#/$defs/Uuid"},
+        "source_version_id": {"$ref": "#/$defs/Uuid"},
+        "rights_declaration_id": {"$ref": "#/$defs/Uuid"},
+        "operation": {"type": "string", "const": "store"},
+        "status": {"$ref": "#/$defs/AuthorizationStatus"},
+        "requested_by_actor_id": {"$ref": "#/$defs/Uuid"},
+        "reviewed_by_actor_id": {
+          "anyOf": [{"$ref": "#/$defs/Uuid"}, {"type": "null"}]
+        },
+        "decision_code": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "RIGHTS_EVIDENCE_ACCEPTED",
+                "RIGHTS_EVIDENCE_INSUFFICIENT",
+                "RIGHTS_REVOKED",
+                "RIGHTS_EXPIRED",
+                "RIGHTS_DISPUTED"
+              ]
+            },
+            {"type": "null"}
+          ]
+        },
+        "valid_from": {
+          "anyOf": [{"$ref": "#/$defs/Timestamp"}, {"type": "null"}]
+        },
+        "valid_until": {
+          "anyOf": [{"$ref": "#/$defs/Timestamp"}, {"type": "null"}]
+        },
+        "row_version": {"$ref": "#/$defs/PositiveInteger"}
+      }
+    },
+    "ReviewSourceStoreAuthorizationV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision", "expected_authorization_row_version"],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": ["activate", "deny", "revoke"]
+        },
+        "expected_authorization_row_version": {"$ref": "#/$defs/PositiveInteger"},
+        "decision_code": {
+          "type": "string",
+          "enum": [
+            "RIGHTS_EVIDENCE_ACCEPTED",
+            "RIGHTS_EVIDENCE_INSUFFICIENT",
+            "RIGHTS_REVOKED"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"decision": {"const": "activate"}},
+            "required": ["decision"]
+          },
+          "then": {
+            "properties": {"decision_code": {"const": "RIGHTS_EVIDENCE_ACCEPTED"}},
+            "required": ["decision_code"]
+          }
+        },
+        {
+          "if": {
+            "properties": {"decision": {"const": "deny"}},
+            "required": ["decision"]
+          },
+          "then": {
+            "properties": {"decision_code": {"const": "RIGHTS_EVIDENCE_INSUFFICIENT"}},
+            "required": ["decision_code"]
+          }
+        },
+        {
+          "if": {
+            "properties": {"decision": {"const": "revoke"}},
+            "required": ["decision"]
+          },
+          "then": {
+            "properties": {"decision_code": {"const": "RIGHTS_REVOKED"}},
+            "required": ["decision_code"]
+          }
+        }
+      ]
+    },
+    "UploadIntentV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "tenant_id",
+        "source_document_id",
+        "source_version_id",
+        "status",
+        "target_url",
+        "expires_at",
+        "max_bytes",
+        "accepted_media_type",
+        "row_version"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/Uuid"},
+        "tenant_id": {"$ref": "#/$defs/Uuid"},
+        "source_document_id": {"$ref": "#/$defs/Uuid"},
+        "source_version_id": {"$ref": "#/$defs/Uuid"},
+        "status": {"type": "string", "enum": ["active", "consumed", "expired", "cancelled"]},
+        "target_url": {
+          "type": "string",
+          "pattern": "^/api/v1/source-upload-targets/[A-Za-z0-9_-]{32,}$"
+        },
+        "expires_at": {"$ref": "#/$defs/Timestamp"},
+        "max_bytes": {"type": "integer", "const": 6291456},
+        "accepted_media_type": {"type": "string", "const": "application/pdf"},
+        "row_version": {"$ref": "#/$defs/PositiveInteger"}
+      }
+    },
+    "UploadIntentSummaryV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "expires_at"],
+      "properties": {
+        "id": {"$ref": "#/$defs/Uuid"},
+        "status": {"type": "string", "enum": ["active", "consumed", "expired", "cancelled"]},
+        "expires_at": {"$ref": "#/$defs/Timestamp"}
+      }
+    },
+    "SourceAdmissionV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_document",
+        "source_version",
+        "rights_declaration",
+        "store_authorization",
+        "upload_intent",
+        "removal"
+      ],
+      "properties": {
+        "source_document": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "tenant_id", "display_name", "current_version_id", "row_version"],
+          "properties": {
+            "id": {"$ref": "#/$defs/Uuid"},
+            "tenant_id": {"$ref": "#/$defs/Uuid"},
+            "display_name": {"type": "string", "minLength": 1, "maxLength": 160},
+            "current_version_id": {"$ref": "#/$defs/Uuid"},
+            "row_version": {"$ref": "#/$defs/PositiveInteger"}
+          }
+        },
+        "source_version": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "tenant_id",
+            "source_document_id",
+            "version_number",
+            "admission_status",
+            "declared_filename",
+            "content_sha256",
+            "derived_file_size_bytes",
+            "derived_media_type",
+            "derived_page_count",
+            "derived_rendered_pixels_total",
+            "rejection_code",
+            "validation_attempt_count",
+            "row_version"
+          ],
+          "properties": {
+            "id": {"$ref": "#/$defs/Uuid"},
+            "tenant_id": {"$ref": "#/$defs/Uuid"},
+            "source_document_id": {"$ref": "#/$defs/Uuid"},
+            "version_number": {"$ref": "#/$defs/PositiveInteger"},
+            "admission_status": {"$ref": "#/$defs/SourceAdmissionStatus"},
+            "declared_filename": {"type": "string", "minLength": 1, "maxLength": 255},
+            "content_sha256": {
+              "anyOf": [{"$ref": "#/$defs/Sha256"}, {"type": "null"}]
+            },
+            "derived_file_size_bytes": {
+              "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
+            },
+            "derived_media_type": {
+              "anyOf": [{"type": "string", "const": "application/pdf"}, {"type": "null"}]
+            },
+            "derived_page_count": {
+              "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
+            },
+            "derived_rendered_pixels_total": {
+              "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
+            },
+            "rejection_code": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "RIGHTS_AUTHORIZATION_DENIED",
+                    "PDF_SIGNATURE_MISMATCH",
+                    "PDF_MEDIA_TYPE_INVALID",
+                    "PDF_ENCRYPTED",
+                    "PDF_CORRUPT",
+                    "PDF_POLYGLOT_REJECTED",
+                    "PDF_SIZE_LIMIT_EXCEEDED",
+                    "PDF_PAGE_LIMIT_EXCEEDED",
+                    "PDF_PIXEL_LIMIT_EXCEEDED",
+                    "PDF_DECODED_LIMIT_EXCEEDED",
+                    "PDF_VALIDATION_TIMEOUT",
+                    "PDF_UNSAFE",
+                    "OBJECT_MISSING",
+                    "OBJECT_CHECKSUM_MISMATCH"
+                  ]
+                },
+                {"type": "null"}
+              ]
+            },
+            "validation_attempt_count": {"type": "integer", "minimum": 0},
+            "row_version": {"$ref": "#/$defs/PositiveInteger"}
+          }
+        },
+        "rights_declaration": {"$ref": "#/$defs/RightsDeclarationV1"},
+        "store_authorization": {"$ref": "#/$defs/SourceUseAuthorizationV1"},
+        "upload_intent": {
+          "anyOf": [{"$ref": "#/$defs/UploadIntentSummaryV1"}, {"type": "null"}]
+        },
+        "removal": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "reason_code"],
+          "properties": {
+            "status": {"$ref": "#/$defs/RemovalStatus"},
+            "reason_code": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": ["USER_CANCELLED", "RIGHTS_REVOKED", "RIGHTS_EXPIRED", "RIGHTS_DISPUTED"]
+                },
+                {"type": "null"}
+              ]
+            }
+          }
+        }
+      }
+    },
+    "CancelSourceAdmissionV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expected_source_version_row_version", "reason_code"],
+      "properties": {
+        "expected_source_version_row_version": {"$ref": "#/$defs/PositiveInteger"},
+        "reason_code": {"type": "string", "enum": ["USER_CANCELLED", "SOURCE_REPLACED"]}
+      }
+    },
+    "AdmissionValidationResultV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "outcome",
+        "inspector_version",
+        "content_sha256",
+        "file_size_bytes",
+        "media_type",
+        "page_count",
+        "rendered_pixels_total",
+        "decoded_parser_bytes",
+        "rejection_code"
+      ],
+      "properties": {
+        "outcome": {"type": "string", "enum": ["admitted", "rejected", "retryable_failure"]},
+        "inspector_version": {"type": "string", "minLength": 1, "maxLength": 80},
+        "content_sha256": {
+          "anyOf": [{"$ref": "#/$defs/Sha256"}, {"type": "null"}]
+        },
+        "file_size_bytes": {
+          "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
+        },
+        "media_type": {
+          "anyOf": [{"type": "string", "const": "application/pdf"}, {"type": "null"}]
+        },
+        "page_count": {
+          "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
+        },
+        "rendered_pixels_total": {
+          "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
+        },
+        "decoded_parser_bytes": {
+          "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
+        },
+        "rejection_code": {
+          "anyOf": [
+            {"type": "string", "maxLength": 80, "pattern": "^[A-Z0-9_]+$"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "AdmissionValidationJobV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "job_id",
+        "tenant_id",
+        "source_document_id",
+        "source_version_id",
+        "storage_object_id",
+        "stage",
+        "attempt_number",
+        "lease_expires_at",
+        "idempotency_key",
+        "correlation_id",
+        "policy",
+        "input_manifest_sha256"
+      ],
+      "properties": {
+        "job_id": {"$ref": "#/$defs/Uuid"},
+        "tenant_id": {"$ref": "#/$defs/Uuid"},
+        "source_document_id": {"$ref": "#/$defs/Uuid"},
+        "source_version_id": {"$ref": "#/$defs/Uuid"},
+        "storage_object_id": {"$ref": "#/$defs/Uuid"},
+        "stage": {"type": "string", "const": "validate_admission"},
+        "attempt_number": {"$ref": "#/$defs/PositiveInteger"},
+        "lease_expires_at": {"$ref": "#/$defs/Timestamp"},
+        "idempotency_key": {"type": "string", "minLength": 16, "maxLength": 128},
+        "correlation_id": {"$ref": "#/$defs/Uuid"},
+        "policy": {"$ref": "#/$defs/AdmissionPolicyV1"},
+        "input_manifest_sha256": {"$ref": "#/$defs/Sha256"}
+      }
+    },
+    "SourceRemovalJobV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "job_id",
+        "tenant_id",
+        "source_document_id",
+        "source_version_id",
+        "storage_object_id",
+        "stage",
+        "reason_code",
+        "attempt_number",
+        "lease_expires_at",
+        "idempotency_key",
+        "correlation_id",
+        "impact_manifest_sha256"
+      ],
+      "properties": {
+        "job_id": {"$ref": "#/$defs/Uuid"},
+        "tenant_id": {"$ref": "#/$defs/Uuid"},
+        "source_document_id": {"$ref": "#/$defs/Uuid"},
+        "source_version_id": {"$ref": "#/$defs/Uuid"},
+        "storage_object_id": {"$ref": "#/$defs/Uuid"},
+        "stage": {"type": "string", "const": "remove_quarantine_object"},
+        "reason_code": {"type": "string", "enum": ["USER_CANCELLED", "RIGHTS_REVOKED", "RIGHTS_EXPIRED", "RIGHTS_DISPUTED"]},
+        "attempt_number": {"$ref": "#/$defs/PositiveInteger"},
+        "lease_expires_at": {"$ref": "#/$defs/Timestamp"},
+        "idempotency_key": {"type": "string", "minLength": 16, "maxLength": 128},
+        "correlation_id": {"$ref": "#/$defs/Uuid"},
+        "impact_manifest_sha256": {"$ref": "#/$defs/Sha256"}
+      }
+    },
+    "SourceAdmissionEventV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "event_type",
+        "event_version",
+        "tenant_id",
+        "source_document_id",
+        "source_version_id",
+        "aggregate_version",
+        "occurred_at",
+        "correlation_id",
+        "payload"
+      ],
+      "properties": {
+        "event_id": {"$ref": "#/$defs/Uuid"},
+        "event_type": {
+          "type": "string",
+          "enum": [
+            "source.rights.declared.v1",
+            "source.store_authorization.activated.v1",
+            "source.version.quarantined.v1",
+            "source.admission.validation_requested.v1",
+            "source.version.admitted.v1",
+            "source.version.rejected.v1",
+            "source.version.cancelled.v1",
+            "source.rights.revoked.v1",
+            "source.removal.completed.v1"
+          ]
+        },
+        "event_version": {"type": "integer", "const": 1},
+        "tenant_id": {"$ref": "#/$defs/Uuid"},
+        "source_document_id": {"$ref": "#/$defs/Uuid"},
+        "source_version_id": {"$ref": "#/$defs/Uuid"},
+        "aggregate_version": {"$ref": "#/$defs/PositiveInteger"},
+        "occurred_at": {"$ref": "#/$defs/Timestamp"},
+        "correlation_id": {"$ref": "#/$defs/Uuid"},
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["admission_status", "content_sha256", "reason_code"],
+          "properties": {
+            "admission_status": {"$ref": "#/$defs/SourceAdmissionStatus"},
+            "content_sha256": {
+              "anyOf": [{"$ref": "#/$defs/Sha256"}, {"type": "null"}]
+            },
+            "reason_code": {
+              "anyOf": [{"type": "string", "maxLength": 80, "pattern": "^[A-Z0-9_]+$"}, {"type": "null"}]
+            }
+          }
+        }
+      }
+    },
+    "AdmissionFixtureManifestV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fixture_version", "classification", "fixtures"],
+      "properties": {
+        "fixture_version": {"type": "string", "const": "f003-fixtures-v1"},
+        "classification": {"type": "string", "const": "synthetic_or_rights_cleared_only"},
+        "fixtures": {
+          "type": "array",
+          "minItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "kind", "expected_outcome", "license_note"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^[a-z0-9-]{3,80}$"},
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "valid_pdf",
+                  "signature_mismatch",
+                  "encrypted_pdf",
+                  "corrupt_pdf",
+                  "page_limit",
+                  "pixel_limit",
+                  "size_limit",
+                  "validation_unavailable",
+                  "object_missing",
+                  "checksum_mismatch"
+                ]
+              },
+              "expected_outcome": {"type": "string", "enum": ["admitted", "rejected", "retryable_failure"]},
+              "license_note": {"type": "string", "minLength": 1, "maxLength": 160},
+              "expected_rejection_code": {
+                "anyOf": [{"type": "string", "maxLength": 80, "pattern": "^[A-Z0-9_]+$"}, {"type": "null"}]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

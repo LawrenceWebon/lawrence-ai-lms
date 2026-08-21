@@ -1,6 +1,6 @@
 # AI LMS Feature Inventory
 
-Status: **approved MVP sequence; F-001 complete; F-002 implementation in code review**
+Status: **approved MVP sequence; F-001 complete; F-002 implementation merged; independent review/approval evidence unrecorded**
 
 Derived from: `docs/product/spec.md`
 
