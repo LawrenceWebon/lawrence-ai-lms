@@ -1,11 +1,13 @@
 # F-003 — PDF Source Admission
 
-Status: **contract correction merged; #43 blocked on unresolved review/approval gate**
+Status: **local implementation candidate complete; independent review and protected PR checks pending**
 
 Feature ID: `F-003`
 Planning issue: [#42](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/42)
 Review-evidence correction:
 [#51](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/51)
+Implementation: [#43](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/43)
+and [local evidence](../../evidence/f003-source-admission-implementation.md)
 
 ## Outcome
 

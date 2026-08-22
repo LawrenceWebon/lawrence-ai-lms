@@ -1,6 +1,6 @@
 # Implementation and Release Evidence Index
 
-Status: **pre-implementation index; no LMS implementation or production evidence exists**
+Status: **local implementation evidence exists; no production or release evidence exists**
 
 Documentation states intended controls. Evidence demonstrates that a specific code, migration, configuration, provider contract, environment and test run implemented those controls. No document may label a capability `implemented`, `verified`, production-ready or finalized solely because a plan section exists.
 
@@ -47,11 +47,11 @@ Phase 0 creates a machine-readable evidence manifest. Each entry contains:
 
 ## Current state
 
-There are no code, migrations, roles/policies, OpenAPI/event artifacts, provider
-sandbox contracts, production-shaped tests, dashboards, deployments or restore drills
-in this documentation repository. The
-[F-003 planning review correction](f003-planning-review-correction.md) is a governance
-record for an already-merged planning contract; it is not implementation or release
-evidence. The first implementation entries are produced by Phase 0. Until then, all
-implementation gates remain pending or blocked as stated in the
-[product audit](../product/product-audit.md) and feature readiness audits.
+The repository now contains local F-001/F-002 code and an F-003 implementation
+candidate. The [F-003 local implementation record](f003-source-admission-implementation.md)
+pins its code commit, synthetic artifacts, migration/RLS results, API/client/build
+checks, and browser regressions. It is local candidate evidence only: protected PR
+checks, independent review, release, deployment, retention/recovery, provider, and
+production gates remain pending or blocked. The
+[F-003 planning review correction](f003-planning-review-correction.md) remains a
+governance record rather than implementation or release evidence.
