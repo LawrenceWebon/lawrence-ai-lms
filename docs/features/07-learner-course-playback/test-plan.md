@@ -1,6 +1,9 @@
 # Test Plan — F-007 Learner Course Playback and Progress
 
-Status: **approved verification contract; implementation evidence does not exist**
+Status: **local verification complete; protected checks and independent review pending**
+
+Local results are recorded in
+[F007-LOCAL-IMPLEMENTATION-2026-08-22](../../evidence/f007-learner-playback-implementation.md).
 
 ## Software correctness
 
@@ -165,7 +168,7 @@ pwsh -NoProfile -File ./scripts/validate-markdown-links.ps1
 git diff --check
 ```
 
-The future implementation adds the complete repository gates:
+The implementation adds the complete repository gates:
 
 ```text
 make lint
@@ -176,10 +179,13 @@ make openapi-check
 make web-build
 make e2e-f001
 make e2e-f002
+make e2e-f003
+make e2e-f007
 make docs-check
 ```
 
-It must also run the focused F-007 migration/RLS/service/API/Admin/event/client/player/
-accessibility/concurrency suites. All applicable checks pass with zero lint/type errors;
-protected GitHub checks and an independent exact-head review remain required before
-merge.
+The local candidate also ran the focused F-007 migration/RLS/service/API/Admin/event/
+client/player/accessibility/concurrency suites. Applicable local checks pass with zero
+lint/type errors; protected GitHub checks and an independent exact-head review remain
+required before merge. Automated browser evidence does not replace a manual
+assistive-technology interoperability session.

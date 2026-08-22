@@ -1,6 +1,10 @@
 # Technical Decisions — F-007 Learner Course Playback and Progress
 
-Status: **owner-approved and frozen; implementation evidence pending**
+Status: **owner-approved, frozen, and implemented locally; independent review and protected checks pending**
+
+Local implementation evidence is recorded in
+[F007-LOCAL-IMPLEMENTATION-2026-08-22](../../evidence/f007-learner-playback-implementation.md)
+at application commit `dd758909e3060032ecbe28f8175d3849a4c26208`.
 
 ## Existing architecture to reuse
 
@@ -146,10 +150,11 @@ structurally ready for RTL without claiming another supported pilot locale.
 
 - Status: accepted.
 - F-007 is implemented in issue
-  [#46](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/46) after decision
-  correction [#50](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/50)'s
-  already-merged distinct-approval defect receives an explicit valid disposition.
-  Issue #46 is then the sole F-007 owner for learning migrations/RLS, permission
+  [#46](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/46). The
+  [project-owner disposition](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/46#issuecomment-5380754610)
+  closed decision correction [#50](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/50)'s
+  already-merged launch hold without claiming retroactive approval. Issue #46 is the
+  sole F-007 owner for learning migrations/RLS, permission
   additions, services, API/Admin, composition, OpenAPI/client generation, web/player,
   events, tests, and documentation manifest.
 - F-001/F-002 paths and contracts remain read-only inputs except for narrow,
@@ -228,5 +233,6 @@ tokens, or unrestricted actor data.
 F-007 implementation issue #46 is the only owner of learning migrations,
 permissions, application composition/settings, OpenAPI/client regeneration, web
 playback routes, F-007 events, integration/E2E fixtures, status documentation, and
-`manifest.json` after its launch gate closes. Workflow correction #54 owns the current
-status/manifest update. No F-007 implementation hotspot may change before #46 starts.
+`manifest.json`. Its owner-approved launch disposition is recorded above, and its local
+candidate is pinned by the implementation evidence; this does not supply the still
+required independent review or approval of the final PR head.
