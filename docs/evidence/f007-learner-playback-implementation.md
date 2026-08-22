@@ -91,8 +91,12 @@ browser suite passed. The architecture gate then identified direct ORM persisten
 API composition; persistence moved behind the Learning and Courses module boundaries,
 and the final architecture and regression suites passed. Finally, additive F-007 RLS
 policies changed the expected F-002 course database-catalog fingerprint; the expected
-identity was regenerated and the clean full suite passed. No initial failure is
-presented as passing evidence.
+identity was regenerated and the clean full suite passed. The first draft-PR quality
+run then caught that the evidence/status edit had removed historical readiness phrases
+asserted by the frozen F-007 contract test. Those phrases were restored as explicit
+launch-history statements without changing application code; the exact failing test
+and a clean 615-test non-RLS rerun passed. No initial failure is presented as passing
+evidence.
 
 ## Deterministic generated identities
 

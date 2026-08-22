@@ -2,6 +2,9 @@
 
 Status: **IMPLEMENTATION CANDIDATE VERIFIED LOCALLY; PR REVIEW/CHECKS PENDING**
 
+Launch transition: **READY FOR IMPLEMENTATION** was satisfied by the narrow owner
+disposition before #46 resources were provisioned.
+
 - [x] Outcome and non-goals match the focused product spec and F-007 inventory.
 - [x] F-001 identity/tenant and F-002 immutable publication dependencies are present.
 - [x] Actors, least-privilege permissions, private learner flow, tenant/resource

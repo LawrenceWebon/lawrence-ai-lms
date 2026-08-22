@@ -1,6 +1,6 @@
 # Technical Decisions — F-007 Learner Course Playback and Progress
 
-Status: **owner-approved, frozen, and implemented locally; independent review and protected checks pending**
+Status: **owner-approved and frozen; local implementation candidate verified; independent review and protected checks pending**
 
 Local implementation evidence is recorded in
 [F007-LOCAL-IMPLEMENTATION-2026-08-22](../../evidence/f007-learner-playback-implementation.md)
