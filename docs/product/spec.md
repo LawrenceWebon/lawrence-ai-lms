@@ -2,7 +2,7 @@
 
 Status: **approved implementation-facing MVP contract**
 
-Last updated: 2026-08-09
+Last updated: 2026-08-21
 
 ## Product outcome
 
@@ -196,9 +196,11 @@ silently replace canonical content.
 ## Assumptions and open questions
 
 The first implementation targets adult users in private institutions and uses
-synthetic or explicitly rights-cleared PDFs. Initial locale, content-block types,
-upload limits, OCR thresholds, provider/model, and production runtime remain explicit
-questions in `docs/product/open-questions.md`; a feature may not silently choose them.
+synthetic or explicitly rights-cleared PDFs. The initial focused-pilot product and
+course locale is exactly `en` under P-014; broader locale coverage remains a later
+decision. Upload limits, OCR thresholds, provider/model, and production runtime remain
+explicit questions in `docs/product/open-questions.md`; a feature may not silently
+choose them.
 
 ## Explicit non-goals
 

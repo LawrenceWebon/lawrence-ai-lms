@@ -101,8 +101,11 @@ Derived from: `docs/product/spec.md`
   lesson content, records progress, leaves, and resumes.
 - **UI overview:** course overview, lesson player, navigation, progress, empty/no-access
   states, and resume action.
-- **Constraints:** enrollment and progress are tenant/version scoped; learners cannot
-  view source PDFs, generation artifacts, or unpublished versions by default.
+- **Constraints:** P-014 permits tenant-admin manual assignment only, pins each
+  enrollment to one immutable published version, makes withdrawn/archived pins
+  neutrally unavailable, and changes progress only through explicit open/complete/
+  reopen commands. The initial pilot locale is exactly `en`; learners cannot view
+  source PDFs, generation artifacts, or unpublished versions by default.
 
 ### F-008 — End-to-end PDF-to-course integration
 
