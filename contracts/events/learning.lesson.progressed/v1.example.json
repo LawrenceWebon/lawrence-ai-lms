@@ -1,0 +1,24 @@
+{
+  "event_id": "70000000-0000-4000-8000-000000000003",
+  "event_type": "learning.lesson.progressed.v1",
+  "event_version": 1,
+  "producer": "learning",
+  "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+  "aggregate_type": "enrollment_progress",
+  "aggregate_id": "00000000-0000-4000-8000-00000000e001",
+  "aggregate_version": 4,
+  "occurred_at": "2026-08-21T00:05:00Z",
+  "recorded_at": "2026-08-21T00:05:01Z",
+  "correlation_id": "71000000-0000-4000-8000-000000000003",
+  "causation_id": "72000000-0000-4000-8000-000000000003",
+  "privacy_class": "internal",
+  "payload": {
+    "enrollment_id": "00000000-0000-4000-8000-00000000e001",
+    "course_version_id": "00000000-0000-4000-8000-00000000c101",
+    "lesson_id": "00000000-0000-4000-8000-00000000c302",
+    "command": "complete_lesson",
+    "previous_lesson_state": "in_progress",
+    "lesson_state": "completed",
+    "aggregate_version": 4
+  }
+}

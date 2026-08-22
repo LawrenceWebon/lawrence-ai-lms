@@ -21,6 +21,7 @@ def test_health_endpoint_reports_f001_integration_readiness() -> None:
             "f001-identity-tenancy",
             "f002-course-lifecycle",
             "f003-pdf-source-admission",
+            "f007-private-learner-playback",
         ],
     }
 

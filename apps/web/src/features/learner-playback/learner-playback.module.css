@@ -1,0 +1,406 @@
+.shell {
+  --ink: #182235;
+  --muted: #526176;
+  --line: #c7d2df;
+  --surface: #ffffff;
+  --surface-soft: #f5f8fb;
+  --accent: #0f6267;
+  --accent-dark: #08474b;
+  color: var(--ink);
+  display: grid;
+  gap: 1rem;
+  margin: 2rem auto;
+  max-width: 76rem;
+  min-width: 0;
+  padding: 0 1rem 4rem;
+}
+
+.shell h1,
+.shell h2,
+.shell h3,
+.shell h4,
+.shell h5,
+.shell p,
+.shell button {
+  overflow-wrap: anywhere;
+}
+
+.shell h1,
+.shell h2,
+.shell h3,
+.shell h4,
+.shell h5,
+.shell p {
+  margin-block-start: 0;
+}
+
+.skipLink {
+  background: var(--ink);
+  color: #ffffff;
+  inset-block-start: 0.5rem;
+  inset-inline-start: 0.5rem;
+  padding: 0.75rem 1rem;
+  position: fixed;
+  transform: translateY(-200%);
+  z-index: 10;
+}
+
+.skipLink:focus {
+  transform: translateY(0);
+}
+
+.hero {
+  background: linear-gradient(135deg, #e2f4f0, #f8fcfb);
+  border: 1px solid #abd1ca;
+  border-radius: 1rem;
+  padding: clamp(1.25rem, 4vw, 2.4rem);
+}
+
+.hero p:last-child {
+  color: var(--muted);
+  line-height: 1.6;
+  margin-block-end: 0;
+  max-width: 52rem;
+}
+
+.eyebrow {
+  color: var(--accent-dark);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin-block-end: 0.4rem;
+  text-transform: uppercase;
+}
+
+.card,
+.workspace {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  box-shadow: 0 1rem 3rem rgb(24 34 53 / 8%);
+  min-width: 0;
+  padding: clamp(1.15rem, 4vw, 2rem);
+}
+
+.workspace {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.workspaceHeader,
+.actions,
+.tenantList li,
+.lessonNavigation,
+.progressActions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  justify-content: space-between;
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+  margin-block-start: 1.25rem;
+  max-width: 34rem;
+  min-width: 0;
+}
+
+.form label {
+  display: grid;
+  font-weight: 750;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.form input {
+  background: var(--surface-soft);
+  border: 1px solid #7c91a7;
+  border-radius: 0.6rem;
+  box-sizing: border-box;
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.45;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0.75rem;
+  width: 100%;
+}
+
+.primaryButton,
+.secondaryButton,
+.textButton,
+.lessonLink {
+  border: 2px solid transparent;
+  border-radius: 0.65rem;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 750;
+  max-width: 100%;
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+}
+
+.primaryButton {
+  background: var(--accent);
+  color: #ffffff;
+  justify-self: start;
+}
+
+.primaryButton:hover {
+  background: var(--accent-dark);
+}
+
+.secondaryButton {
+  background: var(--surface);
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
+.textButton {
+  background: transparent;
+  color: var(--accent-dark);
+  text-decoration: underline;
+  text-underline-offset: 0.2rem;
+}
+
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible,
+.textButton:focus-visible,
+.lessonLink:focus-visible,
+.form input:focus-visible,
+.skipLink:focus-visible,
+.alert:focus-visible,
+.workspace h2:focus-visible,
+.lessonBody h3:focus-visible {
+  outline: 3px solid #f2b134;
+  outline-offset: 3px;
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.textButton:disabled,
+.lessonLink:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.liveRegions:empty {
+  display: none;
+}
+
+.status,
+.alert {
+  border-radius: 0.7rem;
+  line-height: 1.5;
+  margin-block-end: 0;
+  padding: 0.85rem 1rem;
+}
+
+.status {
+  background: #edf8f6;
+  border: 1px solid #9fc9c2;
+  color: #08474b;
+}
+
+.alert {
+  background: #fff0f1;
+  border: 1px solid #d98b94;
+  color: #701321;
+}
+
+.tenantList,
+.courseGrid {
+  display: grid;
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tenantList li,
+.courseCard,
+.emptyState {
+  background: var(--surface-soft);
+  border: 1px solid #dbe3ec;
+  border-radius: 0.8rem;
+  min-width: 0;
+  padding: 1rem;
+}
+
+.courseGrid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+}
+
+.courseCard {
+  display: grid;
+  gap: 1rem;
+}
+
+.courseCard p:last-child,
+.emptyState p:last-child {
+  color: var(--muted);
+  line-height: 1.55;
+  margin-block-end: 0;
+}
+
+.courseProgress {
+  align-items: center;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.courseProgress span:first-child {
+  font-weight: 800;
+}
+
+.courseProgress progress {
+  accent-color: var(--accent);
+  max-width: 28rem;
+  width: 100%;
+}
+
+.playerLayout {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(14rem, 19rem) minmax(0, 1fr);
+  min-width: 0;
+}
+
+.outline {
+  align-self: start;
+  background: var(--surface-soft);
+  border: 1px solid #dbe3ec;
+  border-radius: 0.8rem;
+  min-width: 0;
+  padding: 1rem;
+}
+
+.outline ol {
+  display: grid;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.lessonLink {
+  background: var(--surface);
+  border-color: #b6c5d3;
+  color: var(--ink);
+  display: grid;
+  gap: 0.25rem;
+  text-align: start;
+  width: 100%;
+}
+
+.lessonLink[aria-current="page"] {
+  border-color: var(--accent);
+  border-inline-start-width: 0.35rem;
+}
+
+.lessonLink small {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.lessonBody {
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  line-height: 1.7;
+  min-width: 0;
+  padding: clamp(1rem, 4vw, 2rem);
+}
+
+.lessonState {
+  color: var(--accent-dark);
+  font-weight: 800;
+}
+
+.richText {
+  border-inline-start: 0.3rem solid var(--accent);
+  margin-block: 1rem 2rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding-inline-start: 1rem;
+}
+
+.richText code {
+  background: #e2e8f0;
+  border-radius: 0.2rem;
+  font-size: 0.92em;
+  padding: 0.1rem 0.25rem;
+}
+
+.progressActions {
+  background: #edf8f6;
+  border-radius: 0.75rem;
+  justify-content: flex-start;
+  padding: 1rem;
+}
+
+.lessonNavigation {
+  border-block-start: 1px solid var(--line);
+  margin-block-start: 1.5rem;
+  padding-block-start: 1rem;
+}
+
+.srOnly {
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+@media (max-width: 80rem) {
+  .playerLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 40rem) {
+  .shell {
+    margin-block-start: 1rem;
+    padding-inline: 0.5rem;
+  }
+
+  .workspaceHeader,
+  .actions,
+  .tenantList li,
+  .lessonNavigation,
+  .progressActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .primaryButton,
+  .secondaryButton,
+  .textButton {
+    justify-self: stretch;
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skipLink {
+    scroll-behavior: auto;
+  }
+}
+
+@media (forced-colors: active) {
+  .hero,
+  .card,
+  .workspace,
+  .courseCard,
+  .outline,
+  .lessonBody,
+  .primaryButton,
+  .secondaryButton,
+  .lessonLink {
+    border: 1px solid CanvasText;
+  }
+}

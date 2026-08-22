@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-lms.local/events/learning.enrollment.revoked/v1.schema.json",
+  "title": "learning.enrollment.revoked.v1",
+  "$ref": "https://contracts.ai-lms.local/f007/learner-events.v1.schema.json#/$defs/EnrollmentRevokedV1"
+}
