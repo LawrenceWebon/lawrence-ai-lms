@@ -60,6 +60,27 @@ const expectedOperations = {
     "post",
     "createSuccessorCourseDraft",
   ],
+  "/api/v1/tenants/{tenant_id}/source-documents/admissions": [
+    "post",
+    "createSourceAdmission",
+  ],
+  "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}": [
+    "get",
+    "getSourceAdmission",
+  ],
+  "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/cancel": [
+    "post",
+    "cancelSourceAdmission",
+  ],
+  "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/rights-authorizations/{authorization_id}/decisions": [
+    "post",
+    "reviewSourceStoreAuthorization",
+  ],
+  "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/upload-intents": [
+    "post",
+    "createSourceUploadIntent",
+  ],
+  "/api/v1/source-upload-targets/{opaque_token}": ["put", "uploadSourceDocument"],
   "/health": ["get", "healthCheck"],
 };
 
@@ -69,10 +90,13 @@ const expectedSchemas = [
   "AuthenticationMembershipResponse",
   "AuthenticationPrincipalResponse",
   "CreateInvitationRequest",
+  "CreateRightsDeclarationV1",
+  "CreateSourceAdmissionV1",
   "CreateCourseV1",
   "CreateSuccessorDraftV1",
   "CourseSnapshotV1",
   "CourseVersionHistoryV1",
+  "CancelSourceAdmissionV1",
   "ReplaceCurriculumV1",
   "SuccessorDraftResultV1",
   "TransitionCourseVersionV1",
@@ -82,9 +106,18 @@ const expectedSchemas = [
   "InvitationReceiptResponse",
   "MembershipSummaryResponse",
   "ProblemDetails",
+  "RemovalV1",
+  "ReviewSourceStoreAuthorizationV1",
+  "RightsDeclarationV1",
+  "SourceAdmissionV1",
+  "SourceDocumentV1",
+  "SourceUseAuthorizationV1",
+  "SourceVersionV1",
   "TenantCandidateResponse",
   "TenantSummaryResponse",
   "UpdateMembershipRequest",
+  "UploadIntentSummaryV1",
+  "UploadIntentV1",
 ];
 
 function requireIntegratedShape() {
@@ -136,6 +169,29 @@ export type TransitionName =
   | "withdraw"
   | "archive";
 export type RichTextMark = "strong" | "emphasis" | "code";
+export type RightsBasis =
+  | "owned"
+  | "licensed"
+  | "written_permission"
+  | "public_domain"
+  | "other_documented";
+export type SourceAdmissionStatus =
+  | "rights_pending"
+  | "upload_pending"
+  | "quarantined"
+  | "validating"
+  | "admitted"
+  | "rejected"
+  | "cancelled"
+  | "blocked";
+export type SourceAuthorizationStatus =
+  | "requested"
+  | "active"
+  | "denied"
+  | "revoked"
+  | "expired"
+  | "disputed";
+export type UploadIntentStatus = "active" | "consumed" | "expired" | "cancelled";
 
 export interface paths {
   "/health": {
@@ -206,6 +262,30 @@ export interface paths {
   "/api/v1/tenants/{tenant_id}/courses/{course_id}/versions/{version_id}/successor-draft": {
     parameters: EmptyParameters;
     post: operations["createSuccessorCourseDraft"];
+  };
+  "/api/v1/tenants/{tenant_id}/source-documents/admissions": {
+    parameters: EmptyParameters;
+    post: operations["createSourceAdmission"];
+  };
+  "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}": {
+    parameters: EmptyParameters;
+    get: operations["getSourceAdmission"];
+  };
+  "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/cancel": {
+    parameters: EmptyParameters;
+    post: operations["cancelSourceAdmission"];
+  };
+  "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/rights-authorizations/{authorization_id}/decisions": {
+    parameters: EmptyParameters;
+    post: operations["reviewSourceStoreAuthorization"];
+  };
+  "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/upload-intents": {
+    parameters: EmptyParameters;
+    post: operations["createSourceUploadIntent"];
+  };
+  "/api/v1/source-upload-targets/{opaque_token}": {
+    parameters: EmptyParameters;
+    put: operations["uploadSourceDocument"];
   };
 }
 
@@ -465,6 +545,116 @@ export interface components {
       successor_version_id: string;
       snapshot: components["schemas"]["CourseSnapshotV1"];
     };
+    CreateRightsDeclarationV1: {
+      basis: RightsBasis;
+      attestation_version: "f003-source-rights-attestation-v1";
+      attested: true;
+      rights_holder_name?: string;
+      evidence_reference?: string;
+      valid_until?: string;
+    };
+    CreateSourceAdmissionV1: {
+      display_name: string;
+      declared_filename: string;
+      rights_declaration: components["schemas"]["CreateRightsDeclarationV1"];
+    };
+    ReviewSourceStoreAuthorizationV1: {
+      decision: "activate" | "deny" | "revoke";
+      expected_authorization_row_version: number;
+      decision_code:
+        | "RIGHTS_EVIDENCE_ACCEPTED"
+        | "RIGHTS_EVIDENCE_INSUFFICIENT"
+        | "RIGHTS_REVOKED";
+    };
+    CancelSourceAdmissionV1: {
+      expected_source_version_row_version: number;
+      reason_code: "USER_CANCELLED" | "SOURCE_REPLACED";
+    };
+    SourceDocumentV1: {
+      id: string;
+      tenant_id: string;
+      display_name: string;
+      current_version_id: string;
+      row_version: number;
+    };
+    SourceVersionV1: {
+      id: string;
+      tenant_id: string;
+      source_document_id: string;
+      version_number: number;
+      admission_status: SourceAdmissionStatus;
+      declared_filename: string;
+      content_sha256: string | null;
+      derived_file_size_bytes: number | null;
+      derived_media_type: string | null;
+      derived_pdf_signature_valid: boolean | null;
+      derived_parser_accepted: boolean | null;
+      derived_page_count: number | null;
+      derived_max_rendered_pixels_per_page: number | null;
+      derived_rendered_pixels_total: number | null;
+      derived_decoded_parser_bytes: number | null;
+      derived_local_inspection_result: "accepted" | "unsafe" | "unavailable" | null;
+      rejection_code: string | null;
+      validation_attempt_count: number;
+      row_version: number;
+    };
+    RightsDeclarationV1: {
+      id: string;
+      tenant_id: string;
+      source_document_id: string;
+      source_version_id: string;
+      declared_by_actor_id: string;
+      basis: RightsBasis;
+      attestation_version: "f003-source-rights-attestation-v1";
+      attested_at: string;
+      valid_until: string | null;
+      evidence_reference: string | null;
+      row_version: number;
+    };
+    SourceUseAuthorizationV1: {
+      id: string;
+      tenant_id: string;
+      source_document_id: string;
+      source_version_id: string;
+      rights_declaration_id: string;
+      operation: "store";
+      status: SourceAuthorizationStatus;
+      requested_by_actor_id: string;
+      reviewed_by_actor_id: string | null;
+      decision_code: string | null;
+      valid_from: string | null;
+      valid_until: string | null;
+      row_version: number;
+    };
+    UploadIntentSummaryV1: {
+      id: string;
+      status: UploadIntentStatus;
+      expires_at: string;
+    };
+    RemovalV1: {
+      status: "not_required" | "pending" | "completed" | "failed";
+      reason_code: "USER_CANCELLED" | "RIGHTS_REVOKED" | "RIGHTS_EXPIRED" | "RIGHTS_DISPUTED" | null;
+    };
+    SourceAdmissionV1: {
+      source_document: components["schemas"]["SourceDocumentV1"];
+      source_version: components["schemas"]["SourceVersionV1"];
+      rights_declaration: components["schemas"]["RightsDeclarationV1"];
+      store_authorization: components["schemas"]["SourceUseAuthorizationV1"];
+      upload_intent: components["schemas"]["UploadIntentSummaryV1"] | null;
+      removal: components["schemas"]["RemovalV1"];
+    };
+    UploadIntentV1: {
+      id: string;
+      tenant_id: string;
+      source_document_id: string;
+      source_version_id: string;
+      status: UploadIntentStatus;
+      target_url: string;
+      expires_at: string;
+      max_bytes: 6291456;
+      accepted_media_type: "application/pdf";
+      row_version: number;
+    };
   };
 }
 
@@ -621,6 +811,67 @@ export interface operations {
       500: ProblemResponse;
     };
   };
+  createSourceAdmission: {
+    parameters: SourceCollectionCommandParameters;
+    requestBody: JsonRequest<components["schemas"]["CreateSourceAdmissionV1"]>;
+    responses: {
+      201: JsonResponse<components["schemas"]["SourceAdmissionV1"]>;
+      400: ProblemResponse;
+      401: ProblemResponse;
+      403: ProblemResponse;
+      404: ProblemResponse;
+      409: ProblemResponse;
+      422: ProblemResponse;
+      500: ProblemResponse;
+    };
+  };
+  getSourceAdmission: {
+    parameters: SourceVersionParameters;
+    requestBody?: never;
+    responses: SourceSnapshotResponses;
+  };
+  reviewSourceStoreAuthorization: {
+    parameters: SourceAuthorizationCommandParameters;
+    requestBody: JsonRequest<components["schemas"]["ReviewSourceStoreAuthorizationV1"]>;
+    responses: SourceSnapshotResponses;
+  };
+  createSourceUploadIntent: {
+    parameters: SourceVersionCommandParameters;
+    requestBody?: never;
+    responses: {
+      201: JsonResponse<components["schemas"]["UploadIntentV1"]>;
+      400: ProblemResponse;
+      401: ProblemResponse;
+      403: ProblemResponse;
+      404: ProblemResponse;
+      409: ProblemResponse;
+      429: ProblemResponse;
+      500: ProblemResponse;
+    };
+  };
+  uploadSourceDocument: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: { opaque_token: string };
+      cookie?: never;
+    };
+    requestBody: BinaryRequest;
+    responses: {
+      202: JsonResponse<components["schemas"]["SourceAdmissionV1"]>;
+      404: ProblemResponse;
+      409: ProblemResponse;
+      410: ProblemResponse;
+      422: ProblemResponse;
+      503: ProblemResponse;
+      500: ProblemResponse;
+    };
+  };
+  cancelSourceAdmission: {
+    parameters: SourceVersionCommandParameters;
+    requestBody: JsonRequest<components["schemas"]["CancelSourceAdmissionV1"]>;
+    responses: SourceSnapshotResponses;
+  };
 }
 
 type EmptyParameters = {
@@ -673,7 +924,37 @@ type CourseTransitionOperation = {
   requestBody: JsonRequest<components["schemas"]["TransitionCourseVersionV1"]>;
   responses: CourseSnapshotResponses;
 };
+type SourceHeaders = AuthHeaders & { "X-Tenant-ID": string };
+type SourceCollectionCommandParameters = {
+  query?: never;
+  header: SourceHeaders & { "Idempotency-Key": string };
+  path: { tenant_id: string };
+  cookie?: never;
+};
+type SourceVersionParameters = {
+  query?: never;
+  header: SourceHeaders;
+  path: { tenant_id: string; source_document_id: string; source_version_id: string };
+  cookie?: never;
+};
+type SourceVersionCommandParameters = Omit<SourceVersionParameters, "header"> & {
+  header: SourceHeaders & { "Idempotency-Key": string };
+};
+type SourceAuthorizationCommandParameters = Omit<SourceVersionCommandParameters, "path"> & {
+  path: SourceVersionParameters["path"] & { authorization_id: string };
+};
+type SourceSnapshotResponses = {
+  200: JsonResponse<components["schemas"]["SourceAdmissionV1"]>;
+  400: ProblemResponse;
+  401: ProblemResponse;
+  403: ProblemResponse;
+  404: ProblemResponse;
+  409: ProblemResponse;
+  422: ProblemResponse;
+  500: ProblemResponse;
+};
 type JsonRequest<T> = { content: { "application/json": T } };
+type BinaryRequest = { content: { "application/pdf": Blob | ArrayBuffer | Uint8Array } };
 type JsonResponse<T> = {
   headers: Record<string, unknown>;
   content: { "application/json": T };

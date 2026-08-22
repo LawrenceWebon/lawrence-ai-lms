@@ -1,0 +1,22 @@
+{
+  "event_id": "10000000-0000-4000-8000-000000000301",
+  "event_type": "source.store_authorization.activated.v1",
+  "event_version": 1,
+  "producer": "documents",
+  "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+  "aggregate_type": "source_version",
+  "aggregate_id": "00000000-0000-4000-8000-00000000c302",
+  "source_document_id": "00000000-0000-4000-8000-00000000c301",
+  "source_version_id": "00000000-0000-4000-8000-00000000c302",
+  "aggregate_version": 2,
+  "occurred_at": "2026-08-22T01:00:00Z",
+  "recorded_at": "2026-08-22T01:00:01Z",
+  "correlation_id": "30000000-0000-4000-8000-000000000301",
+  "causation_id": "40000000-0000-4000-8000-000000000301",
+  "privacy_class": "internal",
+  "payload": {
+    "admission_status": "upload_pending",
+    "content_sha256": null,
+    "reason_code": null
+  }
+}

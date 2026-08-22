@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-lms.local/events/source.store_authorization.activated/v1.schema.json",
+  "title": "source.store_authorization.activated.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "producer",
+    "tenant_id",
+    "aggregate_type",
+    "aggregate_id",
+    "source_document_id",
+    "source_version_id",
+    "aggregate_version",
+    "occurred_at",
+    "recorded_at",
+    "correlation_id",
+    "causation_id",
+    "privacy_class",
+    "payload"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_type": {
+      "const": "source.store_authorization.activated.v1"
+    },
+    "event_version": {
+      "const": 1
+    },
+    "producer": {
+      "const": "documents"
+    },
+    "tenant_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "aggregate_type": {
+      "const": "source_version"
+    },
+    "aggregate_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "source_document_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "source_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "aggregate_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "correlation_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "causation_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "privacy_class": {
+      "const": "internal"
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "admission_status",
+        "content_sha256",
+        "reason_code"
+      ],
+      "properties": {
+        "admission_status": {
+          "const": "upload_pending"
+        },
+        "content_sha256": {
+          "type": "null"
+        },
+        "reason_code": {
+          "type": "null"
+        }
+      }
+    }
+  }
+}

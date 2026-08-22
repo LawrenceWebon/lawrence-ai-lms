@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "lms.modules.identity.apps.IdentityConfig",
     "lms.modules.tenancy.apps.TenancyConfig",
     "lms.modules.courses.apps.CoursesConfig",
+    "lms.modules.documents.apps.DocumentsConfig",
     "lms.platform_database.apps.PlatformDatabaseConfig",
 ]
 
@@ -73,3 +74,10 @@ DATABASES = {
         )
     )
 }
+
+# F-003 is intentionally a local-only adapter. Production provider selection,
+# retention, recovery, and real-data use remain unapproved.
+AI_LMS_LOCAL_QUARANTINE_ROOT = os.environ.get(
+    "AI_LMS_LOCAL_QUARANTINE_ROOT",
+    "/tmp/ai-lms-f003-quarantine",  # noqa: S108 - Compose-internal synthetic storage.
+)

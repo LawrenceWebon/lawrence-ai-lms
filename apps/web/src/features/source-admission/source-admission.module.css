@@ -1,0 +1,260 @@
+.shell {
+  --ink: #172033;
+  --muted: #526176;
+  --line: #c1ccda;
+  --surface: #ffffff;
+  --soft: #f3f7fb;
+  --accent: #155f62;
+  --accent-dark: #0d4547;
+  color: var(--ink);
+  display: grid;
+  gap: 1rem;
+  margin: 2rem auto;
+  max-width: 68rem;
+  min-width: 0;
+  padding: 0 1rem 4rem;
+}
+
+.shell h1,
+.shell h2,
+.shell h3,
+.shell p,
+.shell dd {
+  margin-top: 0;
+  overflow-wrap: anywhere;
+}
+
+.hero {
+  background: linear-gradient(135deg, #e4f6f2, #f7fbfa);
+  border: 1px solid #a9ccc5;
+  border-radius: 1rem;
+  padding: clamp(1.25rem, 4vw, 2.25rem);
+}
+
+.hero p:last-child {
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 0;
+  max-width: 50rem;
+}
+
+.eyebrow {
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+}
+
+.card,
+.workspaceHeader {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  box-shadow: 0 1rem 3rem rgb(23 32 51 / 8%);
+  min-width: 0;
+  padding: clamp(1.15rem, 4vw, 2rem);
+}
+
+.workspace {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.workspaceHeader,
+.sectionHeader,
+.tenantList li,
+.actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  justify-content: space-between;
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  min-width: 0;
+}
+
+.form label:not(.checkLabel) {
+  display: grid;
+  font-weight: 700;
+  gap: 0.4rem;
+}
+
+.form input,
+.form select {
+  background: var(--soft);
+  border: 1px solid #8193a8;
+  border-radius: 0.6rem;
+  box-sizing: border-box;
+  color: var(--ink);
+  font: inherit;
+  max-width: 100%;
+  min-height: 2.8rem;
+  min-width: 0;
+  padding: 0.7rem;
+  width: 100%;
+}
+
+.checkLabel {
+  align-items: flex-start;
+  display: flex;
+  font-weight: 650;
+  gap: 0.65rem;
+  line-height: 1.5;
+}
+
+.checkLabel input {
+  flex: 0 0 auto;
+  margin-top: 0.25rem;
+  min-height: 1.2rem;
+  width: 1.2rem;
+}
+
+.primaryButton,
+.secondaryButton,
+.dangerButton {
+  border: 2px solid transparent;
+  border-radius: 0.65rem;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 750;
+  max-width: 100%;
+  min-height: 2.75rem;
+  overflow-wrap: anywhere;
+  padding: 0.65rem 1rem;
+}
+
+.primaryButton {
+  background: var(--accent);
+  color: #ffffff;
+  justify-self: start;
+}
+
+.primaryButton:hover {
+  background: var(--accent-dark);
+}
+
+.secondaryButton {
+  background: #ffffff;
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
+.dangerButton {
+  background: #8f2230;
+  color: #ffffff;
+  margin-top: 1rem;
+}
+
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible,
+.dangerButton:focus-visible,
+.form input:focus-visible,
+.form select:focus-visible {
+  outline: 3px solid #edaa28;
+  outline-offset: 3px;
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.dangerButton:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.status,
+.alert,
+.rejection {
+  border-radius: 0.7rem;
+  line-height: 1.5;
+  padding: 0.85rem 1rem;
+}
+
+.status {
+  background: #e7f6f3;
+  border: 1px solid #9ec8c0;
+  color: #0d4547;
+}
+
+.alert,
+.rejection {
+  background: #fff0f1;
+  border: 1px solid #d98b94;
+  color: #701321;
+}
+
+.tenantList {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+
+.tenantList li,
+.details div {
+  background: var(--soft);
+  border-radius: 0.75rem;
+  min-width: 0;
+  padding: 1rem;
+}
+
+.badge {
+  background: #dcefea;
+  border: 1px solid #8bb9af;
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+}
+
+.details {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  margin: 1rem 0;
+}
+
+.details dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.details dd {
+  margin-bottom: 0;
+  margin-left: 0;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 40rem) {
+  .shell {
+    margin-top: 1rem;
+    padding-inline: 0.5rem;
+  }
+
+  .workspaceHeader,
+  .sectionHeader,
+  .tenantList li,
+  .actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .primaryButton,
+  .secondaryButton,
+  .dangerButton {
+    justify-self: stretch;
+    width: 100%;
+  }
+}

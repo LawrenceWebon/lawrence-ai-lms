@@ -5,6 +5,7 @@ import hmac
 import time
 from datetime import timedelta
 from hashlib import sha256
+from pathlib import Path
 from typing import Final
 from uuid import UUID
 
@@ -20,7 +21,9 @@ from pydantic import BaseModel, ConfigDict, SecretStr
 django.setup()
 
 from lms.api.composition import DjangoCourseAdministrationService, DjangoTenancyService
+from lms.api.document_composition import DjangoSourceAdmissionService
 from lms.api.main import create_application
+from lms.modules.documents.storage import LocalQuarantineStorage
 from lms.modules.identity.services import DjangoIdentityProfileReader, IdentityService
 from lms.modules.identity.tokens import CachedJwks, JwtVerificationConfig, JwtVerifier
 from lms.modules.tenancy.models import (
@@ -44,6 +47,7 @@ SYNTHETIC_PASSWORD: Final = "synthetic-password"  # noqa: S105
 SUBJECTS: Final = {
     "alpha-admin@example.invalid": UUID("00000000-0000-4000-8000-000000000101"),
     "instructor@example.invalid": UUID("00000000-0000-4000-8000-000000000102"),
+    "learner@example.invalid": UUID("00000000-0000-4000-8000-000000000103"),
     "outsider@example.invalid": UUID("00000000-0000-4000-8000-000000000105"),
     "invitee@example.invalid": UUID("00000000-0000-4000-8000-000000000106"),
 }
@@ -89,10 +93,13 @@ def _identity_service() -> IdentityService:
     )
 
 
+source_storage = LocalQuarantineStorage(Path(settings.AI_LMS_LOCAL_QUARANTINE_ROOT))
+source_service = DjangoSourceAdmissionService(storage=source_storage)
 app = create_application(
     identity_authenticator=_identity_service(),
     tenancy_service=DjangoTenancyService(),
     course_service=DjangoCourseAdministrationService(),
+    document_service=source_service,
 )
 fixture_router = APIRouter(prefix="/api/integration", include_in_schema=False)
 
@@ -105,10 +112,16 @@ def _digest(value: str) -> str:
     ).hexdigest()
 
 
+def _clear_source_quarantine() -> None:
+    for locator in source_storage.locators():
+        source_storage.delete(locator)
+
+
 @transaction.atomic
 def reset_fixture() -> None:
     from lms.modules.identity.models import UserProfile
 
+    transaction.on_commit(_clear_source_quarantine)
     with connection.cursor() as cursor:
         cursor.execute("TRUNCATE app.tenants, app.permissions, app.user_profiles CASCADE")
     now = timezone.now()
@@ -153,10 +166,16 @@ def reset_fixture() -> None:
         user_profile=profiles["instructor@example.invalid"],
         status="active",
     )
+    learner_alpha = TenantMembership.objects.create(
+        tenant=alpha,
+        user_profile=profiles["learner@example.invalid"],
+        status="active",
+    )
     for tenant, membership, role_code in (
         (alpha, admin_membership, "tenant_admin"),
         (alpha, instructor_alpha, "instructor"),
         (beta, instructor_beta, "instructor"),
+        (alpha, learner_alpha, "learner"),
     ):
         MembershipRole.objects.create(
             tenant=tenant,

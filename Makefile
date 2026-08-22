@@ -3,7 +3,7 @@ BACKEND_EXEC := $(COMPOSE) exec -T backend
 WEB_EXEC := $(COMPOSE) exec -T web
 PYTHONPATH := backend/src
 
-.PHONY: compose-up clean-install lint typecheck test test-rls openapi-check web-build e2e-f001 e2e-f002 docs-check architecture-check migration-authority-check
+.PHONY: compose-up clean-install lint typecheck test test-rls openapi-check web-build e2e-f001 e2e-f002 e2e-f003 docs-check architecture-check migration-authority-check
 
 compose-up:
 	$(COMPOSE) up -d --build --wait
@@ -39,6 +39,9 @@ e2e-f001: web-build
 
 e2e-f002: web-build
 	$(WEB_EXEC) npm run test:e2e --workspace @ai-lms/e2e -- f002-course-editor.spec.ts
+
+e2e-f003: web-build
+	$(WEB_EXEC) npm run test:e2e --workspace @ai-lms/e2e -- f003-source-admission.spec.ts
 
 docs-check:
 	$(BACKEND_EXEC) python scripts/docs_check.py
