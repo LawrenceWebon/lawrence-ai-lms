@@ -1,6 +1,6 @@
 # Readiness Audit — F-007 Learner Course Playback and Progress
 
-Status: **BLOCKED — #50 MERGED WITHOUT THE REQUIRED DISTINCT APPROVAL RECORD**
+Status: **CONTRACT READY FOR IMPLEMENTATION; #46 EXECUTION BLOCKED ON APPROVAL RECORD**
 
 - [x] Outcome and non-goals match the focused product spec and F-007 inventory.
 - [x] F-001 identity/tenant and F-002 immutable publication dependencies are present.
