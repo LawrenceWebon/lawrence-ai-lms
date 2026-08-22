@@ -21,6 +21,8 @@ TECHNICAL_DECISIONS_PATH = (
     REPO_ROOT / "docs/features/07-learner-course-playback/technical-decisions.md"
 )
 READINESS_AUDIT_PATH = REPO_ROOT / "docs/features/07-learner-course-playback/readiness-audit.md"
+PRODUCT_DECISIONS_PATH = REPO_ROOT / "docs/product/decisions.md"
+LOCALE_PLAN_PATH = REPO_ROOT / "docs/plan/18-localization-accessibility.md"
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -173,6 +175,7 @@ def test_f007_event_contract_rejects_unapproved_payload_fields() -> None:
 
 def test_f007_fixtures_freeze_version_pin_and_negative_cases() -> None:
     fixture = load_json(FIXTURE_PATH)
+    decisions = fixture["approved_decisions"]
     course = fixture["courses"]["pointer_advanced"]
     active = fixture["enrollments"]["active_pin_v1"]
     pinned = course["versions"]["v1"]
@@ -180,6 +183,34 @@ def test_f007_fixtures_freeze_version_pin_and_negative_cases() -> None:
     scenarios = {scenario["id"]: scenario for scenario in fixture["scenarios"]}
 
     assert fixture["classification"] == "synthetic"
+    assert decisions == {
+        "private_enrollment": {
+            "admission_source": "manual_assignment",
+            "self_enrollment": False,
+            "revocation_terminal": True,
+            "reenrollment_creates_new_record": True,
+            "reenrollment_pins_current_published_version": True,
+            "copy_historical_progress": False,
+        },
+        "unavailable_pinned_version": {
+            "states": ["withdrawn", "archived"],
+            "http_status": 404,
+            "problem_code": "LEARNING_RESOURCE_NOT_FOUND",
+            "auto_migrate": False,
+            "learner_history_readable": False,
+        },
+        "progress": {
+            "commands": ["open_lesson", "complete_lesson", "reopen_lesson"],
+            "get_or_telemetry_mutates": False,
+            "course_completion_rule": "all_required_lessons_complete",
+            "required_lesson_reopen_reopens_course": True,
+        },
+        "locale": {
+            "initial_pilot": "en",
+            "preserve_unicode_and_fallback_metadata": True,
+            "rtl_ready": True,
+        },
+    }
     assert active["status"] == "active"
     assert active["admission_source"] == "manual_assignment"
     assert active["course_version_id"] == pinned["id"]
@@ -194,23 +225,78 @@ def test_f007_fixtures_freeze_version_pin_and_negative_cases() -> None:
     assert fixture["enrollments"]["revoked"]["status"] == "revoked"
     assert fixture["memberships"]["alpha_learner_revoked"]["status"] == "revoked"
     assert scenarios["wrong_tenant_denied"]["expected_result"] == "learning_resource_not_found"
+    active_enrollment_keys = [
+        (
+            enrollment["tenant_id"],
+            enrollment["learner_membership_id"],
+            enrollment["course_id"],
+        )
+        for enrollment in fixture["enrollments"].values()
+        if enrollment["status"] == "active"
+    ]
+    assert len(active_enrollment_keys) == len(set(active_enrollment_keys))
 
-    withdrawn = fixture["courses"]["withdrawn"]
-    withdrawn_pin = fixture["enrollments"]["withdrawn_pin"]
-    assert withdrawn["versions"]["v1"]["status"] == "withdrawn"
-    assert withdrawn_pin["course_version_id"] == withdrawn["versions"]["v1"]["id"]
-    assert scenarios["withdrawn_pin_denied_under_recommended_policy"]["expected_result"].startswith(
-        "pending_f007_q02"
-    )
+    old_enrollment = fixture["enrollments"]["reenrollment_revoked_v1"]
+    new_enrollment = fixture["enrollments"]["reenrollment_active_v2"]
+    assert old_enrollment["id"] != new_enrollment["id"]
+    assert old_enrollment["status"] == "revoked"
+    assert new_enrollment["status"] == "active"
+    assert old_enrollment["learner_membership_id"] == new_enrollment["learner_membership_id"]
+    assert new_enrollment["learner_membership_id"] != active["learner_membership_id"]
+    assert old_enrollment["course_id"] == new_enrollment["course_id"] == course["id"]
+    assert old_enrollment["course_version_id"] == pinned["id"]
+    assert new_enrollment["course_version_id"] == course["current_published_version_id"]
+    assert fixture["progress_records"]["reenrollment_revoked_v1"] == [
+        {
+            "lesson_id": "00000000-0000-4000-8000-00000000c301",
+            "state": "completed",
+        }
+    ]
+    assert fixture["progress_records"]["reenrollment_active_v2"] == []
+
+    for state in ("withdrawn", "archived"):
+        unavailable_course = fixture["courses"][state]
+        unavailable_pin = fixture["enrollments"][f"{state}_pin"]
+        scenario = scenarios[f"{state}_pin_denied"]
+        assert unavailable_course["versions"]["v1"]["status"] == state
+        assert unavailable_pin["course_version_id"] == unavailable_course["versions"]["v1"]["id"]
+        assert scenario["expected_result"] == "learning_resource_not_found"
+        assert scenario["expected_course_version_id"] is None
 
 
-def test_f007_decision_gates_are_explicit_and_block_implementation() -> None:
+def test_f007_progress_commands_and_initial_locale_are_frozen() -> None:
+    playback_schema = load_json(PLAYBACK_SCHEMA_PATH)
+    playback_examples = load_json(PLAYBACK_EXAMPLES_PATH)
+
+    assert playback_schema["$defs"]["ProgressCommandV1"]["properties"]["command"]["enum"] == [
+        "open_lesson",
+        "complete_lesson",
+        "reopen_lesson",
+    ]
+    assert playback_schema["$defs"]["EnrollmentV1"]["properties"]["admission_source"] == {
+        "const": "manual_assignment"
+    }
+    assert {
+        example["primary_locale"]
+        for example in playback_examples.values()
+        if isinstance(example, dict) and "primary_locale" in example
+    } == {"en"}
+
+
+def test_f007_decisions_are_owner_approved_and_contract_ready() -> None:
     technical_decisions = TECHNICAL_DECISIONS_PATH.read_text(encoding="utf-8")
     readiness = READINESS_AUDIT_PATH.read_text(encoding="utf-8")
+    product_decisions = PRODUCT_DECISIONS_PATH.read_text(encoding="utf-8")
+    locale_plan = LOCALE_PLAN_PATH.read_text(encoding="utf-8")
 
     for decision_id in ("F007-Q01", "F007-Q02", "F007-Q03", "F007-Q04"):
         assert decision_id in technical_decisions
         assert decision_id in readiness
 
-    assert "NOT READY FOR IMPLEMENTATION" in readiness
-    assert "- [ ]" in readiness
+    assert "P-014" in product_decisions
+    assert "Status: **owner-approved and frozen" in technical_decisions
+    assert "READY FOR IMPLEMENTATION" in readiness
+    assert "- [ ] F007-Q" not in readiness
+    assert "NOT READY FOR IMPLEMENTATION" not in readiness
+    assert "Initial focused-pilot locale under P-014" in locale_plan
+    assert "\nen\n" in locale_plan

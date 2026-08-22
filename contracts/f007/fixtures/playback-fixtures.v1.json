@@ -2,6 +2,41 @@
   "fixture_version": 1,
   "classification": "synthetic",
   "description": "Invented F-007 learner playback fixtures containing no private, uploaded, or source-derived material.",
+  "approved_decisions": {
+    "private_enrollment": {
+      "admission_source": "manual_assignment",
+      "self_enrollment": false,
+      "revocation_terminal": true,
+      "reenrollment_creates_new_record": true,
+      "reenrollment_pins_current_published_version": true,
+      "copy_historical_progress": false
+    },
+    "unavailable_pinned_version": {
+      "states": [
+        "withdrawn",
+        "archived"
+      ],
+      "http_status": 404,
+      "problem_code": "LEARNING_RESOURCE_NOT_FOUND",
+      "auto_migrate": false,
+      "learner_history_readable": false
+    },
+    "progress": {
+      "commands": [
+        "open_lesson",
+        "complete_lesson",
+        "reopen_lesson"
+      ],
+      "get_or_telemetry_mutates": false,
+      "course_completion_rule": "all_required_lessons_complete",
+      "required_lesson_reopen_reopens_course": true
+    },
+    "locale": {
+      "initial_pilot": "en",
+      "preserve_unicode_and_fallback_metadata": true,
+      "rtl_ready": true
+    }
+  },
   "tenants": {
     "alpha": "00000000-0000-4000-8000-0000000000a1",
     "beta": "00000000-0000-4000-8000-0000000000b2"
@@ -29,6 +64,12 @@
       "id": "00000000-0000-4000-8000-000000000304",
       "tenant_id": "00000000-0000-4000-8000-0000000000a1",
       "status": "revoked",
+      "role": "learner"
+    },
+    "alpha_learner_reenrolled": {
+      "id": "00000000-0000-4000-8000-000000000305",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "status": "active",
       "role": "learner"
     },
     "beta_learner_active": {
@@ -80,6 +121,22 @@
           ]
         }
       }
+    },
+    "archived": {
+      "id": "00000000-0000-4000-8000-00000000c003",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "current_published_version_id": null,
+      "versions": {
+        "v1": {
+          "id": "00000000-0000-4000-8000-00000000c104",
+          "version_number": 1,
+          "status": "archived",
+          "content_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "lesson_ids": [
+            "00000000-0000-4000-8000-00000000c304"
+          ]
+        }
+      }
     }
   },
   "enrollments": {
@@ -118,7 +175,43 @@
       "course_version_id": "00000000-0000-4000-8000-00000000c103",
       "status": "active",
       "admission_source": "manual_assignment"
+    },
+    "reenrollment_revoked_v1": {
+      "id": "00000000-0000-4000-8000-00000000e005",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "learner_membership_id": "00000000-0000-4000-8000-000000000305",
+      "course_id": "00000000-0000-4000-8000-00000000c001",
+      "course_version_id": "00000000-0000-4000-8000-00000000c101",
+      "status": "revoked",
+      "admission_source": "manual_assignment"
+    },
+    "reenrollment_active_v2": {
+      "id": "00000000-0000-4000-8000-00000000e006",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "learner_membership_id": "00000000-0000-4000-8000-000000000305",
+      "course_id": "00000000-0000-4000-8000-00000000c001",
+      "course_version_id": "00000000-0000-4000-8000-00000000c102",
+      "status": "active",
+      "admission_source": "manual_assignment"
+    },
+    "archived_pin": {
+      "id": "00000000-0000-4000-8000-00000000e007",
+      "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+      "learner_membership_id": "00000000-0000-4000-8000-000000000302",
+      "course_id": "00000000-0000-4000-8000-00000000c003",
+      "course_version_id": "00000000-0000-4000-8000-00000000c104",
+      "status": "active",
+      "admission_source": "manual_assignment"
     }
+  },
+  "progress_records": {
+    "reenrollment_revoked_v1": [
+      {
+        "lesson_id": "00000000-0000-4000-8000-00000000c301",
+        "state": "completed"
+      }
+    ],
+    "reenrollment_active_v2": []
   },
   "scenarios": [
     {
@@ -176,12 +269,21 @@
       "expected_course_version_id": null
     },
     {
-      "id": "withdrawn_pin_denied_under_recommended_policy",
+      "id": "withdrawn_pin_denied",
       "actor_membership": "alpha_learner_active",
       "tenant": "alpha",
       "enrollment": "withdrawn_pin",
       "requested_lesson_id": "00000000-0000-4000-8000-00000000c303",
-      "expected_result": "pending_f007_q02_recommended_learning_resource_not_found",
+      "expected_result": "learning_resource_not_found",
+      "expected_course_version_id": null
+    },
+    {
+      "id": "archived_pin_denied",
+      "actor_membership": "alpha_learner_active",
+      "tenant": "alpha",
+      "enrollment": "archived_pin",
+      "requested_lesson_id": "00000000-0000-4000-8000-00000000c304",
+      "expected_result": "learning_resource_not_found",
       "expected_course_version_id": null
     }
   ]

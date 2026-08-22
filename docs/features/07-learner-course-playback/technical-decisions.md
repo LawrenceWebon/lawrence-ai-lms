@@ -1,6 +1,6 @@
 # Technical Decisions — F-007 Learner Course Playback and Progress
 
-Status: **planning proposal; F007-Q01–Q04 and independent review pending**
+Status: **owner-approved and frozen; implementation evidence pending**
 
 ## Existing architecture to reuse
 
@@ -14,14 +14,14 @@ Status: **planning proposal; F007-Q01–Q04 and independent review pending**
   command idempotency, atomic audit/outbox facts, and deterministic synthetic fixtures.
 - The learning-domain version-pin invariant in documents 05, 07, and 20.
 
-## Owner decision gates
+## Owner-approved decisions
 
-These decisions change persisted lifecycle or acceptance behavior. They must be
-explicitly accepted before this package can become `READY FOR IMPLEMENTATION`.
+These decisions change persisted lifecycle or acceptance behavior and are approved
+under P-014. Implementation must consume them exactly.
 
 ### F007-Q01 — Private enrollment and re-enrollment policy
 
-Recommended decision:
+Approved decision:
 
 - the first slice permits manual assignment by a tenant administrator with
   `learning.enrollments.manage`;
@@ -33,7 +33,7 @@ Recommended decision:
 
 ### F007-Q02 — Withdrawn or archived pinned version
 
-Recommended decision:
+Approved decision:
 
 - a withdrawn or archived pinned version becomes immediately unavailable for new
   playback and progress operations;
@@ -45,7 +45,7 @@ Recommended decision:
 
 ### F007-Q03 — Completion and reopen semantics
 
-Recommended decision:
+Approved decision:
 
 - `open_lesson` explicitly records the resume lesson and starts an unstarted lesson;
 - `complete_lesson` explicitly marks a lesson complete;
@@ -57,17 +57,18 @@ Recommended decision:
 
 ### F007-Q04 — Initial locale acceptance
 
-This is product question Q-P08. The implementation must preserve the F-002
-`primary_locale`, use repository localization boundaries, and remain structurally
-ready for RTL, but it cannot claim an initial accepted pilot locale until the owner
-chooses one. The proposed synthetic fixtures use `en` only as contract data, not as a
-product-locale approval.
+Approved decision:
 
-## Proposed decisions
+This closes product question Q-P08 for the focused pilot: the accepted initial locale
+is exactly `en`. The implementation preserves the F-002 `primary_locale`, Unicode,
+language/fallback metadata, and repository localization boundaries and remains
+structurally ready for RTL without claiming another supported pilot locale.
+
+## Frozen technical decisions
 
 ### F007-TD-001 — Enrollment is private and pins one immutable course version
 
-- Status: proposed; depends on F007-Q01.
+- Status: accepted under P-014.
 - `Enrollment` is tenant-owned and relates one active learner membership to one course
   and one immutable course version.
 - The create request accepts `course_id` only. Inside one transaction, the service
@@ -82,7 +83,7 @@ product-locale approval.
 
 ### F007-TD-002 — Playback is enrollment-scoped and version-stable
 
-- Status: proposed; unavailable behavior depends on F007-Q02.
+- Status: accepted under P-014.
 - Every dashboard, outline, and lesson selector re-derives the actor's current tenant,
   membership, permission, enrollment ownership, enrollment status, and pinned version.
 - The dashboard lists only the current learner's active enrollments, ordered by
@@ -97,7 +98,7 @@ product-locale approval.
 
 ### F007-TD-003 — Progress changes only through explicit optimistic commands
 
-- Status: proposed; transition semantics depend on F007-Q03.
+- Status: accepted under P-014.
 - GET operations are selectors and have no business-state side effect.
 - `open_lesson`, `complete_lesson`, and `reopen_lesson` require an HTTP
   `Idempotency-Key`, a route-matching command discriminator, `lesson_id`, and the
@@ -113,7 +114,7 @@ product-locale approval.
 
 ### F007-TD-004 — The learner surface is minimal and private
 
-- Status: proposed; locale acceptance depends on F007-Q04.
+- Status: accepted under P-014.
 - The web surface contains a private learner-course list, an enrollment playback page,
   one rich-text lesson renderer, previous/next navigation, resume, complete, and reopen
   controls, and safe empty/loading/error states.
@@ -127,7 +128,7 @@ product-locale approval.
 
 ### F007-TD-005 — Learning owns authorization, transactions, and RLS
 
-- Status: proposed.
+- Status: accepted.
 - The Learning module owns enrollment and progress invariants. It reads published
   course/curriculum state through the Courses public boundary and never mutates F-002
   models directly.
@@ -143,18 +144,20 @@ product-locale approval.
 
 ### F007-TD-006 — One vertical issue owns shared integration hotspots
 
-- Status: proposed.
+- Status: accepted.
 - F-007 is implemented in issue
-  [#46](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/46) after this planning
-  package and all four owner decisions merge. That issue is the sole F-007 owner for
-  learning migrations/RLS, permission additions, services, API/Admin, composition,
-  OpenAPI/client generation, web/player, events, tests, and documentation manifest.
+  [#46](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/46) after decision
+  correction [#50](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/50)'s pull
+  request independently passes review/checks and merges. Issue #46 is the sole F-007
+  owner for learning migrations/RLS, permission additions, services, API/Admin,
+  composition, OpenAPI/client generation, web/player, events, tests, and documentation
+  manifest.
 - F-001/F-002 paths and contracts remain read-only inputs except for narrow,
   issue-declared permission/composition integration owned by the F-007 issue.
 - No provider, queue, storage, dependency, lockfile, CI, analytics, notification, or
   production configuration is added.
 
-## Proposed executable DTO contract
+## Frozen executable DTO contract
 
 The schema and examples are
 `contracts/f007/learner-playback.v1.schema.json` and
@@ -174,7 +177,7 @@ The schema and examples are
 Bodies never accept tenant authority, actor ID, authoritative course-version ID,
 status timestamps, or idempotency keys. Request schemas reject unknown properties.
 
-## Proposed HTTP contract
+## Frozen HTTP contract
 
 All paths are under `/api/v1/tenants/{tenant_id}` and require `Authorization` plus a
 matching `X-Tenant-ID`.
@@ -200,10 +203,10 @@ re-authorizes every page and never treats the cursor as authority.
 `PROGRESS_VERSION_CONFLICT`, `IDEMPOTENCY_CONFLICT`, and
 `SERVICE_CONTRACT_ERROR`.
 
-F007-Q02 must confirm whether withdrawn/archived pins use the neutral not-found code;
-the proposed schemas do not expose a separate existence oracle.
+Withdrawn/archived pins use neutral `404 LEARNING_RESOURCE_NOT_FOUND`; the schemas do
+not expose a separate existence oracle and the service never auto-migrates the pin.
 
-## Proposed event facts
+## Frozen event facts
 
 The executable event schema/example pair is
 `contracts/f007/learner-events.v1.schema.json` and
@@ -225,6 +228,5 @@ tokens, or unrestricted actor data.
 F-007 implementation issue #46 is the only owner of learning migrations,
 permissions, application composition/settings, OpenAPI/client regeneration, web
 playback routes, F-007 events, integration/E2E fixtures, status documentation, and
-`manifest.json`. Until that issue starts, planning issue #45 alone owns
-`docs/features/07-learner-course-playback/**`, `contracts/f007/**`, the focused
-contract test, the feature index link, and the planning manifest update.
+`manifest.json`. Until that issue starts, decision correction #50 alone owns the
+declared decision-related product/locale/F-007 contract/test/manifest paths.
