@@ -1,6 +1,6 @@
 # Test Plan — F-003 PDF Source Admission
 
-Status: **frozen verification plan; correction #51 merge pending**
+Status: **frozen verification plan; implementation blocked on governance disposition**
 
 ## Contract and fixture correctness
 

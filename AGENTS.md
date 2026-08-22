@@ -45,6 +45,10 @@ explicitly requests implementation and the selected issue is ready.
 - Create repository worktrees only under the exact absolute
   `/home/lawrence/Project Neo/worktrees/ai-lms/` root; do not place worktrees inside
   the repository or under `/tmp`.
+- Use `/home/lawrence/Project Neo/tmp/` as the exact host-side scratch root. Every
+  issue declares one unique child directory there; never use host `/tmp`, the scratch
+  root itself, or another task's child as a task workspace. Container-internal
+  ephemeral caches may continue to use `/tmp` inside that task's Compose services.
 - Up to four independent issues may run concurrently after shared contracts freeze.
 - Every issue declares owned paths, dependencies, shared hotspots, tests, and merge
   order.
@@ -64,7 +68,8 @@ explicitly requests implementation and the selected issue is ready.
   or a closed-but-unmerged PR is not cleanup eligibility.
 - For each cleanup-eligible task, verify the worktree is clean, stop only its recorded
   Compose project, remove it with `git worktree remove`, and verify both its directory
-  and task-local resources are gone. Preserve active, dirty, or unmerged worktrees.
+  and task-local resources, including its exact host scratch child, are gone. Preserve
+  active, dirty, or unmerged worktrees.
 
 ## Debugging and performance
 

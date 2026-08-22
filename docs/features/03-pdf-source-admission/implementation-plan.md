@@ -1,6 +1,6 @@
 # Implementation Plan — F-003 PDF Source Admission
 
-Status: **contract ready; #43 blocked pending correction #51 approval and merge**
+Status: **contract ready; #43 blocked pending post-merge gate disposition**
 
 ## Dependency graph
 
@@ -11,9 +11,11 @@ F-001 merged + P-013 local envelope
 planning #42 (contracts, fixture, test plan)
                 |
                 v
-       merged PR #44 + correction #51
+       merged PR #44 + correction #51/PR #53
                 |
-       independent review + merge
+       merge-head review/approval gate unresolved
+                |
+       owner-approved disposition required
                 |
                 +--> #43 source-admission vertical slice --> F-004 contract consumers
 ```
@@ -27,7 +29,7 @@ meaningful independent delivery.
 |---|---|---|---|---|---|---|
 | [#42](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/42) | Planning | Freeze local-only DTO/job/event/fixture, Q-P03 envelope, boundaries, and test plan | `docs/features/03-pdf-source-admission/**`, `contracts/f003/**`, contract test, product decision/question, feature index, manifest | F-001/F-002 architecture patterns and plan documents | none | 1 |
 | [#51](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/51) | Review-evidence correction owner | Record the exact audit, correct its three blocking contract findings, and document the one-time temporal exception | Narrow F-003 contract/test/status/evidence and serialized manifest paths | exact PR #44 head plus frozen product/plan behavior | #42/PR #44 merged | 2 |
-| [#43](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/43) | F-003 integration owner | Implement the complete private local admission slice and evidence | Documents module/migrations/RLS, API/Admin/composition, contracts/OpenAPI/client/events, web/E2E, F-003 tests/docs/manifest | frozen #42 contract and synthetic fixtures | #51 independently approved and merged | 3 |
+| [#43](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/43) | F-003 integration owner | Implement the complete private local admission slice and evidence | Documents module/migrations/RLS, API/Admin/composition, contracts/OpenAPI/client/events, web/E2E, F-003 tests/docs/manifest | frozen #42 contract and synthetic fixtures | #51 merged; exact-head/distinct-approval disposition required | 3 |
 
 ## Launch gate
 
@@ -35,8 +37,11 @@ Issue #43 must remain **BLOCKED** until all conditions are true:
 
 1. #42's planning contract, merged as PR #44 at
    `83a0c487ff782192d4c18e08cfebd86eb4cf626f`, has its missing review order resolved
-   by correction #51, and #51 itself has an independent exact-SHA review, distinct
-   authorized approval, protected checks, and verified merge into `develop`;
+   by correction #51. PR #53 merged as
+   `5b89c6a8e62140f8032492b5454a12b2ef063bce`, but its merge head
+   `57bb2692eebfc81c6198589bfdd4fb7afeb17286` lacks an independent exact-head verdict
+   and a distinct authorized GitHub approval. An explicit owner-approved disposition
+   must close that defect without claiming retroactive approval;
 2. P-013 is present on that merged base, and its local-only values are copied without
    reinterpretation into the executable admission-policy fixture;
 3. `contracts/f003` and `backend/tests/contracts/test_f003_contracts.py` pass on the
@@ -44,6 +49,10 @@ Issue #43 must remain **BLOCKED** until all conditions are true:
 4. no uncommitted change exists in the coordinator checkout and the target branch/path
    is absent; and
 5. F-003's implementation branch is created from that exact `origin/develop` SHA.
+
+A valid disposition means a separately reviewed, distinctly approved corrective or
+ratification change, or a separately approved workflow-policy change. An issue comment
+or the existing merged state alone does not close item 1.
 
 F-002's missing pre-merge review record is separately tracked by #40/#41. F-003
 depends only on merged F-001 and the frozen F-003 contract; this plan does not disguise
@@ -55,9 +64,11 @@ or resolve the F-002 review gate.
   persistent-worker, queue, provider, or production environment.
 - Branch: `feature/LMS-43-f003-source-admission`
 - Worktree: `/home/lawrence/Project Neo/worktrees/ai-lms/source-admission-LMS-43`
+- Host scratch: `/home/lawrence/Project Neo/tmp/LMS-43`
 - Compose project: `ai-lms-lms-43`
 - PostgreSQL host port: `55243`
-- Base: exact latest `origin/develop` containing correction #51's merge.
+- Base: exact latest `origin/develop` after the #51 post-merge gate has a valid
+  recorded disposition.
 
 ### Exclusive ownership
 

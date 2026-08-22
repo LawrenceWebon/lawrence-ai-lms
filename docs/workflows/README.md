@@ -151,6 +151,7 @@ Each issue must declare:
 - dependencies and merge order;
 - shared files the agent must not edit;
 - required test and evidence commands;
+- exact worktree, Compose resources, ports, and host scratch child;
 - explicit non-goals; and
 - relevant plan, decision, risk, and change IDs.
 
@@ -165,13 +166,16 @@ Each issue must declare:
   unmerged sibling branch.
 - Each lane can run its focused tests using fakes or committed synthetic fixtures.
 - Each lane uses unique local resources: Compose project name, ports, test database or
-  schema, queue/bucket prefixes, and temporary directories. One agent must not stop,
-  migrate, truncate, or reseed another agent's resources.
+  schema, queue/bucket prefixes, and host scratch directory. Host scratch must be one
+  declared child of the exact `/home/lawrence/Project Neo/tmp/` root; never use host
+  `/tmp`, the scratch root itself, or another task's child. Container-internal
+  ephemeral `/tmp` caches remain valid inside the lane's Compose services. One agent
+  must not stop, migrate, truncate, or reseed another agent's resources.
 - Repository worktrees live only under
   `/home/lawrence/Project Neo/worktrees/ai-lms/`. Project Python/Node dependencies
   execute only in the lane's reusable Docker Compose services; agents do not create a
   host `.venv`, install host `node_modules`, place worktrees inside the repository, or
-  use `/tmp` for worktrees.
+  place worktrees under `/tmp` or the host scratch root.
 - No agent reviews or approves its own PR. A different agent/context reviews it.
 - If all agents use one GitHub identity, an agent review is recorded as a PR comment;
   any required GitHub approval must come from a distinct authorized reviewer.
@@ -265,11 +269,13 @@ Copy the verified values into explicit task variables:
 REPO=OWNER/REPOSITORY
 BASE=develop
 AI_LMS_WT_ROOT="/home/lawrence/Project Neo/worktrees/ai-lms"
+AI_LMS_TMP_ROOT="/home/lawrence/Project Neo/tmp"
 ```
 
 Stop if authentication, `origin`, GitHub's default `develop`, or canonical checkout
-state is unexpected. Never discard existing changes. The current local repository must
-have a GitHub `origin` before the remote steps below can run.
+state is unexpected, or if either exact root is absent. Never discard existing changes.
+The current local repository must have a GitHub `origin` before the remote steps below
+can run.
 
 ### 2. Create one issue and linked branch per task
 
@@ -282,6 +288,10 @@ gh issue create --repo "$REPO" --title "[PDF ingestion] Short task" \
 
 ISSUE=123
 BRANCH=feature/LMS-123-pdf-upload
+TASK_TMP="$AI_LMS_TMP_ROOT/LMS-$ISSUE"
+
+test ! -e "$TASK_TMP"
+mkdir -p "$TASK_TMP"
 
 gh issue develop "$ISSUE" --repo "$REPO" --name "$BRANCH" --base "$BASE"
 gh issue develop --list "$ISSUE" --repo "$REPO"
@@ -298,7 +308,7 @@ WORKTREE="$AI_LMS_WT_ROOT/agent-1-LMS-123"
 test ! -e "$WORKTREE"
 git worktree add --track -b "$BRANCH" "$WORKTREE" "origin/$BRANCH"
 gh issue comment "$ISSUE" --repo "$REPO" \
-  --body "Claimed by Agent A on $BRANCH; worktree isolated; owned paths recorded in the issue."
+  --body "Claimed by Agent A on $BRANCH; worktree and host scratch $TASK_TMP are isolated; owned paths recorded in the issue."
 ```
 
 If the branch or path already exists, inspect and stop. Never reset or opportunistically
@@ -440,6 +450,11 @@ docker compose ls -a
 git fetch --prune origin
 ```
 
+After moving any retained evidence into a declared durable repository path, remove
+only the exact recorded task scratch child and verify it is absent. Prefer a
+recoverable trash operation when available. Never recursively target
+`/home/lawrence/Project Neo/tmp`, use a glob, or infer a scratch path during cleanup.
+
 The required sequence is:
 
 1. verify GitHub reports `MERGED`, or cite the explicit owner-approved abandonment;
@@ -447,9 +462,11 @@ The required sequence is:
 3. stop only the task's recorded Compose project and remove its disposable volumes;
 4. remove the registered worktree with `git worktree remove`, which also removes its
    directory;
-5. verify the directory, worktree registration, containers, networks, and disposable
-   volumes are gone; and
-6. record what was removed and whether any retained artifact remains recoverable.
+5. remove and verify the exact task scratch child after preserving any declared
+   durable evidence;
+6. verify the directory, worktree registration, containers, networks, disposable
+   volumes, and scratch child are gone; and
+7. record what was removed and whether any retained artifact remains recoverable.
 
 Stop on a dirty tree, unresolved PR state, unexpected path, or resource-name mismatch.
 Never use `rm -rf` as a substitute for `git worktree remove`; never remove an active,

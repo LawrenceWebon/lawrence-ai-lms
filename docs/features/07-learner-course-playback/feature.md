@@ -1,6 +1,6 @@
 # F-007 — Learner Course Playback and Progress
 
-Status: **owner-approved contract; implementation starts only after the #50 correction merges**
+Status: **owner-approved contract merged; #46 blocked on unresolved approval gate**
 
 Feature ID: `F-007`
 
