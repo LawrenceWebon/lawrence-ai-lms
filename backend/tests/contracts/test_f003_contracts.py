@@ -263,6 +263,17 @@ def test_f003_rejected_validation_rejects_contradictory_or_unfrozen_reason() -> 
     with pytest.raises(ValidationError):
         validator.validate(result)
 
+    result = load_json(EXAMPLES_PATH)["AdmissionValidationResultV1"]
+    result.update(
+        {
+            "outcome": "rejected",
+            "rejection_code": "PDF_MEDIA_TYPE_INVALID",
+            "media_type": None,
+        }
+    )
+    with pytest.raises(ValidationError):
+        validator.validate(result)
+
     result.update(
         {
             "rejection_code": "PDF_CORRUPT",
@@ -288,6 +299,36 @@ def test_f003_retryable_validation_requires_unavailable_nonterminal_result() -> 
 
     result["local_inspection_result"] = "unavailable"
     validator.validate(result)
+
+
+@pytest.mark.parametrize(
+    ("field", "terminal_value"),
+    [
+        ("file_size_bytes", 6_291_457),
+        ("media_type", "text/plain"),
+        ("pdf_signature_valid", False),
+        ("parser_accepted", False),
+        ("page_count", 101),
+        ("max_rendered_pixels_per_page", 25_000_001),
+        ("rendered_pixels_total", 250_000_001),
+        ("decoded_parser_bytes", 67_108_865),
+    ],
+)
+def test_f003_retryable_validation_rejects_known_terminal_evidence(
+    field: str, terminal_value: object
+) -> None:
+    result = load_json(EXAMPLES_PATH)["AdmissionValidationResultV1"]
+    result.update(
+        {
+            "outcome": "retryable_failure",
+            "local_inspection_result": "unavailable",
+            "rejection_code": None,
+            field: terminal_value,
+        }
+    )
+
+    with pytest.raises(ValidationError):
+        validator_for("AdmissionValidationResultV1").validate(result)
 
 
 @pytest.mark.parametrize(

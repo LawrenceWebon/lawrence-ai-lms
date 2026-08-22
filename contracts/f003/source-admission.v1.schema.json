@@ -781,7 +781,12 @@
               {
                 "properties": {
                   "rejection_code": {"const": "PDF_MEDIA_TYPE_INVALID"},
-                  "media_type": {"not": {"const": "application/pdf"}}
+                  "media_type": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "not": {"const": "application/pdf"}
+                  }
                 }
               },
               {
@@ -867,6 +872,48 @@
           },
           "then": {
             "properties": {
+              "file_size_bytes": {
+                "anyOf": [
+                  {"type": "integer", "minimum": 1, "maximum": 6291456},
+                  {"type": "null"}
+                ]
+              },
+              "media_type": {
+                "anyOf": [
+                  {"type": "string", "const": "application/pdf"},
+                  {"type": "null"}
+                ]
+              },
+              "pdf_signature_valid": {
+                "anyOf": [{"const": true}, {"type": "null"}]
+              },
+              "parser_accepted": {
+                "anyOf": [{"const": true}, {"type": "null"}]
+              },
+              "page_count": {
+                "anyOf": [
+                  {"type": "integer", "minimum": 1, "maximum": 100},
+                  {"type": "null"}
+                ]
+              },
+              "max_rendered_pixels_per_page": {
+                "anyOf": [
+                  {"type": "integer", "minimum": 1, "maximum": 25000000},
+                  {"type": "null"}
+                ]
+              },
+              "rendered_pixels_total": {
+                "anyOf": [
+                  {"type": "integer", "minimum": 1, "maximum": 250000000},
+                  {"type": "null"}
+                ]
+              },
+              "decoded_parser_bytes": {
+                "anyOf": [
+                  {"type": "integer", "minimum": 0, "maximum": 67108864},
+                  {"type": "null"}
+                ]
+              },
               "local_inspection_result": {"const": "unavailable"},
               "rejection_code": {"type": "null"}
             }

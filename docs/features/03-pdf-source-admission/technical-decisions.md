@@ -191,7 +191,10 @@ Rejected results require a stable rejection code; retryable failures do not masq
 as terminal rejection. Each rejected validation code is bound to its matching failed,
 over-limit, missing-object, or checksum observation; a rejected result cannot report
 an unavailable inspection. A retryable result requires an unavailable local inspection
-and no terminal code. Every non-rejected public snapshot has a null rejection code.
+and no terminal code, and every known observation is null or remains inside the
+admission policy; known invalid or over-limit evidence is terminal, not retryable.
+`PDF_MEDIA_TYPE_INVALID` requires an observed non-PDF media string rather than an
+unknown/null observation. Every non-rejected public snapshot has a null rejection code.
 
 `SourceAdmissionEventV1` uses the repository envelope: producer, tenant, aggregate
 type/ID/version, occurred/recorded times, correlation/causation IDs, privacy class, and

@@ -81,7 +81,8 @@ Issue #51 corrects the findings without changing the approved product envelope:
   inspection acceptance, active `store` rights, and no rejection reason;
 - rejected results bind frozen terminal codes to their failed, over-limit,
   missing-object, or checksum observation; retryable results require an unavailable
-  inspection and no terminal code; non-rejected snapshots cannot carry one;
+  inspection, no terminal code, and only null or in-policy known observations;
+  non-rejected snapshots cannot carry a terminal code;
 - `SourceAdmissionEventV1` now carries the repository producer/aggregate/recorded/
   causation/privacy envelope, discriminates all nine event facts, and binds rejection,
   cancellation, revocation, and removal reason families; and
@@ -103,19 +104,32 @@ reviewer's negative probes proved that:
 2. rejected, cancelled, and removal-completed events accepted reasons from the wrong
    family or an arbitrary uppercase value.
 
-The follow-up adds the missing negative cases and the explicit mappings summarized
-above. The first verdict remains immutable review evidence; the follow-up head requires
-a new independent exact-SHA review and distinct authorized approval.
+The first follow-up added the missing negative cases and explicit mappings summarized
+above. Its candidate head
+`aefe886d8e64a75d2e9577e2f9a317282c0f082d` received a second independent
+**CHANGES REQUIRED** verdict in the
+[exact-SHA re-review comment](https://github.com/LawrenceWebon/lawrence-ai-lms/pull/53#issuecomment-5377165938).
+That review confirmed every first-cycle counterexample was fixed, then proved two
+remaining boundary errors:
 
-Follow-up correction prepared: `2026-08-22`. Corrected contract candidate checksums
-after the first review findings are:
+1. `PDF_MEDIA_TYPE_INVALID` accepted a null/unknown media observation; and
+2. a retryable/unavailable result accepted known terminal evidence such as non-PDF
+   media, failed signature/parser checks, or an over-limit observation.
+
+The second follow-up requires an observed non-PDF string for the media rejection and
+allows a retryable result to contain only null or in-policy known observations. Both
+prior verdicts remain immutable evidence; the new head requires another independent
+exact-SHA review and distinct authorized approval.
+
+Second follow-up prepared: `2026-08-22`. Corrected contract candidate checksums after
+both review cycles are:
 
 | Path | SHA-256 |
 |---|---|
-| `contracts/f003/source-admission.v1.schema.json` | `5d55036341419678fa10fc6fdfdb1dbcbee9de86990756afc20604e5bbbe7c9a` |
+| `contracts/f003/source-admission.v1.schema.json` | `bb19f2f3d8b517125ef060913762004d10123d54ebe54c4a39a7da0fb6f9e30e` |
 | `contracts/f003/source-admission.v1.examples.json` | `2dc829c68772ac891cd3dece560f9ec8af025404145cc05a344464bc7ac24b49` |
 | `contracts/f003/fixtures/admission-fixtures.v1.json` | `f251416802e93226a4e58486a7533b249ca15442d848e94364e6a52756b86287` |
-| `backend/tests/contracts/test_f003_contracts.py` | `db067281d0551eaa6a3d87db288bce7d757cbf257bd0ca86925e8d7fe2efe3de` |
+| `backend/tests/contracts/test_f003_contracts.py` | `a25ef53c92da0e6d7ab16ed2f986985fc937feb11b9c2daa9454acfc9cd7d0ef` |
 
 ## One-time controlled exception
 
@@ -147,11 +161,16 @@ On the first corrected candidate reviewed at
 - focused Ruff lint and format checks: passed;
 - Draft 2020-12 schema and JSON syntax validation: passed.
 
-The follow-up candidate adds 18 executable cases for the reviewer's contradictory
-result/snapshot and event-reason probes. Local verification passes 74 focused and 115
-total contract tests. Its exact committed SHA, protected checks, and independent
-re-review verdict are recorded on PR #53; none is treated as approved before that
-review.
+The first follow-up candidate added 18 executable cases for contradictory
+result/snapshot and event-reason probes. At exact head
+`aefe886d8e64a75d2e9577e2f9a317282c0f082d`, 74 focused and 115 total contract
+tests plus all protected checks passed before the second review returned changes
+required.
+
+The second follow-up adds eight terminal-evidence matrix cases plus the null-media
+negative. Local verification passes 82 focused and 123 total contract tests. Its exact
+committed SHA, protected checks, and independent re-review verdict are recorded on PR
+#53; none is treated as approved before that review.
 
 This evidence ratifies planning content only. It does not prove application code,
 migrations, RLS, upload security, storage, parser/scanner capability, retention,
