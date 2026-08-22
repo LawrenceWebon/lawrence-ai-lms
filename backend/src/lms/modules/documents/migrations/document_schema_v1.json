@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "authority": "Django",
+  "schema_fingerprint": "sha256:09cb1ccd00cc4cbe88fc9c353bfc775f1b1f981656588b7e7d46239f6cd2003b",
+  "database_fingerprint": "sha256:2d49eb3fd95cb658299f49162200ed679fc859b4eab76046c0fbb3a9be2126cd",
+  "objects": [
+    {
+      "schema": "app",
+      "table": "source_documents",
+      "migration": "documents.0001_initial",
+      "security_migration": "documents.0002_document_security",
+      "columns": ["id", "tenant_id", "display_name", "owner_actor_id", "current_version_id", "row_version", "created_at", "updated_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "FOREIGN KEY (tenant_id,current_version_id) -> source_document_versions(tenant_id,id)"],
+      "checks": ["row_version >= 1", "current version is tenant-scoped"],
+      "indexes": ["ix_source_docs_owner (tenant_id,owner_actor_id)"],
+      "lifecycle": "stable source identity; current version pointer is service-controlled",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "app",
+      "table": "source_document_versions",
+      "migration": "documents.0001_initial",
+      "security_migration": "documents.0002_document_security",
+      "columns": ["id", "tenant_id", "source_document_id", "version_number", "admission_status", "declared_filename", "content_sha256", "derived_file_size_bytes", "derived_media_type", "derived_pdf_signature_valid", "derived_parser_accepted", "derived_page_count", "derived_max_rendered_pixels_per_page", "derived_rendered_pixels_total", "derived_decoded_parser_bytes", "derived_local_inspection_result", "rejection_code", "validation_attempt_count", "removal_status", "removal_reason_code", "row_version", "created_at", "updated_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,source_document_id,id)", "UNIQUE (tenant_id,source_document_id,version_number)", "FOREIGN KEY (tenant_id,source_document_id) -> source_documents(tenant_id,id)"],
+      "checks": ["fixed admission/removal states", "canonical checksum", "admitted evidence satisfies P-013", "rejection/removal shapes", "row_version >= 1"],
+      "indexes": ["ix_source_versions_status (tenant_id,admission_status)"],
+      "lifecycle": "identity and declared evidence immutable; terminal admission states cannot reopen",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "app",
+      "table": "source_rights_declarations",
+      "migration": "documents.0001_initial",
+      "security_migration": "documents.0002_document_security",
+      "columns": ["id", "tenant_id", "source_document_id", "source_version_id", "declared_by_actor_id", "basis", "attestation_version", "attested_at", "rights_holder_name", "evidence_reference", "valid_until", "row_version"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,source_version_id)", "composite tenant foreign keys to document and version"],
+      "checks": ["one declaration per version"],
+      "indexes": ["ix_source_rights_version (tenant_id,source_version_id)"],
+      "lifecycle": "append-only immutable rights evidence",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "app",
+      "table": "source_use_authorizations",
+      "migration": "documents.0001_initial",
+      "security_migration": "documents.0002_document_security",
+      "columns": ["id", "tenant_id", "source_document_id", "source_version_id", "rights_declaration_id", "operation", "status", "requested_by_actor_id", "reviewed_by_actor_id", "decision_code", "valid_from", "valid_until", "row_version", "created_at", "updated_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,source_version_id,operation)", "composite tenant foreign keys to document, version, and declaration"],
+      "checks": ["operation = store", "fixed status", "reviewer separation", "decision/status shape"],
+      "indexes": ["ix_source_auth_active (tenant_id,source_version_id,operation,status)"],
+      "lifecycle": "separately reviewed operation-scoped authorization",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "app",
+      "table": "source_upload_intents",
+      "migration": "documents.0001_initial",
+      "security_migration": "documents.0002_document_security",
+      "columns": ["id", "tenant_id", "source_document_id", "source_version_id", "authorization_id", "token_digest", "purpose", "status", "expires_at", "max_bytes", "accepted_media_type", "observed_content_sha256", "observed_byte_count", "upload_claim_digest", "upload_claim_expires_at", "row_version", "created_at", "updated_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE token digest", "UNIQUE active (tenant_id,source_version_id)", "composite tenant foreign keys to document, version, and authorization"],
+      "checks": ["purpose = source_quarantine", "fixed status", "observation and upload-claim shapes", "canonical observed checksum"],
+      "indexes": ["ix_source_intents_active (tenant_id,status,expires_at)", "uq_source_intents_active_version partial unique"],
+      "lifecycle": "short-lived opaque single-version target; raw token is never persisted",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "app",
+      "table": "source_storage_objects",
+      "migration": "documents.0001_initial",
+      "security_migration": "documents.0002_document_security",
+      "columns": ["id", "tenant_id", "source_document_id", "source_version_id", "upload_intent_id", "private_locator", "content_sha256", "byte_count", "media_type", "status", "observed_at", "removed_at", "row_version", "created_at", "updated_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,source_version_id)", "UNIQUE upload intent", "UNIQUE private locator", "composite tenant foreign keys to document, version, and intent"],
+      "checks": ["canonical checksum", "positive bytes", "PDF media", "fixed status", "removed-at shape"],
+      "indexes": ["ix_source_objects_status (tenant_id,status)"],
+      "lifecycle": "immutable observation; inventory is reconciled to missing/deleted, never row-deleted",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "integration",
+      "table": "document_jobs",
+      "migration": "documents.0001_initial",
+      "security_migration": "documents.0002_document_security",
+      "columns": ["id", "tenant_id", "source_document_id", "source_version_id", "storage_object_id", "stage", "status", "reason_code", "attempt_count", "max_attempts", "lease_owner", "lease_expires_at", "checkpoint", "idempotency_key", "correlation_id", "input_manifest_sha256", "output_manifest_sha256", "row_version", "created_at", "updated_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,source_version_id,stage)", "composite tenant foreign keys to document, version, and object"],
+      "checks": ["fixed stage/status", "canonical manifest hashes", "lease shape", "1 <= max_attempts <= 10", "attempt_count <= max_attempts"],
+      "indexes": ["ix_document_jobs_claim (tenant_id,stage,status)"],
+      "lifecycle": "durable leased validation/removal checkpoint",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "integration",
+      "table": "document_job_attempts",
+      "migration": "documents.0001_initial",
+      "security_migration": "documents.0002_document_security",
+      "columns": ["id", "tenant_id", "job_id", "attempt_number", "outcome", "retry_class", "reason_code", "inspector_version", "input_manifest_sha256", "output_manifest_sha256", "observation", "started_at", "completed_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,job_id,attempt_number)", "FOREIGN KEY (tenant_id,job_id) -> document_jobs(tenant_id,id)"],
+      "checks": ["fixed outcome", "observation is object", "canonical manifest hashes"],
+      "indexes": ["ix_doc_attempts_job (tenant_id,job_id,attempt_number)"],
+      "lifecycle": "immutable completed attempt evidence",
+      "rls": "ENABLE + FORCE"
+    }
+  ]
+}

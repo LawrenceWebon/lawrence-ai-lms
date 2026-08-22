@@ -117,6 +117,9 @@ def test_real_auth_context_service_selects_explicit_tenant_and_denies_outsider(
         "courses.publish",
         "courses.read",
         "courses.review",
+        "documents.sources.admit",
+        "documents.sources.cancel",
+        "documents.sources.read",
     ]
     assert denied.status_code == 404
     assert denied.headers["content-type"].startswith("application/problem+json")

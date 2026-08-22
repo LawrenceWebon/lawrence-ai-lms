@@ -49,6 +49,10 @@ PERMISSION_COURSES_READ = "courses.read"
 PERMISSION_COURSE_DRAFTS_WRITE = "courses.drafts.write"
 PERMISSION_COURSES_REVIEW = "courses.review"
 PERMISSION_COURSES_PUBLISH = "courses.publish"
+PERMISSION_DOCUMENT_SOURCES_READ = "documents.sources.read"
+PERMISSION_DOCUMENT_SOURCES_ADMIT = "documents.sources.admit"
+PERMISSION_DOCUMENT_SOURCES_CANCEL = "documents.sources.cancel"
+PERMISSION_DOCUMENT_SOURCE_RIGHTS_REVIEW = "documents.source_rights.review"
 FIXED_PERMISSIONS = {
     PERMISSION_MEMBERSHIPS_READ: "List tenant memberships",
     PERMISSION_INVITATIONS_CREATE: "Create tenant invitations",
@@ -57,6 +61,10 @@ FIXED_PERMISSIONS = {
     PERMISSION_COURSE_DRAFTS_WRITE: "Create and edit tenant course drafts",
     PERMISSION_COURSES_REVIEW: "Review tenant course versions",
     PERMISSION_COURSES_PUBLISH: "Publish and withdraw tenant course versions",
+    PERMISSION_DOCUMENT_SOURCES_READ: "Read tenant source-admission status",
+    PERMISSION_DOCUMENT_SOURCES_ADMIT: "Declare and upload private PDF sources",
+    PERMISSION_DOCUMENT_SOURCES_CANCEL: "Cancel tenant source admissions",
+    PERMISSION_DOCUMENT_SOURCE_RIGHTS_REVIEW: "Review operation-scoped source rights",
 }
 ROLE_DISPLAY_NAMES = {
     "tenant_admin": "Tenant administrator",
@@ -73,6 +81,9 @@ ROLE_PERMISSION_CODES = {
                 PERMISSION_COURSE_DRAFTS_WRITE,
                 PERMISSION_COURSES_REVIEW,
                 PERMISSION_COURSES_PUBLISH,
+                PERMISSION_DOCUMENT_SOURCES_READ,
+                PERMISSION_DOCUMENT_SOURCES_ADMIT,
+                PERMISSION_DOCUMENT_SOURCES_CANCEL,
             )
         )
     ),
@@ -222,6 +233,22 @@ def _authorize(actor_id: UUID, tenant_id: UUID, permission_code: str) -> TenantM
     if not _has_permission(membership, permission_code):
         raise denied()
     return membership
+
+
+def authorize_tenant_permission(
+    actor_id: UUID,
+    tenant_id: UUID,
+    permission_code: str,
+) -> MembershipSummary:
+    """Re-derive one fixed permission inside the caller-owned transaction."""
+
+    if not connection.in_atomic_block:
+        raise RuntimeError("tenant authorization requires an active transaction")
+    _set_transaction_context(actor_id=actor_id, tenant_id=tenant_id)
+    membership = _active_membership(actor_id, tenant_id)
+    if not _has_permission(membership, permission_code):
+        raise TenancyError("TENANT_PERMISSION_DENIED")
+    return _membership_summary(membership)
 
 
 def _normalized_role_codes(role_codes: Iterable[str]) -> tuple[str, ...]:

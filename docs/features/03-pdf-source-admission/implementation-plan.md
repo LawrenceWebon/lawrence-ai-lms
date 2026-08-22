@@ -1,6 +1,6 @@
 # Implementation Plan — F-003 PDF Source Admission
 
-Status: **contract ready; #43 blocked pending post-merge gate disposition**
+Status: **#43 local implementation candidate complete; review and protected checks pending**
 
 ## Dependency graph
 
@@ -13,11 +13,11 @@ planning #42 (contracts, fixture, test plan)
                 v
        merged PR #44 + correction #51/PR #53
                 |
-       merge-head review/approval gate unresolved
+       owner disposition + merged PR #55
                 |
-       owner-approved disposition required
+       #43 local implementation candidate
                 |
-                +--> #43 source-admission vertical slice --> F-004 contract consumers
+       exact-head review + protected checks --> F-004 contract consumers
 ```
 
 F-003 intentionally has one implementation issue, one branch, one worktree, and one
@@ -29,19 +29,20 @@ meaningful independent delivery.
 |---|---|---|---|---|---|---|
 | [#42](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/42) | Planning | Freeze local-only DTO/job/event/fixture, Q-P03 envelope, boundaries, and test plan | `docs/features/03-pdf-source-admission/**`, `contracts/f003/**`, contract test, product decision/question, feature index, manifest | F-001/F-002 architecture patterns and plan documents | none | 1 |
 | [#51](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/51) | Review-evidence correction owner | Record the exact audit, correct its three blocking contract findings, and document the one-time temporal exception | Narrow F-003 contract/test/status/evidence and serialized manifest paths | exact PR #44 head plus frozen product/plan behavior | #42/PR #44 merged | 2 |
-| [#43](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/43) | F-003 integration owner | Implement the complete private local admission slice and evidence | Documents module/migrations/RLS, API/Admin/composition, contracts/OpenAPI/client/events, web/E2E, F-003 tests/docs/manifest | frozen #42 contract and synthetic fixtures | #51 merged; exact-head/distinct-approval disposition required | 3 |
+| [#43](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/43) | F-003 integration owner | Implement the complete private local admission slice and evidence | Documents module/migrations/RLS, API/Admin/composition, contracts/OpenAPI/client/events, web/E2E, F-003 tests/docs/manifest | frozen #42 contract and synthetic fixtures | #51 merged; owner launch disposition recorded | 3 |
 
-## Launch gate
+## Launch gate — satisfied 2026-08-22
 
-Issue #43 must remain **BLOCKED** until all conditions are true:
+Issue #43 remained blocked until all conditions were true:
 
 1. #42's planning contract, merged as PR #44 at
    `83a0c487ff782192d4c18e08cfebd86eb4cf626f`, has its missing review order resolved
    by correction #51. PR #53 merged as
    `5b89c6a8e62140f8032492b5454a12b2ef063bce`, but its merge head
    `57bb2692eebfc81c6198589bfdd4fb7afeb17286` lacks an independent exact-head verdict
-   and a distinct authorized GitHub approval. An explicit owner-approved disposition
-   must close that defect without claiming retroactive approval;
+   and a distinct authorized GitHub approval. The project owner's narrow
+   [launch disposition](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/43#issuecomment-5379136978)
+   closed that historical hold without claiming retroactive approval;
 2. P-013 is present on that merged base, and its local-only values are copied without
    reinterpretation into the executable admission-policy fixture;
 3. `contracts/f003` and `backend/tests/contracts/test_f003_contracts.py` pass on the
@@ -50,9 +51,11 @@ Issue #43 must remain **BLOCKED** until all conditions are true:
    is absent; and
 5. F-003's implementation branch is created from that exact `origin/develop` SHA.
 
-A valid disposition means a separately reviewed, distinctly approved corrective or
-ratification change, or a separately approved workflow-policy change. An issue comment
-or the existing merged state alone does not close item 1.
+The disposition was accepted only because it is the latest explicit project-owner
+instruction after PR #55 merged at
+`b733f94718826d7c7f98e08e44285639ece07813`. It applies only to #43's launch and does
+not weaken this implementation's exact-head review, distinct approval, protected-check,
+or merge requirements.
 
 F-002's missing pre-merge review record is separately tracked by #40/#41. F-003
 depends only on merged F-001 and the frozen F-003 contract; this plan does not disguise
@@ -67,8 +70,14 @@ or resolve the F-002 review gate.
 - Host scratch: `/home/lawrence/Project Neo/tmp/LMS-43`
 - Compose project: `ai-lms-lms-43`
 - PostgreSQL host port: `55243`
-- Base: exact latest `origin/develop` after the #51 post-merge gate has a valid
-  recorded disposition.
+- Base: exact `origin/develop` SHA
+  `b733f94718826d7c7f98e08e44285639ece07813` after the recorded owner disposition.
+
+The application implementation is pinned at
+`f4b3af0b7d4595617f4effcba1b263a02f04e540`; complete local results and limitations are
+in the [implementation evidence](../../evidence/f003-source-admission-implementation.md).
+The later documentation commit, protected checks, and independent exact-head verdict
+remain part of the PR handoff gate.
 
 ### Exclusive ownership
 

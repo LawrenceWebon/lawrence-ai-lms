@@ -1,0 +1,62 @@
+{
+  "manifest_version": "f003-synthetic-artifacts-v1",
+  "classification": "synthetic_only",
+  "artifacts": [
+    {
+      "id": "synthetic-valid-one-page-pdf",
+      "origin": "Repository-authored deterministic ASCII PDF fixture; contains no book or user content.",
+      "license": "CC0-1.0",
+      "path": "backend/tests/documents/fixtures/synthetic-valid-one-page.pdf",
+      "sha256": "6350af32579ffbd7b251a6244bf9bd036d303cbc7404ae06d5e02f1b8f5b994f",
+      "expected_rejection_code": null
+    },
+    {
+      "id": "synthetic-signature-mismatch",
+      "origin": "Repository-authored deterministic invalid-byte fixture.",
+      "license": "CC0-1.0",
+      "path": "backend/tests/documents/fixtures/synthetic-signature-mismatch.pdf",
+      "sha256": "6632b76d4ea7b4846b85664c1b81c935ac1f1c3639c50e955e8b1d92f0b46954",
+      "expected_rejection_code": "PDF_SIGNATURE_MISMATCH"
+    },
+    {
+      "id": "synthetic-encrypted-pdf",
+      "origin": "Repository-authored deterministic PDF encryption-marker fixture.",
+      "license": "CC0-1.0",
+      "path": "backend/tests/documents/fixtures/synthetic-encrypted.pdf",
+      "sha256": "89ce04d4c34af288bd0a6a4c70316d3a1a4d26d6b9e39e415c760f86c2455343",
+      "expected_rejection_code": "PDF_ENCRYPTED"
+    },
+    {
+      "id": "synthetic-corrupt-pdf",
+      "origin": "Repository-authored deterministic truncated-PDF fixture.",
+      "license": "CC0-1.0",
+      "path": "backend/tests/documents/fixtures/synthetic-corrupt.pdf",
+      "sha256": "59a535d21a08e07d540167522eee5d1115dcbcb2d5f49eb2858b0a2ae36d184f",
+      "expected_rejection_code": "PDF_CORRUPT"
+    },
+    {
+      "id": "synthetic-pixel-cap-pdf",
+      "origin": "Repository-authored deterministic oversized-media-box fixture.",
+      "license": "CC0-1.0",
+      "path": "backend/tests/documents/fixtures/synthetic-pixel-cap.pdf",
+      "sha256": "8575591cc3b09bc1d85f529407d010c0b05baa398d659aa16f6d51d9d67e477e",
+      "expected_rejection_code": "PDF_PIXEL_LIMIT_EXCEEDED"
+    },
+    {
+      "id": "synthetic-unsafe-pdf",
+      "origin": "Repository-authored deterministic active-content-marker fixture.",
+      "license": "CC0-1.0",
+      "path": "backend/tests/documents/fixtures/synthetic-unsafe.pdf",
+      "sha256": "3b7d99cd1156a763a1f67a84436e19a7f2cc99d7748ef65aa15a76ec315e3b3b",
+      "expected_rejection_code": "PDF_UNSAFE"
+    },
+    {
+      "id": "synthetic-polyglot-pdf",
+      "origin": "Repository-authored deterministic trailing-payload fixture.",
+      "license": "CC0-1.0",
+      "path": "backend/tests/documents/fixtures/synthetic-polyglot.pdf",
+      "sha256": "e9edde2810555ea39f8649b4f6822fc0ee4f1c991d50152f64a2872d9fe9a423",
+      "expected_rejection_code": "PDF_POLYGLOT_REJECTED"
+    }
+  ]
+}

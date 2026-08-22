@@ -1,6 +1,6 @@
 # F-003 Planning Review Correction Evidence
 
-Status: **audit findings corrected; independent correction review and merge pending**
+Status: **correction merged; project-owner disposition recorded for #43 launch**
 
 - Evidence ID: `F003-PLANNING-REVIEW-CORRECTION-2026-08-21`
 - Classification: internal planning-governance evidence; synthetic/local scope only
@@ -141,8 +141,8 @@ both review cycles are:
 | Compensating controls | Independent exact-head audit; correction of every blocking finding; executable negative tests; current-base and protected CI; no #43 implementation; no provider or real data |
 | Residual risk | A further planning defect may exist; any correction-review finding blocks readiness and must be fixed before #43 starts |
 | Accountable owner | Project owner, by explicit instruction on `2026-08-22` |
-| Independent approver | Required on correction #51's exact PR head; not yet satisfied |
-| Expiry | One-time exception expires when correction #51 merges and #43 is updated; it grants no future bypass |
+| Independent approver | Not recorded on PR #53's merge head; the project-owner disposition authorizes only #43 launch without claiming retroactive approval |
+| Expiry | Satisfied for #43 launch by the 2026-08-22 owner disposition after PR #55 merged; it grants no future bypass |
 | Review trigger | Any change to an F-003 contract, fixture, test, limit, or correction head invalidates the applicable exact-SHA evidence and requires review again |
 
 ## Verification and limitations

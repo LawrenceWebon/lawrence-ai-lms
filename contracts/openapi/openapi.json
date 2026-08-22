@@ -182,6 +182,30 @@
         "title": "BulletListNode",
         "type": "object"
       },
+      "CancelSourceAdmissionV1": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_source_version_row_version": {
+            "minimum": 1.0,
+            "title": "Expected Source Version Row Version",
+            "type": "integer"
+          },
+          "reason_code": {
+            "enum": [
+              "USER_CANCELLED",
+              "SOURCE_REPLACED"
+            ],
+            "title": "Reason Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_source_version_row_version",
+          "reason_code"
+        ],
+        "title": "CancelSourceAdmissionV1",
+        "type": "object"
+      },
       "ContentBlockRecordV1": {
         "additionalProperties": false,
         "properties": {
@@ -758,6 +782,85 @@
         "title": "CreateInvitationRequest",
         "type": "object"
       },
+      "CreateRightsDeclarationV1": {
+        "additionalProperties": false,
+        "properties": {
+          "attestation_version": {
+            "const": "f003-source-rights-attestation-v1",
+            "title": "Attestation Version",
+            "type": "string"
+          },
+          "attested": {
+            "const": true,
+            "title": "Attested",
+            "type": "boolean"
+          },
+          "basis": {
+            "enum": [
+              "owned",
+              "licensed",
+              "written_permission",
+              "public_domain",
+              "other_documented"
+            ],
+            "title": "Basis",
+            "type": "string"
+          },
+          "evidence_reference": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "title": "Evidence Reference",
+            "type": "string"
+          },
+          "rights_holder_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Rights Holder Name",
+            "type": "string"
+          },
+          "valid_until": {
+            "format": "date-time",
+            "title": "Valid Until",
+            "type": "string"
+          }
+        },
+        "required": [
+          "basis",
+          "attestation_version",
+          "attested"
+        ],
+        "title": "CreateRightsDeclarationV1",
+        "type": "object"
+      },
+      "CreateSourceAdmissionV1": {
+        "additionalProperties": false,
+        "properties": {
+          "declared_filename": {
+            "maxLength": 255,
+            "minLength": 1,
+            "pattern": "^[^/\\\\]+\\.[Pp][Dd][Ff]$",
+            "title": "Declared Filename",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "rights_declaration": {
+            "$ref": "#/components/schemas/CreateRightsDeclarationV1"
+          }
+        },
+        "required": [
+          "display_name",
+          "declared_filename",
+          "rights_declaration"
+        ],
+        "title": "CreateSourceAdmissionV1",
+        "type": "object"
+      },
       "CreateSuccessorDraftV1": {
         "additionalProperties": false,
         "properties": {
@@ -1011,6 +1114,19 @@
           "valid_until"
         ],
         "title": "EntitlementResponse",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
         "type": "object"
       },
       "HeadingNode": {
@@ -1351,6 +1467,44 @@
         "title": "ProblemDetails",
         "type": "object"
       },
+      "RemovalV1": {
+        "additionalProperties": false,
+        "properties": {
+          "reason_code": {
+            "anyOf": [
+              {
+                "enum": [
+                  "USER_CANCELLED",
+                  "RIGHTS_REVOKED",
+                  "RIGHTS_EXPIRED",
+                  "RIGHTS_DISPUTED"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
+          },
+          "status": {
+            "enum": [
+              "not_required",
+              "pending",
+              "completed",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "reason_code"
+        ],
+        "title": "RemovalV1",
+        "type": "object"
+      },
       "ReplaceCurriculumV1": {
         "additionalProperties": false,
         "properties": {
@@ -1373,6 +1527,41 @@
           "sections"
         ],
         "title": "ReplaceCurriculumV1",
+        "type": "object"
+      },
+      "ReviewSourceStoreAuthorizationV1": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "enum": [
+              "activate",
+              "deny",
+              "revoke"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "decision_code": {
+            "enum": [
+              "RIGHTS_EVIDENCE_ACCEPTED",
+              "RIGHTS_EVIDENCE_INSUFFICIENT",
+              "RIGHTS_REVOKED"
+            ],
+            "title": "Decision Code",
+            "type": "string"
+          },
+          "expected_authorization_row_version": {
+            "minimum": 1.0,
+            "title": "Expected Authorization Row Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "decision",
+          "expected_authorization_row_version",
+          "decision_code"
+        ],
+        "title": "ReviewSourceStoreAuthorizationV1",
         "type": "object"
       },
       "RichTextDocument": {
@@ -1420,6 +1609,103 @@
           "content"
         ],
         "title": "RichTextDocument",
+        "type": "object"
+      },
+      "RightsDeclarationV1": {
+        "additionalProperties": false,
+        "properties": {
+          "attestation_version": {
+            "const": "f003-source-rights-attestation-v1",
+            "title": "Attestation Version",
+            "type": "string"
+          },
+          "attested_at": {
+            "format": "date-time",
+            "title": "Attested At",
+            "type": "string"
+          },
+          "basis": {
+            "enum": [
+              "owned",
+              "licensed",
+              "written_permission",
+              "public_domain",
+              "other_documented"
+            ],
+            "title": "Basis",
+            "type": "string"
+          },
+          "declared_by_actor_id": {
+            "format": "uuid",
+            "title": "Declared By Actor Id",
+            "type": "string"
+          },
+          "evidence_reference": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9._:-]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Reference"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "row_version": {
+            "minimum": 1.0,
+            "title": "Row Version",
+            "type": "integer"
+          },
+          "source_document_id": {
+            "format": "uuid",
+            "title": "Source Document Id",
+            "type": "string"
+          },
+          "source_version_id": {
+            "format": "uuid",
+            "title": "Source Version Id",
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "source_document_id",
+          "source_version_id",
+          "declared_by_actor_id",
+          "basis",
+          "attestation_version",
+          "attested_at",
+          "valid_until",
+          "evidence_reference",
+          "row_version"
+        ],
+        "title": "RightsDeclarationV1",
         "type": "object"
       },
       "SectionRecordV1": {
@@ -1476,6 +1762,442 @@
           "lessons"
         ],
         "title": "SectionRecordV1",
+        "type": "object"
+      },
+      "SourceAdmissionV1": {
+        "additionalProperties": false,
+        "properties": {
+          "removal": {
+            "$ref": "#/components/schemas/RemovalV1"
+          },
+          "rights_declaration": {
+            "$ref": "#/components/schemas/RightsDeclarationV1"
+          },
+          "source_document": {
+            "$ref": "#/components/schemas/SourceDocumentV1"
+          },
+          "source_version": {
+            "$ref": "#/components/schemas/SourceVersionV1"
+          },
+          "store_authorization": {
+            "$ref": "#/components/schemas/SourceUseAuthorizationV1"
+          },
+          "upload_intent": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UploadIntentSummaryV1"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "source_document",
+          "source_version",
+          "rights_declaration",
+          "store_authorization",
+          "upload_intent",
+          "removal"
+        ],
+        "title": "SourceAdmissionV1",
+        "type": "object"
+      },
+      "SourceDocumentV1": {
+        "additionalProperties": false,
+        "properties": {
+          "current_version_id": {
+            "format": "uuid",
+            "title": "Current Version Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "row_version": {
+            "minimum": 1.0,
+            "title": "Row Version",
+            "type": "integer"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "display_name",
+          "current_version_id",
+          "row_version"
+        ],
+        "title": "SourceDocumentV1",
+        "type": "object"
+      },
+      "SourceUseAuthorizationV1": {
+        "additionalProperties": false,
+        "properties": {
+          "decision_code": {
+            "anyOf": [
+              {
+                "enum": [
+                  "RIGHTS_EVIDENCE_ACCEPTED",
+                  "RIGHTS_EVIDENCE_INSUFFICIENT",
+                  "RIGHTS_REVOKED",
+                  "RIGHTS_EXPIRED",
+                  "RIGHTS_DISPUTED"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Code"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "operation": {
+            "const": "store",
+            "title": "Operation",
+            "type": "string"
+          },
+          "requested_by_actor_id": {
+            "format": "uuid",
+            "title": "Requested By Actor Id",
+            "type": "string"
+          },
+          "reviewed_by_actor_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed By Actor Id"
+          },
+          "rights_declaration_id": {
+            "format": "uuid",
+            "title": "Rights Declaration Id",
+            "type": "string"
+          },
+          "row_version": {
+            "minimum": 1.0,
+            "title": "Row Version",
+            "type": "integer"
+          },
+          "source_document_id": {
+            "format": "uuid",
+            "title": "Source Document Id",
+            "type": "string"
+          },
+          "source_version_id": {
+            "format": "uuid",
+            "title": "Source Version Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "requested",
+              "active",
+              "denied",
+              "revoked",
+              "expired",
+              "disputed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "valid_from": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid From"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "source_document_id",
+          "source_version_id",
+          "rights_declaration_id",
+          "operation",
+          "status",
+          "requested_by_actor_id",
+          "reviewed_by_actor_id",
+          "decision_code",
+          "valid_from",
+          "valid_until",
+          "row_version"
+        ],
+        "title": "SourceUseAuthorizationV1",
+        "type": "object"
+      },
+      "SourceVersionV1": {
+        "additionalProperties": false,
+        "properties": {
+          "admission_status": {
+            "enum": [
+              "rights_pending",
+              "upload_pending",
+              "quarantined",
+              "validating",
+              "admitted",
+              "rejected",
+              "cancelled",
+              "blocked"
+            ],
+            "title": "Admission Status",
+            "type": "string"
+          },
+          "content_sha256": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Sha256"
+          },
+          "declared_filename": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Declared Filename",
+            "type": "string"
+          },
+          "derived_decoded_parser_bytes": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived Decoded Parser Bytes"
+          },
+          "derived_file_size_bytes": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived File Size Bytes"
+          },
+          "derived_local_inspection_result": {
+            "anyOf": [
+              {
+                "enum": [
+                  "accepted",
+                  "unsafe",
+                  "unavailable"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived Local Inspection Result"
+          },
+          "derived_max_rendered_pixels_per_page": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived Max Rendered Pixels Per Page"
+          },
+          "derived_media_type": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived Media Type"
+          },
+          "derived_page_count": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived Page Count"
+          },
+          "derived_parser_accepted": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived Parser Accepted"
+          },
+          "derived_pdf_signature_valid": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived Pdf Signature Valid"
+          },
+          "derived_rendered_pixels_total": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived Rendered Pixels Total"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "rejection_code": {
+            "anyOf": [
+              {
+                "enum": [
+                  "RIGHTS_AUTHORIZATION_DENIED",
+                  "PDF_SIGNATURE_MISMATCH",
+                  "PDF_MEDIA_TYPE_INVALID",
+                  "PDF_ENCRYPTED",
+                  "PDF_CORRUPT",
+                  "PDF_POLYGLOT_REJECTED",
+                  "PDF_SIZE_LIMIT_EXCEEDED",
+                  "PDF_PAGE_LIMIT_EXCEEDED",
+                  "PDF_PIXEL_LIMIT_EXCEEDED",
+                  "PDF_DECODED_LIMIT_EXCEEDED",
+                  "PDF_VALIDATION_TIMEOUT",
+                  "PDF_UNSAFE",
+                  "OBJECT_MISSING",
+                  "OBJECT_CHECKSUM_MISMATCH"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rejection Code"
+          },
+          "row_version": {
+            "minimum": 1.0,
+            "title": "Row Version",
+            "type": "integer"
+          },
+          "source_document_id": {
+            "format": "uuid",
+            "title": "Source Document Id",
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "validation_attempt_count": {
+            "minimum": 0.0,
+            "title": "Validation Attempt Count",
+            "type": "integer"
+          },
+          "version_number": {
+            "minimum": 1.0,
+            "title": "Version Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "source_document_id",
+          "version_number",
+          "admission_status",
+          "declared_filename",
+          "content_sha256",
+          "derived_file_size_bytes",
+          "derived_media_type",
+          "derived_pdf_signature_valid",
+          "derived_parser_accepted",
+          "derived_page_count",
+          "derived_max_rendered_pixels_per_page",
+          "derived_rendered_pixels_total",
+          "derived_decoded_parser_bytes",
+          "derived_local_inspection_result",
+          "rejection_code",
+          "validation_attempt_count",
+          "row_version"
+        ],
+        "title": "SourceVersionV1",
         "type": "object"
       },
       "SuccessorDraftResultV1": {
@@ -1847,6 +2569,152 @@
         ],
         "title": "UpdateMembershipRequest",
         "type": "object"
+      },
+      "UploadIntentSummaryV1": {
+        "additionalProperties": false,
+        "properties": {
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "consumed",
+              "expired",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "expires_at"
+        ],
+        "title": "UploadIntentSummaryV1",
+        "type": "object"
+      },
+      "UploadIntentV1": {
+        "additionalProperties": false,
+        "properties": {
+          "accepted_media_type": {
+            "const": "application/pdf",
+            "title": "Accepted Media Type",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "max_bytes": {
+            "const": 6291456,
+            "title": "Max Bytes",
+            "type": "integer"
+          },
+          "row_version": {
+            "minimum": 1.0,
+            "title": "Row Version",
+            "type": "integer"
+          },
+          "source_document_id": {
+            "format": "uuid",
+            "title": "Source Document Id",
+            "type": "string"
+          },
+          "source_version_id": {
+            "format": "uuid",
+            "title": "Source Version Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "consumed",
+              "expired",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "target_url": {
+            "pattern": "^/api/v1/source-upload-targets/[A-Za-z0-9_-]{32,}$",
+            "title": "Target Url",
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "source_document_id",
+          "source_version_id",
+          "status",
+          "target_url",
+          "expires_at",
+          "max_bytes",
+          "accepted_media_type",
+          "row_version"
+        ],
+        "title": "UploadIntentV1",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
       }
     }
   },
@@ -1982,6 +2850,136 @@
           }
         },
         "summary": "Get Authentication Context"
+      }
+    },
+    "/api/v1/source-upload-targets/{opaque_token}": {
+      "put": {
+        "operationId": "uploadSourceDocument",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "opaque_token",
+            "required": true,
+            "schema": {
+              "title": "Opaque Token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/pdf": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceAdmissionV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          }
+        },
+        "summary": "Upload Source Document"
       }
     },
     "/api/v1/tenant-invitations/accept": {
@@ -4965,6 +5963,965 @@
           }
         },
         "summary": "Update Membership"
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/source-documents/admissions": {
+      "post": {
+        "operationId": "createSourceAdmission",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "X-Tenant-Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSourceAdmissionV1"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceAdmissionV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          }
+        },
+        "summary": "Create Source Admission"
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}": {
+      "get": {
+        "operationId": "getSourceAdmission",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "X-Tenant-Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceAdmissionV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          }
+        },
+        "summary": "Get Source Admission"
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/cancel": {
+      "post": {
+        "operationId": "cancelSourceAdmission",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "X-Tenant-Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelSourceAdmissionV1"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceAdmissionV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          }
+        },
+        "summary": "Cancel Source Admission"
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/rights-authorizations/{authorization_id}/decisions": {
+      "post": {
+        "operationId": "reviewSourceStoreAuthorization",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "authorization_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Authorization Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "X-Tenant-Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewSourceStoreAuthorizationV1"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceAdmissionV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          }
+        },
+        "summary": "Review Source Store Authorization"
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/upload-intents": {
+      "post": {
+        "operationId": "createSourceUploadIntent",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "X-Tenant-Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadIntentV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          }
+        },
+        "summary": "Create Source Upload Intent"
       }
     },
     "/health": {

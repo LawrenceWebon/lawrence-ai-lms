@@ -1,6 +1,9 @@
 # Test Plan — F-003 PDF Source Admission
 
-Status: **frozen verification plan; implementation blocked on governance disposition**
+Status: **local verification complete; protected checks and independent review pending**
+
+Local results are recorded in the
+[F-003 implementation evidence](../../evidence/f003-source-admission-implementation.md).
 
 ## Contract and fixture correctness
 
