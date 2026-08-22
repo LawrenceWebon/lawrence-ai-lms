@@ -1,6 +1,17 @@
 # Technical Decisions — F-003 PDF Source Admission
 
-Status: **frozen for independent planning review**
+Status: **frozen; audit findings corrected and correction #51 merge pending**
+
+## Planning review evidence correction
+
+PR #44 merged the planning contract without the required independent pre-merge
+approval record. The retrospective audit found three contradictions between its
+executable schema and the decisions below. Correction
+[#51](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/51) fixes only those
+contradictions and records the exact-head audit and controlled exception in the
+[F-003 planning review correction evidence](../../evidence/f003-planning-review-correction.md).
+Issue #43 remains blocked until #51 itself is independently reviewed, distinctly
+approved, checked, and merged.
 
 ## Existing architecture to reuse
 
@@ -160,8 +171,9 @@ Frozen event facts are `source.rights.declared.v1`,
 `source.admission.validation_requested.v1`, `source.version.admitted.v1`,
 `source.version.rejected.v1`, `source.version.cancelled.v1`,
 `source.rights.revoked.v1`, and `source.removal.completed.v1`. Their concrete event
-schemas are generated/owned by #43 from the frozen minimized payload shape; no event
-includes source content, object key, target token, legal evidence, or full filename.
+schemas are generated/owned by #43 from the corrected repository envelope and
+discriminated minimized payload shape; no event includes source content, object key,
+target token, legal evidence, or full filename.
 
 Stable problems are `SOURCE_RIGHTS_AUTHORIZATION_REQUIRED`,
 `SOURCE_RIGHTS_AUTHORIZATION_DENIED`,
@@ -170,6 +182,18 @@ Stable problems are `SOURCE_RIGHTS_AUTHORIZATION_REQUIRED`,
 `UPLOAD_QUOTA_EXCEEDED`, `SOURCE_ADMISSION_STATE_CONFLICT`,
 `SOURCE_ADMISSION_VERSION_CONFLICT`, `IDEMPOTENCY_CONFLICT`,
 `TENANT_CONTEXT_REQUIRED`, and neutral `RESOURCE_NOT_FOUND`.
+
+An `admitted` validation result and public snapshot require a non-null checksum,
+bounded positive file/page/pixel observations, bounded decoded parser material,
+recognized PDF media, confirmed PDF signature/parser acceptance, an accepted bounded
+local inspection result, no rejection code, and an active `store` authorization.
+Rejected results require a stable rejection code; retryable failures do not masquerade
+as terminal rejection.
+
+`SourceAdmissionEventV1` uses the repository envelope: producer, tenant, aggregate
+type/ID/version, occurred/recorded times, correlation/causation IDs, privacy class, and
+payload. Each of the nine event types is discriminated against its compatible
+admission state and reason/checksum shape; a type/payload mismatch is invalid.
 
 ## F003-TD-006 — Transaction, tenancy, retention, and removal boundary
 
@@ -204,6 +228,7 @@ fixtures and cannot claim production deletion completeness.
 
 Issue [#43](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/43) is the one
 F-003 implementation and integration owner. It owns the Documents migration graph,
-settings/composition, FastAPI/OpenAPI/generated client, Admin adapter, web/E2E,
-event schemas, CI/Make targets, and documentation manifest for this feature. No
-parallel implementation issue may edit those hotspots.
+settings/composition, FastAPI/OpenAPI/generated client, Admin adapter, web/E2E, event
+schemas, CI/Make targets, and documentation manifest after correction #51 merges and
+#43 starts. Until then, #51 alone owns the serialized correction manifest. No parallel
+implementation issue may edit those hotspots.

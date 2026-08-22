@@ -1,5 +1,7 @@
 # Test Plan — F-003 PDF Source Admission
 
+Status: **frozen verification plan; correction #51 merge pending**
+
 ## Contract and fixture correctness
 
 - Validate the F-003 Draft 2020-12 schema, every named DTO/example, event payload
@@ -79,8 +81,10 @@
 - Events, audit, logs, errors, generated OpenAPI examples, test artifacts, browser
   source, and screenshot evidence contain no PDF bytes/text, signed URL/token, object
   key, unbounded file name, rights evidence, private prompt, or real data.
-- Fixtures are generated synthetic/right-cleared PDFs only. Their origin, license, and
-  checksums are declared in the fixture manifest.
+- The planning fixture manifest is deterministic scenario metadata only and contains no
+  PDF artifact. Issue #43 must create only synthetic/right-cleared PDF artifacts and a
+  separate executable manifest containing each artifact's origin, license, path, and
+  SHA-256 before claiming upload-security or implementation evidence.
 - Retention/legal-hold, provider deletion, object backup/RPO, external transfer, and
   production recovery remain explicit `not_applicable` only to this local slice; they
   are not marked passed or silently waived.

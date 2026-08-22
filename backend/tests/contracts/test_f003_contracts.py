@@ -74,6 +74,153 @@ def test_f003_admission_snapshot_has_same_tenant_edges_and_separate_reviewer() -
     assert snapshot["store_authorization"]["operation"] == "store"
 
 
+@pytest.mark.parametrize(
+    "field",
+    [
+        "content_sha256",
+        "derived_file_size_bytes",
+        "derived_media_type",
+        "derived_pdf_signature_valid",
+        "derived_parser_accepted",
+        "derived_page_count",
+        "derived_max_rendered_pixels_per_page",
+        "derived_rendered_pixels_total",
+        "derived_decoded_parser_bytes",
+        "derived_local_inspection_result",
+    ],
+)
+def test_f003_admitted_snapshot_requires_byte_derived_evidence(field: str) -> None:
+    snapshot = load_json(EXAMPLES_PATH)["SourceAdmissionV1"]
+    snapshot["source_version"][field] = None
+
+    with pytest.raises(ValidationError):
+        validator_for("SourceAdmissionV1").validate(snapshot)
+
+
+def test_f003_admitted_snapshot_requires_active_rights_and_no_rejection() -> None:
+    snapshot = load_json(EXAMPLES_PATH)["SourceAdmissionV1"]
+    snapshot["store_authorization"]["status"] = "revoked"
+    with pytest.raises(ValidationError):
+        validator_for("SourceAdmissionV1").validate(snapshot)
+
+    snapshot = load_json(EXAMPLES_PATH)["SourceAdmissionV1"]
+    snapshot["source_version"]["admission_status"] = "rejected"
+    snapshot["source_version"]["rejection_code"] = None
+    with pytest.raises(ValidationError):
+        validator_for("SourceAdmissionV1").validate(snapshot)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("derived_file_size_bytes", 6_291_457),
+        ("derived_pdf_signature_valid", False),
+        ("derived_parser_accepted", False),
+        ("derived_page_count", 101),
+        ("derived_max_rendered_pixels_per_page", 25_000_001),
+        ("derived_rendered_pixels_total", 250_000_001),
+        ("derived_decoded_parser_bytes", 67_108_865),
+        ("derived_local_inspection_result", "unsafe"),
+        ("validation_attempt_count", 0),
+    ],
+)
+def test_f003_admitted_snapshot_rejects_failed_or_over_limit_evidence(
+    field: str, value: object
+) -> None:
+    snapshot = load_json(EXAMPLES_PATH)["SourceAdmissionV1"]
+    snapshot["source_version"][field] = value
+
+    with pytest.raises(ValidationError):
+        validator_for("SourceAdmissionV1").validate(snapshot)
+
+    snapshot = load_json(EXAMPLES_PATH)["SourceAdmissionV1"]
+    snapshot["source_version"]["rejection_code"] = "PDF_UNSAFE"
+    with pytest.raises(ValidationError):
+        validator_for("SourceAdmissionV1").validate(snapshot)
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "content_sha256",
+        "file_size_bytes",
+        "media_type",
+        "pdf_signature_valid",
+        "parser_accepted",
+        "page_count",
+        "max_rendered_pixels_per_page",
+        "rendered_pixels_total",
+        "decoded_parser_bytes",
+        "local_inspection_result",
+    ],
+)
+def test_f003_admitted_validation_requires_bounded_observation(field: str) -> None:
+    result = load_json(EXAMPLES_PATH)["AdmissionValidationResultV1"]
+    result[field] = None
+
+    with pytest.raises(ValidationError):
+        validator_for("AdmissionValidationResultV1").validate(result)
+
+
+def test_f003_validation_outcome_and_rejection_reason_are_consistent() -> None:
+    admitted = load_json(EXAMPLES_PATH)["AdmissionValidationResultV1"]
+    admitted["rejection_code"] = "PDF_UNSAFE"
+    with pytest.raises(ValidationError):
+        validator_for("AdmissionValidationResultV1").validate(admitted)
+
+    rejected = load_json(EXAMPLES_PATH)["AdmissionValidationResultV1"]
+    rejected["outcome"] = "rejected"
+    rejected["rejection_code"] = None
+    with pytest.raises(ValidationError):
+        validator_for("AdmissionValidationResultV1").validate(rejected)
+
+    retryable = load_json(EXAMPLES_PATH)["AdmissionValidationResultV1"]
+    retryable.update(
+        {
+            "outcome": "retryable_failure",
+            "content_sha256": None,
+            "file_size_bytes": None,
+            "media_type": None,
+            "pdf_signature_valid": None,
+            "parser_accepted": None,
+            "page_count": None,
+            "max_rendered_pixels_per_page": None,
+            "rendered_pixels_total": None,
+            "decoded_parser_bytes": None,
+            "local_inspection_result": None,
+            "rejection_code": None,
+        }
+    )
+    validator_for("AdmissionValidationResultV1").validate(retryable)
+
+    retryable["rejection_code"] = "INSPECTOR_UNAVAILABLE"
+    with pytest.raises(ValidationError):
+        validator_for("AdmissionValidationResultV1").validate(retryable)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("file_size_bytes", 6_291_457),
+        ("pdf_signature_valid", False),
+        ("parser_accepted", False),
+        ("page_count", 101),
+        ("max_rendered_pixels_per_page", 25_000_001),
+        ("rendered_pixels_total", 250_000_001),
+        ("decoded_parser_bytes", 67_108_865),
+        ("local_inspection_result", "unsafe"),
+    ],
+)
+def test_f003_admitted_validation_rejects_failed_or_over_limit_evidence(
+    field: str, value: object
+) -> None:
+    result = load_json(EXAMPLES_PATH)["AdmissionValidationResultV1"]
+    result[field] = value
+
+    with pytest.raises(ValidationError):
+        validator_for("AdmissionValidationResultV1").validate(result)
+
+
 def test_f003_local_policy_has_the_owner_approved_q_p03_values() -> None:
     policy = load_json(EXAMPLES_PATH)["AdmissionPolicyV1"]
 
@@ -146,6 +293,73 @@ def test_f003_jobs_and_events_do_not_carry_source_content_or_storage_secrets() -
     assert protected_keys.isdisjoint(walk_keys(examples["SourceAdmissionEventV1"]))
 
 
+def test_f003_event_uses_repository_envelope_and_binds_type_to_payload() -> None:
+    event = load_json(EXAMPLES_PATH)["SourceAdmissionEventV1"]
+    validator = validator_for("SourceAdmissionEventV1")
+    required_envelope = {
+        "producer",
+        "aggregate_type",
+        "aggregate_id",
+        "aggregate_version",
+        "recorded_at",
+        "causation_id",
+        "privacy_class",
+    }
+
+    assert required_envelope.issubset(event)
+    assert event["producer"] == "documents"
+    assert event["aggregate_type"] == "source_version"
+    assert event["aggregate_id"] == event["source_version_id"]
+    validator.validate(event)
+
+    for field in required_envelope:
+        missing = copy.deepcopy(event)
+        del missing[field]
+        with pytest.raises(ValidationError):
+            validator.validate(missing)
+
+    mismatched = copy.deepcopy(event)
+    mismatched["event_type"] = "source.rights.declared.v1"
+    with pytest.raises(ValidationError):
+        validator.validate(mismatched)
+
+
+@pytest.mark.parametrize(
+    ("event_type", "admission_status", "content_sha256", "reason_code"),
+    [
+        ("source.rights.declared.v1", "rights_pending", None, None),
+        ("source.store_authorization.activated.v1", "upload_pending", None, None),
+        ("source.version.quarantined.v1", "quarantined", None, None),
+        ("source.admission.validation_requested.v1", "quarantined", None, None),
+        (
+            "source.version.admitted.v1",
+            "admitted",
+            "sha256:577a863e821823c16490e2acbc6c30b086a45c90d6efefea815b8bc4bd99fb1d",
+            None,
+        ),
+        ("source.version.rejected.v1", "rejected", None, "PDF_CORRUPT"),
+        ("source.version.cancelled.v1", "cancelled", None, "USER_CANCELLED"),
+        ("source.rights.revoked.v1", "blocked", None, "RIGHTS_REVOKED"),
+        ("source.removal.completed.v1", "blocked", None, "RIGHTS_REVOKED"),
+    ],
+)
+def test_f003_all_event_facts_have_discriminated_payloads(
+    event_type: str,
+    admission_status: str,
+    content_sha256: str | None,
+    reason_code: str | None,
+) -> None:
+    event = load_json(EXAMPLES_PATH)["SourceAdmissionEventV1"]
+    event["event_type"] = event_type
+    event["payload"] = {
+        "admission_status": admission_status,
+        "content_sha256": content_sha256,
+        "reason_code": reason_code,
+    }
+
+    validator_for("SourceAdmissionEventV1").validate(event)
+
+
 def test_f003_fixture_manifest_is_synthetic_and_covers_required_outcomes() -> None:
     manifest = load_json(FIXTURES_PATH)
     fixtures = manifest["fixtures"]
@@ -153,6 +367,8 @@ def test_f003_fixture_manifest_is_synthetic_and_covers_required_outcomes() -> No
     outcomes = {fixture["expected_outcome"] for fixture in fixtures}
 
     assert manifest["classification"] == "synthetic_or_rights_cleared_only"
+    assert manifest["artifact_scope"] == "scenario_metadata_only"
+    assert manifest["artifact_provenance_status"] == "required_from_implementation_issue_43"
     assert {
         "valid_pdf",
         "signature_mismatch",
