@@ -1,6 +1,6 @@
 # Implementation Plan — F-003 PDF Source Admission
 
-Status: **one implementation issue defined; blocked pending planning-PR approval and merge**
+Status: **contract ready; #43 blocked pending correction #51 approval and merge**
 
 ## Dependency graph
 
@@ -9,6 +9,11 @@ F-001 merged + P-013 local envelope
                 |
                 v
 planning #42 (contracts, fixture, test plan)
+                |
+                v
+       merged PR #44 + correction #51
+                |
+       independent review + merge
                 |
                 +--> #43 source-admission vertical slice --> F-004 contract consumers
 ```
@@ -21,14 +26,17 @@ meaningful independent delivery.
 | Issue | Agent | Objective | Primary owned paths | Consumes | Depends on | Merge order |
 |---|---|---|---|---|---|---|
 | [#42](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/42) | Planning | Freeze local-only DTO/job/event/fixture, Q-P03 envelope, boundaries, and test plan | `docs/features/03-pdf-source-admission/**`, `contracts/f003/**`, contract test, product decision/question, feature index, manifest | F-001/F-002 architecture patterns and plan documents | none | 1 |
-| [#43](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/43) | F-003 integration owner | Implement the complete private local admission slice and evidence | Documents module/migrations/RLS, API/Admin/composition, contracts/OpenAPI/client/events, web/E2E, F-003 tests/docs/manifest | frozen #42 contract and synthetic fixtures | #42 merged | 2 |
+| [#51](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/51) | Review-evidence correction owner | Record the exact audit, correct its three blocking contract findings, and document the one-time temporal exception | Narrow F-003 contract/test/status/evidence and serialized manifest paths | exact PR #44 head plus frozen product/plan behavior | #42/PR #44 merged | 2 |
+| [#43](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/43) | F-003 integration owner | Implement the complete private local admission slice and evidence | Documents module/migrations/RLS, API/Admin/composition, contracts/OpenAPI/client/events, web/E2E, F-003 tests/docs/manifest | frozen #42 contract and synthetic fixtures | #51 independently approved and merged | 3 |
 
 ## Launch gate
 
 Issue #43 must remain **BLOCKED** until all conditions are true:
 
-1. #42's planning PR has an independent exact-SHA review, a distinct authorized
-   approval, and a verified merge into `develop`;
+1. #42's planning contract, merged as PR #44 at
+   `83a0c487ff782192d4c18e08cfebd86eb4cf626f`, has its missing review order resolved
+   by correction #51, and #51 itself has an independent exact-SHA review, distinct
+   authorized approval, protected checks, and verified merge into `develop`;
 2. P-013 is present on that merged base, and its local-only values are copied without
    reinterpretation into the executable admission-policy fixture;
 3. `contracts/f003` and `backend/tests/contracts/test_f003_contracts.py` pass on the
@@ -49,7 +57,7 @@ or resolve the F-002 review gate.
 - Worktree: `/home/lawrence/Project Neo/worktrees/ai-lms/source-admission-LMS-43`
 - Compose project: `ai-lms-lms-43`
 - PostgreSQL host port: `55243`
-- Base: exact `origin/develop` containing #42's merge.
+- Base: exact latest `origin/develop` containing correction #51's merge.
 
 ### Exclusive ownership
 

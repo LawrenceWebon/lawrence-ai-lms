@@ -34,6 +34,50 @@
         "blocked"
       ]
     },
+    "AdmissionRejectionCode": {
+      "type": "string",
+      "enum": [
+        "RIGHTS_AUTHORIZATION_DENIED",
+        "PDF_SIGNATURE_MISMATCH",
+        "PDF_MEDIA_TYPE_INVALID",
+        "PDF_ENCRYPTED",
+        "PDF_CORRUPT",
+        "PDF_POLYGLOT_REJECTED",
+        "PDF_SIZE_LIMIT_EXCEEDED",
+        "PDF_PAGE_LIMIT_EXCEEDED",
+        "PDF_PIXEL_LIMIT_EXCEEDED",
+        "PDF_DECODED_LIMIT_EXCEEDED",
+        "PDF_VALIDATION_TIMEOUT",
+        "PDF_UNSAFE",
+        "OBJECT_MISSING",
+        "OBJECT_CHECKSUM_MISMATCH"
+      ]
+    },
+    "AdmissionValidationRejectionCode": {
+      "type": "string",
+      "enum": [
+        "PDF_SIGNATURE_MISMATCH",
+        "PDF_MEDIA_TYPE_INVALID",
+        "PDF_ENCRYPTED",
+        "PDF_CORRUPT",
+        "PDF_POLYGLOT_REJECTED",
+        "PDF_SIZE_LIMIT_EXCEEDED",
+        "PDF_PAGE_LIMIT_EXCEEDED",
+        "PDF_PIXEL_LIMIT_EXCEEDED",
+        "PDF_DECODED_LIMIT_EXCEEDED",
+        "PDF_UNSAFE",
+        "OBJECT_MISSING",
+        "OBJECT_CHECKSUM_MISMATCH"
+      ]
+    },
+    "CancellationReasonCode": {
+      "type": "string",
+      "enum": ["USER_CANCELLED", "SOURCE_REPLACED"]
+    },
+    "RemovalReasonCode": {
+      "type": "string",
+      "enum": ["USER_CANCELLED", "RIGHTS_REVOKED", "RIGHTS_EXPIRED", "RIGHTS_DISPUTED"]
+    },
     "RemovalStatus": {
       "type": "string",
       "enum": ["not_required", "pending", "completed", "failed"]
@@ -430,8 +474,13 @@
             "content_sha256",
             "derived_file_size_bytes",
             "derived_media_type",
+            "derived_pdf_signature_valid",
+            "derived_parser_accepted",
             "derived_page_count",
+            "derived_max_rendered_pixels_per_page",
             "derived_rendered_pixels_total",
+            "derived_decoded_parser_bytes",
+            "derived_local_inspection_result",
             "rejection_code",
             "validation_attempt_count",
             "row_version"
@@ -450,37 +499,37 @@
               "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
             },
             "derived_media_type": {
-              "anyOf": [{"type": "string", "const": "application/pdf"}, {"type": "null"}]
+              "anyOf": [
+                {"type": "string", "minLength": 1, "maxLength": 100},
+                {"type": "null"}
+              ]
+            },
+            "derived_pdf_signature_valid": {
+              "anyOf": [{"type": "boolean"}, {"type": "null"}]
+            },
+            "derived_parser_accepted": {
+              "anyOf": [{"type": "boolean"}, {"type": "null"}]
             },
             "derived_page_count": {
+              "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
+            },
+            "derived_max_rendered_pixels_per_page": {
               "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
             },
             "derived_rendered_pixels_total": {
               "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
             },
-            "rejection_code": {
+            "derived_decoded_parser_bytes": {
+              "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
+            },
+            "derived_local_inspection_result": {
               "anyOf": [
-                {
-                  "type": "string",
-                  "enum": [
-                    "RIGHTS_AUTHORIZATION_DENIED",
-                    "PDF_SIGNATURE_MISMATCH",
-                    "PDF_MEDIA_TYPE_INVALID",
-                    "PDF_ENCRYPTED",
-                    "PDF_CORRUPT",
-                    "PDF_POLYGLOT_REJECTED",
-                    "PDF_SIZE_LIMIT_EXCEEDED",
-                    "PDF_PAGE_LIMIT_EXCEEDED",
-                    "PDF_PIXEL_LIMIT_EXCEEDED",
-                    "PDF_DECODED_LIMIT_EXCEEDED",
-                    "PDF_VALIDATION_TIMEOUT",
-                    "PDF_UNSAFE",
-                    "OBJECT_MISSING",
-                    "OBJECT_CHECKSUM_MISMATCH"
-                  ]
-                },
+                {"type": "string", "enum": ["accepted", "unsafe", "unavailable"]},
                 {"type": "null"}
               ]
+            },
+            "rejection_code": {
+              "anyOf": [{"$ref": "#/$defs/AdmissionRejectionCode"}, {"type": "null"}]
             },
             "validation_attempt_count": {"type": "integer", "minimum": 0},
             "row_version": {"$ref": "#/$defs/PositiveInteger"}
@@ -508,7 +557,102 @@
             }
           }
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "source_version": {
+                "properties": {"admission_status": {"const": "admitted"}},
+                "required": ["admission_status"]
+              }
+            },
+            "required": ["source_version"]
+          },
+          "then": {
+            "properties": {
+              "source_version": {
+                "properties": {
+                  "content_sha256": {"$ref": "#/$defs/Sha256"},
+                  "derived_file_size_bytes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 6291456
+                  },
+                  "derived_media_type": {"type": "string", "const": "application/pdf"},
+                  "derived_pdf_signature_valid": {"const": true},
+                  "derived_parser_accepted": {"const": true},
+                  "derived_page_count": {"type": "integer", "minimum": 1, "maximum": 100},
+                  "derived_max_rendered_pixels_per_page": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 25000000
+                  },
+                  "derived_rendered_pixels_total": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 250000000
+                  },
+                  "derived_decoded_parser_bytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 67108864
+                  },
+                  "derived_local_inspection_result": {"const": "accepted"},
+                  "rejection_code": {"type": "null"},
+                  "validation_attempt_count": {"type": "integer", "minimum": 1}
+                }
+              },
+              "store_authorization": {
+                "properties": {"status": {"const": "active"}},
+                "required": ["status"]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source_version": {
+                "properties": {"admission_status": {"const": "rejected"}},
+                "required": ["admission_status"]
+              }
+            },
+            "required": ["source_version"]
+          },
+          "then": {
+            "properties": {
+              "source_version": {
+                "properties": {
+                  "rejection_code": {
+                    "$ref": "#/$defs/AdmissionRejectionCode"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source_version": {
+                "properties": {
+                  "admission_status": {"not": {"const": "rejected"}}
+                },
+                "required": ["admission_status"]
+              }
+            },
+            "required": ["source_version"]
+          },
+          "then": {
+            "properties": {
+              "source_version": {
+                "properties": {"rejection_code": {"type": "null"}}
+              }
+            }
+          }
+        }
+      ]
     },
     "CancelSourceAdmissionV1": {
       "type": "object",
@@ -528,9 +672,13 @@
         "content_sha256",
         "file_size_bytes",
         "media_type",
+        "pdf_signature_valid",
+        "parser_accepted",
         "page_count",
+        "max_rendered_pixels_per_page",
         "rendered_pixels_total",
         "decoded_parser_bytes",
+        "local_inspection_result",
         "rejection_code"
       ],
       "properties": {
@@ -543,9 +691,21 @@
           "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
         },
         "media_type": {
-          "anyOf": [{"type": "string", "const": "application/pdf"}, {"type": "null"}]
+          "anyOf": [
+            {"type": "string", "minLength": 1, "maxLength": 100},
+            {"type": "null"}
+          ]
+        },
+        "pdf_signature_valid": {
+          "anyOf": [{"type": "boolean"}, {"type": "null"}]
+        },
+        "parser_accepted": {
+          "anyOf": [{"type": "boolean"}, {"type": "null"}]
         },
         "page_count": {
+          "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
+        },
+        "max_rendered_pixels_per_page": {
           "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
         },
         "rendered_pixels_total": {
@@ -554,13 +714,212 @@
         "decoded_parser_bytes": {
           "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
         },
+        "local_inspection_result": {
+          "anyOf": [
+            {"type": "string", "enum": ["accepted", "unsafe", "unavailable"]},
+            {"type": "null"}
+          ]
+        },
         "rejection_code": {
           "anyOf": [
-            {"type": "string", "maxLength": 80, "pattern": "^[A-Z0-9_]+$"},
+            {"$ref": "#/$defs/AdmissionValidationRejectionCode"},
             {"type": "null"}
           ]
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"outcome": {"const": "admitted"}},
+            "required": ["outcome"]
+          },
+          "then": {
+            "properties": {
+              "content_sha256": {"$ref": "#/$defs/Sha256"},
+              "file_size_bytes": {"type": "integer", "minimum": 1, "maximum": 6291456},
+              "media_type": {"type": "string", "const": "application/pdf"},
+              "pdf_signature_valid": {"const": true},
+              "parser_accepted": {"const": true},
+              "page_count": {"type": "integer", "minimum": 1, "maximum": 100},
+              "max_rendered_pixels_per_page": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 25000000
+              },
+              "rendered_pixels_total": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 250000000
+              },
+              "decoded_parser_bytes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 67108864
+              },
+              "local_inspection_result": {"const": "accepted"},
+              "rejection_code": {"type": "null"}
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {"outcome": {"const": "rejected"}},
+            "required": ["outcome"]
+          },
+          "then": {
+            "properties": {
+              "rejection_code": {"$ref": "#/$defs/AdmissionValidationRejectionCode"},
+              "local_inspection_result": {"not": {"const": "unavailable"}}
+            },
+            "oneOf": [
+              {
+                "properties": {
+                  "rejection_code": {"const": "PDF_SIGNATURE_MISMATCH"},
+                  "pdf_signature_valid": {"const": false}
+                }
+              },
+              {
+                "properties": {
+                  "rejection_code": {"const": "PDF_MEDIA_TYPE_INVALID"},
+                  "media_type": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "not": {"const": "application/pdf"}
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "rejection_code": {
+                    "enum": ["PDF_ENCRYPTED", "PDF_CORRUPT", "PDF_POLYGLOT_REJECTED"]
+                  },
+                  "parser_accepted": {"const": false}
+                }
+              },
+              {
+                "properties": {
+                  "rejection_code": {"const": "PDF_SIZE_LIMIT_EXCEEDED"},
+                  "file_size_bytes": {"type": "integer", "minimum": 6291457}
+                }
+              },
+              {
+                "properties": {
+                  "rejection_code": {"const": "PDF_PAGE_LIMIT_EXCEEDED"},
+                  "page_count": {"type": "integer", "minimum": 101}
+                }
+              },
+              {
+                "properties": {
+                  "rejection_code": {"const": "PDF_PIXEL_LIMIT_EXCEEDED"}
+                },
+                "anyOf": [
+                  {
+                    "properties": {
+                      "max_rendered_pixels_per_page": {
+                        "type": "integer",
+                        "minimum": 25000001
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "rendered_pixels_total": {"type": "integer", "minimum": 250000001}
+                    }
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "rejection_code": {"const": "PDF_DECODED_LIMIT_EXCEEDED"},
+                  "decoded_parser_bytes": {"type": "integer", "minimum": 67108865}
+                }
+              },
+              {
+                "properties": {
+                  "rejection_code": {"const": "PDF_UNSAFE"},
+                  "local_inspection_result": {"const": "unsafe"}
+                }
+              },
+              {
+                "properties": {
+                  "rejection_code": {"const": "OBJECT_MISSING"},
+                  "content_sha256": {"type": "null"},
+                  "file_size_bytes": {"type": "null"},
+                  "media_type": {"type": "null"},
+                  "pdf_signature_valid": {"type": "null"},
+                  "parser_accepted": {"type": "null"},
+                  "page_count": {"type": "null"},
+                  "max_rendered_pixels_per_page": {"type": "null"},
+                  "rendered_pixels_total": {"type": "null"},
+                  "decoded_parser_bytes": {"type": "null"},
+                  "local_inspection_result": {"type": "null"}
+                }
+              },
+              {
+                "properties": {
+                  "rejection_code": {"const": "OBJECT_CHECKSUM_MISMATCH"},
+                  "content_sha256": {"$ref": "#/$defs/Sha256"}
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {"outcome": {"const": "retryable_failure"}},
+            "required": ["outcome"]
+          },
+          "then": {
+            "properties": {
+              "file_size_bytes": {
+                "anyOf": [
+                  {"type": "integer", "minimum": 1, "maximum": 6291456},
+                  {"type": "null"}
+                ]
+              },
+              "media_type": {
+                "anyOf": [
+                  {"type": "string", "const": "application/pdf"},
+                  {"type": "null"}
+                ]
+              },
+              "pdf_signature_valid": {
+                "anyOf": [{"const": true}, {"type": "null"}]
+              },
+              "parser_accepted": {
+                "anyOf": [{"const": true}, {"type": "null"}]
+              },
+              "page_count": {
+                "anyOf": [
+                  {"type": "integer", "minimum": 1, "maximum": 100},
+                  {"type": "null"}
+                ]
+              },
+              "max_rendered_pixels_per_page": {
+                "anyOf": [
+                  {"type": "integer", "minimum": 1, "maximum": 25000000},
+                  {"type": "null"}
+                ]
+              },
+              "rendered_pixels_total": {
+                "anyOf": [
+                  {"type": "integer", "minimum": 1, "maximum": 250000000},
+                  {"type": "null"}
+                ]
+              },
+              "decoded_parser_bytes": {
+                "anyOf": [
+                  {"type": "integer", "minimum": 0, "maximum": 67108864},
+                  {"type": "null"}
+                ]
+              },
+              "local_inspection_result": {"const": "unavailable"},
+              "rejection_code": {"type": "null"}
+            }
+          }
+        }
+      ]
     },
     "AdmissionValidationJobV1": {
       "type": "object",
@@ -633,12 +992,18 @@
         "event_id",
         "event_type",
         "event_version",
+        "producer",
         "tenant_id",
+        "aggregate_type",
+        "aggregate_id",
         "source_document_id",
         "source_version_id",
         "aggregate_version",
         "occurred_at",
+        "recorded_at",
         "correlation_id",
+        "causation_id",
+        "privacy_class",
         "payload"
       ],
       "properties": {
@@ -658,12 +1023,18 @@
           ]
         },
         "event_version": {"type": "integer", "const": 1},
+        "producer": {"type": "string", "const": "documents"},
         "tenant_id": {"$ref": "#/$defs/Uuid"},
+        "aggregate_type": {"type": "string", "const": "source_version"},
+        "aggregate_id": {"$ref": "#/$defs/Uuid"},
         "source_document_id": {"$ref": "#/$defs/Uuid"},
         "source_version_id": {"$ref": "#/$defs/Uuid"},
         "aggregate_version": {"$ref": "#/$defs/PositiveInteger"},
         "occurred_at": {"$ref": "#/$defs/Timestamp"},
+        "recorded_at": {"$ref": "#/$defs/Timestamp"},
         "correlation_id": {"$ref": "#/$defs/Uuid"},
+        "causation_id": {"$ref": "#/$defs/Uuid"},
+        "privacy_class": {"type": "string", "const": "internal"},
         "payload": {
           "type": "object",
           "additionalProperties": false,
@@ -678,15 +1049,130 @@
             }
           }
         }
-      }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "event_type": {"const": "source.rights.declared.v1"},
+            "payload": {
+              "properties": {
+                "admission_status": {"const": "rights_pending"},
+                "content_sha256": {"type": "null"},
+                "reason_code": {"type": "null"}
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "event_type": {"const": "source.store_authorization.activated.v1"},
+            "payload": {
+              "properties": {
+                "admission_status": {"const": "upload_pending"},
+                "content_sha256": {"type": "null"},
+                "reason_code": {"type": "null"}
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "event_type": {"const": "source.version.quarantined.v1"},
+            "payload": {
+              "properties": {
+                "admission_status": {"const": "quarantined"},
+                "reason_code": {"type": "null"}
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "event_type": {"const": "source.admission.validation_requested.v1"},
+            "payload": {
+              "properties": {
+                "admission_status": {"const": "quarantined"},
+                "reason_code": {"type": "null"}
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "event_type": {"const": "source.version.admitted.v1"},
+            "payload": {
+              "properties": {
+                "admission_status": {"const": "admitted"},
+                "content_sha256": {"$ref": "#/$defs/Sha256"},
+                "reason_code": {"type": "null"}
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "event_type": {"const": "source.version.rejected.v1"},
+            "payload": {
+              "properties": {
+                "admission_status": {"const": "rejected"},
+                "reason_code": {"$ref": "#/$defs/AdmissionRejectionCode"}
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "event_type": {"const": "source.version.cancelled.v1"},
+            "payload": {
+              "properties": {
+                "admission_status": {"const": "cancelled"},
+                "reason_code": {"$ref": "#/$defs/CancellationReasonCode"}
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "event_type": {"const": "source.rights.revoked.v1"},
+            "payload": {
+              "properties": {
+                "admission_status": {"const": "blocked"},
+                "reason_code": {"const": "RIGHTS_REVOKED"}
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "event_type": {"const": "source.removal.completed.v1"},
+            "payload": {
+              "properties": {
+                "admission_status": {"enum": ["rejected", "cancelled", "blocked"]},
+                "reason_code": {"$ref": "#/$defs/RemovalReasonCode"}
+              }
+            }
+          }
+        }
+      ]
     },
     "AdmissionFixtureManifestV1": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fixture_version", "classification", "fixtures"],
+      "required": [
+        "fixture_version",
+        "classification",
+        "artifact_scope",
+        "artifact_provenance_status",
+        "fixtures"
+      ],
       "properties": {
         "fixture_version": {"type": "string", "const": "f003-fixtures-v1"},
         "classification": {"type": "string", "const": "synthetic_or_rights_cleared_only"},
+        "artifact_scope": {"type": "string", "const": "scenario_metadata_only"},
+        "artifact_provenance_status": {
+          "type": "string",
+          "const": "required_from_implementation_issue_43"
+        },
         "fixtures": {
           "type": "array",
           "minItems": 8,

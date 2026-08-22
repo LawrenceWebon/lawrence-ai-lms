@@ -1,6 +1,8 @@
 {
   "fixture_version": "f003-fixtures-v1",
   "classification": "synthetic_or_rights_cleared_only",
+  "artifact_scope": "scenario_metadata_only",
+  "artifact_provenance_status": "required_from_implementation_issue_43",
   "fixtures": [
     {
       "id": "synthetic-valid-one-page-pdf",

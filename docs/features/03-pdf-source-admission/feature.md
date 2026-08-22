@@ -1,9 +1,11 @@
 # F-003 — PDF Source Admission
 
-Status: **planning complete; independent planning review pending**
+Status: **contract corrected; #43 starts only after correction #51 merges**
 
 Feature ID: `F-003`
 Planning issue: [#42](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/42)
+Review-evidence correction:
+[#51](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/51)
 
 ## Outcome
 
