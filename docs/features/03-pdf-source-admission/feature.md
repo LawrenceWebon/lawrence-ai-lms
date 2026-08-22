@@ -1,6 +1,6 @@
 # F-003 — PDF Source Admission
 
-Status: **contract corrected; #43 starts only after correction #51 merges**
+Status: **contract correction merged; #43 blocked on unresolved review/approval gate**
 
 Feature ID: `F-003`
 Planning issue: [#42](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/42)

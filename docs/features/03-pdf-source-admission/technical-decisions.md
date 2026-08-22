@@ -1,6 +1,6 @@
 # Technical Decisions — F-003 PDF Source Admission
 
-Status: **frozen; audit findings corrected and correction #51 merge pending**
+Status: **frozen and merged; implementation blocked on post-merge gate disposition**
 
 ## Planning review evidence correction
 
@@ -10,8 +10,9 @@ executable schema and the decisions below. Correction
 [#51](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/51) fixes only those
 contradictions and records the exact-head audit and controlled exception in the
 [F-003 planning review correction evidence](../../evidence/f003-planning-review-correction.md).
-Issue #43 remains blocked until #51 itself is independently reviewed, distinctly
-approved, checked, and merged.
+PR #53 merged the correction, but its final merge head was not the independently
+reviewed head and GitHub records no distinct approval. Issue #43 remains blocked until
+that already-merged governance defect receives an explicit owner-approved disposition.
 
 ## Existing architecture to reuse
 
@@ -237,6 +238,6 @@ fixtures and cannot claim production deletion completeness.
 Issue [#43](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/43) is the one
 F-003 implementation and integration owner. It owns the Documents migration graph,
 settings/composition, FastAPI/OpenAPI/generated client, Admin adapter, web/E2E, event
-schemas, CI/Make targets, and documentation manifest after correction #51 merges and
-#43 starts. Until then, #51 alone owns the serialized correction manifest. No parallel
-implementation issue may edit those hotspots.
+schemas, CI/Make targets, and documentation manifest only after its launch gate closes
+and #43 starts. Workflow correction #54 owns the current status/manifest update. No
+parallel implementation issue may edit those hotspots.

@@ -1,6 +1,6 @@
 # Readiness Audit — F-003 PDF Source Admission
 
-Status: **READY FOR IMPLEMENTATION AFTER #51 REVIEW AND MERGE**
+Status: **BLOCKED — #51 MERGED WITHOUT THE REQUIRED FINAL-HEAD REVIEW/APPROVAL RECORD**
 
 - [x] F-003 remains inside the focused PDF-to-course MVP and has no expanded source
   format, OCR, provider, or production scope.
@@ -35,18 +35,23 @@ Status: **READY FOR IMPLEMENTATION AFTER #51 REVIEW AND MERGE**
 - [x] The one-time exception records scope, reason, compensating controls, residual
   risk, accountable owner, approver gate, expiry, and change trigger without weakening
   future review requirements.
-- [ ] Correction #51 has an independent exact-SHA review, a distinct authorized
-  GitHub approval, protected checks, and a verified merge into `develop`.
+- [x] Correction #51 merged through PR #53 as
+  `5b89c6a8e62140f8032492b5454a12b2ef063bce`; the merged tree matches PR head
+  `57bb2692eebfc81c6198589bfdd4fb7afeb17286`, protected checks passed, and its clean
+  worktree/task-local resources were removed.
+- [ ] PR #53's merge head has an independent exact-SHA verdict and a distinct
+  authorized approval, or an explicit owner-approved corrective disposition closes
+  the already-merged governance defect without claiming retroactive approval.
 
 ## Verdict
 
 The audit performed the missing review and rejected ratification of #44's contradictory
 contract. Correction #51 addresses every blocking finding against the already-approved
 fail-closed, P-013, and event-envelope behavior and records the historical ordering as
-a one-time exception. Issue #43 remains blocked until the unchecked correction gate
-above closes and #51 merges into `develop`. Once that happens, #43 can be independently
-tested against the corrected F-003 schema, scenario manifest, and P-013 envelope
-without importing an unmerged sibling branch.
+a one-time exception. PR #53 has merged, but merge did not retroactively satisfy its
+final-head review or distinct-approval gate. Issue #43 therefore remains blocked until
+that defect has an explicit valid disposition. The corrected F-003 schema, scenario
+manifest, and P-013 envelope are otherwise independently testable on the merged tree.
 
 ## Known limitations and blocked gates
 
@@ -58,8 +63,8 @@ without importing an unmerged sibling branch.
 - F-004 owns extraction/OCR, normalized source structure, and its quality thresholds;
   F-005 owns generation/provider/evaluation; F-006 owns generated-draft review;
   F-007 owns learner access.
-- The exception applies only to PR #44's historical ordering defect. Any F-003
-  contract change or correction-PR head change requires a new exact-SHA review; no
-  future approval is waived.
+- The exception applies only to PR #44's historical ordering defect. PR #53's head
+  changed after its `851d8fbb...` review and merged at `57bb2692...`; that separate
+  defect still requires an explicit disposition and no future approval is waived.
 - #40/#41 record F-002's separate missing pre-merge review evidence. That issue remains
   independent and is not presented as solved here.

@@ -147,11 +147,11 @@ structurally ready for RTL without claiming another supported pilot locale.
 - Status: accepted.
 - F-007 is implemented in issue
   [#46](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/46) after decision
-  correction [#50](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/50)'s pull
-  request independently passes review/checks and merges. Issue #46 is the sole F-007
-  owner for learning migrations/RLS, permission additions, services, API/Admin,
-  composition, OpenAPI/client generation, web/player, events, tests, and documentation
-  manifest.
+  correction [#50](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/50)'s
+  already-merged distinct-approval defect receives an explicit valid disposition.
+  Issue #46 is then the sole F-007 owner for learning migrations/RLS, permission
+  additions, services, API/Admin, composition, OpenAPI/client generation, web/player,
+  events, tests, and documentation manifest.
 - F-001/F-002 paths and contracts remain read-only inputs except for narrow,
   issue-declared permission/composition integration owned by the F-007 issue.
 - No provider, queue, storage, dependency, lockfile, CI, analytics, notification, or
@@ -228,5 +228,5 @@ tokens, or unrestricted actor data.
 F-007 implementation issue #46 is the only owner of learning migrations,
 permissions, application composition/settings, OpenAPI/client regeneration, web
 playback routes, F-007 events, integration/E2E fixtures, status documentation, and
-`manifest.json`. Until that issue starts, decision correction #50 alone owns the
-declared decision-related product/locale/F-007 contract/test/manifest paths.
+`manifest.json` after its launch gate closes. Workflow correction #54 owns the current
+status/manifest update. No F-007 implementation hotspot may change before #46 starts.

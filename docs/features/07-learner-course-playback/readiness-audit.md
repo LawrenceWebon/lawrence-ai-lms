@@ -1,6 +1,6 @@
 # Readiness Audit — F-007 Learner Course Playback and Progress
 
-Status: **READY FOR IMPLEMENTATION AFTER THE #50 CORRECTION REVIEW AND MERGE**
+Status: **CONTRACT READY FOR IMPLEMENTATION; #46 EXECUTION BLOCKED ON APPROVAL RECORD**
 
 - [x] Outcome and non-goals match the focused product spec and F-007 inventory.
 - [x] F-001 identity/tenant and F-002 immutable publication dependencies are present.
@@ -28,18 +28,21 @@ Status: **READY FOR IMPLEMENTATION AFTER THE #50 CORRECTION REVIEW AND MERGE**
 - [x] No PDF, AI, provider, vector, commerce, assessment, notification, analytics,
   real-data, or production capability is silently enabled.
 - [x] Initial planning issue #45 and PR #47 are merged into `develop`.
-- [ ] The pull request for correction issue #50 has an independent exact-SHA review,
-  a distinct authorized approval, protected checks, and a verified merge into
-  `develop`.
+- [x] Correction #50 merged through PR #52 as
+  `eb0fb3e808c37073e99625609c1338ce4b1ce51e`; its reviewed head has the same tree,
+  protected checks passed, and its clean worktree/task-local resources were removed.
+- [ ] PR #52 has a distinct authorized approval, or an explicit owner-approved
+  corrective disposition closes the already-merged approval defect without claiming
+  retroactive approval.
 
 ## Readiness verdict
 
 No material product decision remains hidden in F-007. The accepted contract is
-independently testable against frozen DTO/event schemas and synthetic fixtures, so the
-feature is ready to enter implementation immediately after the #50 correction
-satisfies its review, approval, check, and merge gate. Until GitHub reports that merge,
-issue #46 remains `BLOCKED` and no implementation branch, worktree, or Compose project
-may be created.
+independently testable against frozen DTO/event schemas and synthetic fixtures. PR #52
+has merged, but merge did not retroactively supply the required distinct approval.
+Issue #46 remains `BLOCKED` until that governance defect receives an explicit valid
+disposition; no implementation branch, worktree, host scratch child, or Compose project
+may be created first.
 
 ## Known limitations
 
