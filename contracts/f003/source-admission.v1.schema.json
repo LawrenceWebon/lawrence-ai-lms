@@ -34,6 +34,50 @@
         "blocked"
       ]
     },
+    "AdmissionRejectionCode": {
+      "type": "string",
+      "enum": [
+        "RIGHTS_AUTHORIZATION_DENIED",
+        "PDF_SIGNATURE_MISMATCH",
+        "PDF_MEDIA_TYPE_INVALID",
+        "PDF_ENCRYPTED",
+        "PDF_CORRUPT",
+        "PDF_POLYGLOT_REJECTED",
+        "PDF_SIZE_LIMIT_EXCEEDED",
+        "PDF_PAGE_LIMIT_EXCEEDED",
+        "PDF_PIXEL_LIMIT_EXCEEDED",
+        "PDF_DECODED_LIMIT_EXCEEDED",
+        "PDF_VALIDATION_TIMEOUT",
+        "PDF_UNSAFE",
+        "OBJECT_MISSING",
+        "OBJECT_CHECKSUM_MISMATCH"
+      ]
+    },
+    "AdmissionValidationRejectionCode": {
+      "type": "string",
+      "enum": [
+        "PDF_SIGNATURE_MISMATCH",
+        "PDF_MEDIA_TYPE_INVALID",
+        "PDF_ENCRYPTED",
+        "PDF_CORRUPT",
+        "PDF_POLYGLOT_REJECTED",
+        "PDF_SIZE_LIMIT_EXCEEDED",
+        "PDF_PAGE_LIMIT_EXCEEDED",
+        "PDF_PIXEL_LIMIT_EXCEEDED",
+        "PDF_DECODED_LIMIT_EXCEEDED",
+        "PDF_UNSAFE",
+        "OBJECT_MISSING",
+        "OBJECT_CHECKSUM_MISMATCH"
+      ]
+    },
+    "CancellationReasonCode": {
+      "type": "string",
+      "enum": ["USER_CANCELLED", "SOURCE_REPLACED"]
+    },
+    "RemovalReasonCode": {
+      "type": "string",
+      "enum": ["USER_CANCELLED", "RIGHTS_REVOKED", "RIGHTS_EXPIRED", "RIGHTS_DISPUTED"]
+    },
     "RemovalStatus": {
       "type": "string",
       "enum": ["not_required", "pending", "completed", "failed"]
@@ -455,7 +499,10 @@
               "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
             },
             "derived_media_type": {
-              "anyOf": [{"type": "string", "const": "application/pdf"}, {"type": "null"}]
+              "anyOf": [
+                {"type": "string", "minLength": 1, "maxLength": 100},
+                {"type": "null"}
+              ]
             },
             "derived_pdf_signature_valid": {
               "anyOf": [{"type": "boolean"}, {"type": "null"}]
@@ -482,28 +529,7 @@
               ]
             },
             "rejection_code": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "enum": [
-                    "RIGHTS_AUTHORIZATION_DENIED",
-                    "PDF_SIGNATURE_MISMATCH",
-                    "PDF_MEDIA_TYPE_INVALID",
-                    "PDF_ENCRYPTED",
-                    "PDF_CORRUPT",
-                    "PDF_POLYGLOT_REJECTED",
-                    "PDF_SIZE_LIMIT_EXCEEDED",
-                    "PDF_PAGE_LIMIT_EXCEEDED",
-                    "PDF_PIXEL_LIMIT_EXCEEDED",
-                    "PDF_DECODED_LIMIT_EXCEEDED",
-                    "PDF_VALIDATION_TIMEOUT",
-                    "PDF_UNSAFE",
-                    "OBJECT_MISSING",
-                    "OBJECT_CHECKSUM_MISMATCH"
-                  ]
-                },
-                {"type": "null"}
-              ]
+              "anyOf": [{"$ref": "#/$defs/AdmissionRejectionCode"}, {"type": "null"}]
             },
             "validation_attempt_count": {"type": "integer", "minimum": 0},
             "row_version": {"$ref": "#/$defs/PositiveInteger"}
@@ -599,25 +625,29 @@
               "source_version": {
                 "properties": {
                   "rejection_code": {
-                    "type": "string",
-                    "enum": [
-                      "RIGHTS_AUTHORIZATION_DENIED",
-                      "PDF_SIGNATURE_MISMATCH",
-                      "PDF_MEDIA_TYPE_INVALID",
-                      "PDF_ENCRYPTED",
-                      "PDF_CORRUPT",
-                      "PDF_POLYGLOT_REJECTED",
-                      "PDF_SIZE_LIMIT_EXCEEDED",
-                      "PDF_PAGE_LIMIT_EXCEEDED",
-                      "PDF_PIXEL_LIMIT_EXCEEDED",
-                      "PDF_DECODED_LIMIT_EXCEEDED",
-                      "PDF_VALIDATION_TIMEOUT",
-                      "PDF_UNSAFE",
-                      "OBJECT_MISSING",
-                      "OBJECT_CHECKSUM_MISMATCH"
-                    ]
+                    "$ref": "#/$defs/AdmissionRejectionCode"
                   }
                 }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source_version": {
+                "properties": {
+                  "admission_status": {"not": {"const": "rejected"}}
+                },
+                "required": ["admission_status"]
+              }
+            },
+            "required": ["source_version"]
+          },
+          "then": {
+            "properties": {
+              "source_version": {
+                "properties": {"rejection_code": {"type": "null"}}
               }
             }
           }
@@ -661,7 +691,10 @@
           "anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]
         },
         "media_type": {
-          "anyOf": [{"type": "string", "const": "application/pdf"}, {"type": "null"}]
+          "anyOf": [
+            {"type": "string", "minLength": 1, "maxLength": 100},
+            {"type": "null"}
+          ]
         },
         "pdf_signature_valid": {
           "anyOf": [{"type": "boolean"}, {"type": "null"}]
@@ -689,7 +722,7 @@
         },
         "rejection_code": {
           "anyOf": [
-            {"type": "string", "maxLength": 80, "pattern": "^[A-Z0-9_]+$"},
+            {"$ref": "#/$defs/AdmissionValidationRejectionCode"},
             {"type": "null"}
           ]
         }
@@ -735,13 +768,96 @@
           },
           "then": {
             "properties": {
-              "rejection_code": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 80,
-                "pattern": "^[A-Z0-9_]+$"
+              "rejection_code": {"$ref": "#/$defs/AdmissionValidationRejectionCode"},
+              "local_inspection_result": {"not": {"const": "unavailable"}}
+            },
+            "oneOf": [
+              {
+                "properties": {
+                  "rejection_code": {"const": "PDF_SIGNATURE_MISMATCH"},
+                  "pdf_signature_valid": {"const": false}
+                }
+              },
+              {
+                "properties": {
+                  "rejection_code": {"const": "PDF_MEDIA_TYPE_INVALID"},
+                  "media_type": {"not": {"const": "application/pdf"}}
+                }
+              },
+              {
+                "properties": {
+                  "rejection_code": {
+                    "enum": ["PDF_ENCRYPTED", "PDF_CORRUPT", "PDF_POLYGLOT_REJECTED"]
+                  },
+                  "parser_accepted": {"const": false}
+                }
+              },
+              {
+                "properties": {
+                  "rejection_code": {"const": "PDF_SIZE_LIMIT_EXCEEDED"},
+                  "file_size_bytes": {"type": "integer", "minimum": 6291457}
+                }
+              },
+              {
+                "properties": {
+                  "rejection_code": {"const": "PDF_PAGE_LIMIT_EXCEEDED"},
+                  "page_count": {"type": "integer", "minimum": 101}
+                }
+              },
+              {
+                "properties": {
+                  "rejection_code": {"const": "PDF_PIXEL_LIMIT_EXCEEDED"}
+                },
+                "anyOf": [
+                  {
+                    "properties": {
+                      "max_rendered_pixels_per_page": {
+                        "type": "integer",
+                        "minimum": 25000001
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "rendered_pixels_total": {"type": "integer", "minimum": 250000001}
+                    }
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "rejection_code": {"const": "PDF_DECODED_LIMIT_EXCEEDED"},
+                  "decoded_parser_bytes": {"type": "integer", "minimum": 67108865}
+                }
+              },
+              {
+                "properties": {
+                  "rejection_code": {"const": "PDF_UNSAFE"},
+                  "local_inspection_result": {"const": "unsafe"}
+                }
+              },
+              {
+                "properties": {
+                  "rejection_code": {"const": "OBJECT_MISSING"},
+                  "content_sha256": {"type": "null"},
+                  "file_size_bytes": {"type": "null"},
+                  "media_type": {"type": "null"},
+                  "pdf_signature_valid": {"type": "null"},
+                  "parser_accepted": {"type": "null"},
+                  "page_count": {"type": "null"},
+                  "max_rendered_pixels_per_page": {"type": "null"},
+                  "rendered_pixels_total": {"type": "null"},
+                  "decoded_parser_bytes": {"type": "null"},
+                  "local_inspection_result": {"type": "null"}
+                }
+              },
+              {
+                "properties": {
+                  "rejection_code": {"const": "OBJECT_CHECKSUM_MISMATCH"},
+                  "content_sha256": {"$ref": "#/$defs/Sha256"}
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -750,7 +866,10 @@
             "required": ["outcome"]
           },
           "then": {
-            "properties": {"rejection_code": {"type": "null"}}
+            "properties": {
+              "local_inspection_result": {"const": "unavailable"},
+              "rejection_code": {"type": "null"}
+            }
           }
         }
       ]
@@ -949,12 +1068,7 @@
             "payload": {
               "properties": {
                 "admission_status": {"const": "rejected"},
-                "reason_code": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 80,
-                  "pattern": "^[A-Z0-9_]+$"
-                }
+                "reason_code": {"$ref": "#/$defs/AdmissionRejectionCode"}
               }
             }
           }
@@ -965,12 +1079,7 @@
             "payload": {
               "properties": {
                 "admission_status": {"const": "cancelled"},
-                "reason_code": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 80,
-                  "pattern": "^[A-Z0-9_]+$"
-                }
+                "reason_code": {"$ref": "#/$defs/CancellationReasonCode"}
               }
             }
           }
@@ -992,12 +1101,7 @@
             "payload": {
               "properties": {
                 "admission_status": {"enum": ["rejected", "cancelled", "blocked"]},
-                "reason_code": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 80,
-                  "pattern": "^[A-Z0-9_]+$"
-                }
+                "reason_code": {"$ref": "#/$defs/RemovalReasonCode"}
               }
             }
           }

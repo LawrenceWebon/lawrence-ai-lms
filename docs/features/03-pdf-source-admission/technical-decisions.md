@@ -188,12 +188,17 @@ bounded positive file/page/pixel observations, bounded decoded parser material,
 recognized PDF media, confirmed PDF signature/parser acceptance, an accepted bounded
 local inspection result, no rejection code, and an active `store` authorization.
 Rejected results require a stable rejection code; retryable failures do not masquerade
-as terminal rejection.
+as terminal rejection. Each rejected validation code is bound to its matching failed,
+over-limit, missing-object, or checksum observation; a rejected result cannot report
+an unavailable inspection. A retryable result requires an unavailable local inspection
+and no terminal code. Every non-rejected public snapshot has a null rejection code.
 
 `SourceAdmissionEventV1` uses the repository envelope: producer, tenant, aggregate
 type/ID/version, occurred/recorded times, correlation/causation IDs, privacy class, and
 payload. Each of the nine event types is discriminated against its compatible
-admission state and reason/checksum shape; a type/payload mismatch is invalid.
+admission state and reason/checksum shape. Rejection, cancellation, rights-revocation,
+and removal-completion facts accept only their own frozen reason family; a
+type/payload or type/reason mismatch is invalid.
 
 ## F003-TD-006 — Transaction, tenancy, retention, and removal boundary
 

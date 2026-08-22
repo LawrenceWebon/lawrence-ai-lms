@@ -29,8 +29,9 @@ Status: **READY FOR IMPLEMENTATION AFTER #51 REVIEW AND MERGE**
 - [x] An independent post-merge audit of the exact PR #44 head is linked from the
   controlled-exception record and truthfully reports three blocking contract defects.
 - [x] Correction #51 makes admitted snapshots/results fail closed, restores the
-  repository event envelope and event-type discrimination, and labels the fixture
-  manifest as scenario metadata while requiring #43 artifact provenance evidence.
+  repository event envelope, binds rejected/retryable evidence and event reason
+  families, and labels the fixture manifest as scenario metadata while requiring #43
+  artifact provenance evidence.
 - [x] The one-time exception records scope, reason, compensating controls, residual
   risk, accountable owner, approver gate, expiry, and change trigger without weakening
   future review requirements.

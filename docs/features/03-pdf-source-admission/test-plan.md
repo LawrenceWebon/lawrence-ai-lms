@@ -13,6 +13,10 @@ Status: **frozen verification plan; correction #51 merge pending**
   other than `store`.
 - Assert all source/version/rights/intent/job tenant and parent edges agree, IDs are
   UUIDs, checksums are canonical SHA-256 strings, and events/jobs minimize content.
+- Reject admitted results with missing/failed evidence, rejected results whose frozen
+  code contradicts their observation, retryable results without an unavailable
+  inspection, non-rejected snapshots with terminal codes, and event reasons from a
+  different or unfrozen reason family.
 
 ## Domain, policy, and transaction correctness
 

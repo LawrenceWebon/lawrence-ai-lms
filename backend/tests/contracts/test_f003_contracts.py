@@ -110,6 +110,15 @@ def test_f003_admitted_snapshot_requires_active_rights_and_no_rejection() -> Non
         validator_for("SourceAdmissionV1").validate(snapshot)
 
 
+def test_f003_non_rejected_snapshot_cannot_carry_terminal_rejection() -> None:
+    snapshot = load_json(EXAMPLES_PATH)["SourceAdmissionV1"]
+    snapshot["source_version"]["admission_status"] = "quarantined"
+    snapshot["source_version"]["rejection_code"] = "PDF_UNSAFE"
+
+    with pytest.raises(ValidationError):
+        validator_for("SourceAdmissionV1").validate(snapshot)
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [
@@ -187,7 +196,7 @@ def test_f003_validation_outcome_and_rejection_reason_are_consistent() -> None:
             "max_rendered_pixels_per_page": None,
             "rendered_pixels_total": None,
             "decoded_parser_bytes": None,
-            "local_inspection_result": None,
+            "local_inspection_result": "unavailable",
             "rejection_code": None,
         }
     )
@@ -196,6 +205,89 @@ def test_f003_validation_outcome_and_rejection_reason_are_consistent() -> None:
     retryable["rejection_code"] = "INSPECTOR_UNAVAILABLE"
     with pytest.raises(ValidationError):
         validator_for("AdmissionValidationResultV1").validate(retryable)
+
+
+@pytest.mark.parametrize(
+    ("rejection_code", "evidence"),
+    [
+        ("PDF_SIGNATURE_MISMATCH", {"pdf_signature_valid": False}),
+        ("PDF_MEDIA_TYPE_INVALID", {"media_type": "text/plain"}),
+        ("PDF_ENCRYPTED", {"parser_accepted": False}),
+        ("PDF_CORRUPT", {"parser_accepted": False}),
+        ("PDF_POLYGLOT_REJECTED", {"parser_accepted": False}),
+        ("PDF_SIZE_LIMIT_EXCEEDED", {"file_size_bytes": 6_291_457}),
+        ("PDF_PAGE_LIMIT_EXCEEDED", {"page_count": 101}),
+        (
+            "PDF_PIXEL_LIMIT_EXCEEDED",
+            {"max_rendered_pixels_per_page": 25_000_001},
+        ),
+        ("PDF_DECODED_LIMIT_EXCEEDED", {"decoded_parser_bytes": 67_108_865}),
+        ("PDF_UNSAFE", {"local_inspection_result": "unsafe"}),
+        (
+            "OBJECT_MISSING",
+            {
+                "content_sha256": None,
+                "file_size_bytes": None,
+                "media_type": None,
+                "pdf_signature_valid": None,
+                "parser_accepted": None,
+                "page_count": None,
+                "max_rendered_pixels_per_page": None,
+                "rendered_pixels_total": None,
+                "decoded_parser_bytes": None,
+                "local_inspection_result": None,
+            },
+        ),
+        ("OBJECT_CHECKSUM_MISMATCH", {}),
+    ],
+)
+def test_f003_rejected_validation_binds_frozen_reason_to_evidence(
+    rejection_code: str, evidence: dict[str, object]
+) -> None:
+    result = load_json(EXAMPLES_PATH)["AdmissionValidationResultV1"]
+    result.update({"outcome": "rejected", "rejection_code": rejection_code})
+    result.update(evidence)
+
+    validator_for("AdmissionValidationResultV1").validate(result)
+
+
+def test_f003_rejected_validation_rejects_contradictory_or_unfrozen_reason() -> None:
+    validator = validator_for("AdmissionValidationResultV1")
+
+    result = load_json(EXAMPLES_PATH)["AdmissionValidationResultV1"]
+    result.update({"outcome": "rejected", "rejection_code": "PDF_CORRUPT"})
+    with pytest.raises(ValidationError):
+        validator.validate(result)
+
+    result["rejection_code"] = "UNFROZEN_REASON"
+    with pytest.raises(ValidationError):
+        validator.validate(result)
+
+    result.update(
+        {
+            "rejection_code": "PDF_CORRUPT",
+            "parser_accepted": False,
+            "local_inspection_result": "unavailable",
+        }
+    )
+    with pytest.raises(ValidationError):
+        validator.validate(result)
+
+
+def test_f003_retryable_validation_requires_unavailable_nonterminal_result() -> None:
+    validator = validator_for("AdmissionValidationResultV1")
+    result = load_json(EXAMPLES_PATH)["AdmissionValidationResultV1"]
+    result.update({"outcome": "retryable_failure", "rejection_code": None})
+
+    with pytest.raises(ValidationError):
+        validator.validate(result)
+
+    result["local_inspection_result"] = "unsafe"
+    with pytest.raises(ValidationError):
+        validator.validate(result)
+
+    result["local_inspection_result"] = "unavailable"
+    validator.validate(result)
 
 
 @pytest.mark.parametrize(
@@ -358,6 +450,29 @@ def test_f003_all_event_facts_have_discriminated_payloads(
     }
 
     validator_for("SourceAdmissionEventV1").validate(event)
+
+
+@pytest.mark.parametrize(
+    ("event_type", "admission_status", "reason_code"),
+    [
+        ("source.version.rejected.v1", "rejected", "USER_CANCELLED"),
+        ("source.version.cancelled.v1", "cancelled", "PDF_CORRUPT"),
+        ("source.removal.completed.v1", "blocked", "UNFROZEN_REASON"),
+    ],
+)
+def test_f003_event_reason_family_must_match_event_type(
+    event_type: str, admission_status: str, reason_code: str
+) -> None:
+    event = load_json(EXAMPLES_PATH)["SourceAdmissionEventV1"]
+    event["event_type"] = event_type
+    event["payload"] = {
+        "admission_status": admission_status,
+        "content_sha256": None,
+        "reason_code": reason_code,
+    }
+
+    with pytest.raises(ValidationError):
+        validator_for("SourceAdmissionEventV1").validate(event)
 
 
 def test_f003_fixture_manifest_is_synthetic_and_covers_required_outcomes() -> None:

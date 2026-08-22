@@ -79,21 +79,43 @@ Issue #51 corrects the findings without changing the approved product envelope:
 - admitted results/snapshots now require bounded size, page, per-page/total pixel, and
   decoded-material observations; checksum, PDF MIME/signature/parser agreement, local
   inspection acceptance, active `store` rights, and no rejection reason;
-- rejected and retryable result/reason combinations are explicit;
+- rejected results bind frozen terminal codes to their failed, over-limit,
+  missing-object, or checksum observation; retryable results require an unavailable
+  inspection and no terminal code; non-rejected snapshots cannot carry one;
 - `SourceAdmissionEventV1` now carries the repository producer/aggregate/recorded/
-  causation/privacy envelope and discriminates all nine event facts; and
+  causation/privacy envelope, discriminates all nine event facts, and binds rejection,
+  cancellation, revocation, and removal reason families; and
 - the fixture contract declares itself scenario metadata only, while #43 must produce
   a separate executable actual-PDF origin/license/path/SHA-256 manifest before
   implementation evidence can pass.
 
-Correction prepared: `2026-08-22`. Corrected contract candidate checksums are:
+## Correction review cycle
+
+The first correction candidate was PR #53 at exact head
+`24b07a76b05b5be6f379bc95ead770d5e66a39bd`. Its independent review returned
+**CHANGES REQUIRED** in the
+[exact-SHA review comment](https://github.com/LawrenceWebon/lawrence-ai-lms/pull/53#issuecomment-5377057852).
+Although 56 focused and 97 total contract tests plus all protected checks passed, the
+reviewer's negative probes proved that:
+
+1. rejected, retryable, and quarantined states still accepted contradictory evidence
+   or unfrozen/terminal reasons; and
+2. rejected, cancelled, and removal-completed events accepted reasons from the wrong
+   family or an arbitrary uppercase value.
+
+The follow-up adds the missing negative cases and the explicit mappings summarized
+above. The first verdict remains immutable review evidence; the follow-up head requires
+a new independent exact-SHA review and distinct authorized approval.
+
+Follow-up correction prepared: `2026-08-22`. Corrected contract candidate checksums
+after the first review findings are:
 
 | Path | SHA-256 |
 |---|---|
-| `contracts/f003/source-admission.v1.schema.json` | `f36068b42fb083c438e9eb76ce9486372d3c131bd2ace6063be3c003b2b08d75` |
+| `contracts/f003/source-admission.v1.schema.json` | `5d55036341419678fa10fc6fdfdb1dbcbee9de86990756afc20604e5bbbe7c9a` |
 | `contracts/f003/source-admission.v1.examples.json` | `2dc829c68772ac891cd3dece560f9ec8af025404145cc05a344464bc7ac24b49` |
 | `contracts/f003/fixtures/admission-fixtures.v1.json` | `f251416802e93226a4e58486a7533b249ca15442d848e94364e6a52756b86287` |
-| `backend/tests/contracts/test_f003_contracts.py` | `488305f9ea4592530228485aa96a29c0b9261da03a697d3115636a7f27239ff9` |
+| `backend/tests/contracts/test_f003_contracts.py` | `db067281d0551eaa6a3d87db288bce7d757cbf257bd0ca86925e8d7fe2efe3de` |
 
 ## One-time controlled exception
 
@@ -117,12 +139,19 @@ On the correction base before status edits:
 - `pytest backend/tests/contracts -q`: 48 passed;
 - exact head-to-merge and merge-to-current path-restricted F-003 diffs: empty.
 
-On the corrected candidate:
+On the first corrected candidate reviewed at
+`24b07a76b05b5be6f379bc95ead770d5e66a39bd`:
 
 - `pytest backend/tests/contracts/test_f003_contracts.py -q`: 56 passed;
 - `pytest backend/tests/contracts -q`: 97 passed;
 - focused Ruff lint and format checks: passed;
 - Draft 2020-12 schema and JSON syntax validation: passed.
+
+The follow-up candidate adds 18 executable cases for the reviewer's contradictory
+result/snapshot and event-reason probes. Local verification passes 74 focused and 115
+total contract tests. Its exact committed SHA, protected checks, and independent
+re-review verdict are recorded on PR #53; none is treated as approved before that
+review.
 
 This evidence ratifies planning content only. It does not prove application code,
 migrations, RLS, upload security, storage, parser/scanner capability, retention,
