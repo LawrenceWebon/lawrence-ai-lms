@@ -1,6 +1,6 @@
 # Test Plan — F-003 PDF Source Admission
 
-Status: **local verification complete; protected checks and independent review pending**
+Status: **local/CI verification recorded; independent post-merge audit found an uncovered parser-admission defect tracked by #61**
 
 Local results are recorded in the
 [F-003 implementation evidence](../../evidence/f003-source-admission-implementation.md).

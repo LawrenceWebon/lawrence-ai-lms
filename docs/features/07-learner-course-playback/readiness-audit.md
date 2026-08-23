@@ -1,6 +1,6 @@
 # Readiness Audit — F-007 Learner Course Playback and Progress
 
-Status: **IMPLEMENTATION CANDIDATE VERIFIED LOCALLY; PR REVIEW/CHECKS PENDING**
+Status: **IMPLEMENTATION MERGED — POST-MERGE AUDIT CHANGES REQUIRED; #60 PENDING**
 
 Launch transition: **READY FOR IMPLEMENTATION** was satisfied by the narrow owner
 disposition before #46 resources were provisioned.
@@ -43,17 +43,22 @@ disposition before #46 resources were provisioned.
 - [x] Application commit `dd758909e3060032ecbe28f8175d3849a4c26208` has passing
   local contract, service, migration, RLS, API/Admin, architecture, generated-client,
   browser, accessibility-automation, and regression evidence.
-- [ ] The final draft-PR head has green protected checks, independent exact-head review,
-  a distinct authorized GitHub approval, and merge authorization.
+- [x] PR #57 merged exact head
+  `843d34b168f7cb0b140f7663e775585c80b35cfd` as
+  `7c891c30d5281ed40eab592aa2ab4d14c0c83a33`; its configured protected checks passed,
+  but GitHub records no submitted review or distinct pre-merge approval.
+- [x] An independent post-merge audit reproduced an enrolled learner using
+  `lms_api_runtime` to set its own enrollment to `revoked`, bypassing the tenant-admin
+  service, idempotency, audit, and outbox facts, and returned `CHANGES REQUIRED`.
+- [ ] Forward RLS remediation #60 is independently reviewed and merged.
 
 ## Readiness verdict
 
-No material product decision remains hidden in F-007. The accepted contract is
-independently testable against frozen DTO/event schemas and synthetic fixtures. The
-narrow owner disposition authorized #46 without rewriting PR #52's historical approval
-record. The implementation candidate is verified locally and ready for a draft PR, but
-this audit is not merge approval: protected checks, independent review of the exact
-final SHA, and a distinct authorized approval remain mandatory.
+No material product decision is hidden: the merged policy contradicts the already
+frozen tenant-admin-only enrollment-management contract. The independent post-merge
+audit proved the production runtime lets a learner directly revoke its own enrollment.
+F-007 remains merged but requires the narrow forward migration and regression evidence
+in #60 before it is a clean dependency for F-008.
 
 ## Known limitations
 

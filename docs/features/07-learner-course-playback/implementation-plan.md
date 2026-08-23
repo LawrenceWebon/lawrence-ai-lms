@@ -1,6 +1,6 @@
 # Implementation Plan — F-007 Learner Course Playback and Progress
 
-Status: **#46 local implementation candidate complete; independent review and protected checks pending**
+Status: **#46/PR #57 merged; independent post-merge audit returned CHANGES REQUIRED; RLS remediation #60 pending**
 
 ## Dependency graph
 

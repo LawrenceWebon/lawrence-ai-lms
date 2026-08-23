@@ -1,6 +1,6 @@
 # Technical Decisions — F-003 PDF Source Admission
 
-Status: **frozen and implemented locally; independent review and protected checks pending**
+Status: **frozen and merged; independent post-merge audit requires parser-backed remediation #61**
 
 ## Planning review evidence correction
 
