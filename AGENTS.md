@@ -70,6 +70,15 @@ explicitly requests implementation and the selected issue is ready.
   Compose project, remove it with `git worktree remove`, and verify both its directory
   and task-local resources, including its exact host scratch child, are gone. Preserve
   active, dirty, or unmerged worktrees.
+- When the project owner reports that the latest task PR merged to `develop`, treat
+  that report as authorization to complete the whole post-merge transition without a
+  second prompt: verify the remote merge, perform the exact-resource cleanup above,
+  commission an independent audit of the merged PR head, reconcile truthful review and
+  feature-status evidence, and assess the next dependency-ready task. Merge is the
+  trigger for this work, not proof that the audit passed: record a clean head as
+  independently reviewed, and route confirmed findings to a focused remediation issue.
+  Never fabricate a historical pre-merge approval or treat this transition as deploy,
+  production, provider, or real-data authorization.
 
 ## Debugging and performance
 
