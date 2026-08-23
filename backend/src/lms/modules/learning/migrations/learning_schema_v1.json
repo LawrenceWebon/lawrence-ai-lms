@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "authority": "Django",
+  "schema_fingerprint": "sha256:80310048160ddcc04222c1491c281c5e693f133dfee040a2f8c4bd6990495925",
+  "database_fingerprint": "sha256:4c8519719e05db95f2438a1085d835598ffd5c6b992af484cac7250ea6361657",
+  "objects": [
+    {
+      "table": "enrollments",
+      "migration": "learning.0001_initial",
+      "security_migration": "learning.0002_learning_security",
+      "columns": ["id", "tenant_id", "learner_membership_id", "course_id", "course_version_id", "admission_source", "status", "enrolled_at", "revoked_at", "revocation_reason_code", "assigned_by_actor_id", "row_version", "created_at", "updated_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,learner_membership_id,course_id) WHERE status = active", "FOREIGN KEY (tenant_id,learner_membership_id) -> tenant_memberships(tenant_id,id)", "FOREIGN KEY (tenant_id,course_id) -> courses(tenant_id,id)", "FOREIGN KEY (tenant_id,course_id,course_version_id) -> course_versions(tenant_id,course_id,id)"],
+      "checks": ["admission_source = manual_assignment", "status is active or revoked", "revocation timestamp and reason match status", "row_version >= 1", "identity and pinned version are immutable", "only active-to-revoked transition is allowed"],
+      "indexes": ["ix_enrollments_dashboard (tenant_id,learner_membership_id,status,enrolled_at DESC,id DESC)", "ix_enrollments_course_status (tenant_id,course_id,status)"],
+      "delete_behavior": "retained history; all direct deletes rejected",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "table": "course_progress",
+      "migration": "learning.0001_initial",
+      "security_migration": "learning.0002_learning_security",
+      "columns": ["id", "tenant_id", "enrollment_id", "course_version_id", "state", "required_lesson_count", "completed_required_lesson_count", "resume_lesson_id", "last_progress_at", "row_version", "created_at", "updated_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,enrollment_id)", "FOREIGN KEY (tenant_id,enrollment_id) -> enrollments(tenant_id,id)", "FOREIGN KEY (tenant_id,course_version_id) -> course_versions(tenant_id,id)", "FOREIGN KEY (tenant_id,course_version_id,resume_lesson_id) -> lessons(tenant_id,course_version_id,id)"],
+      "checks": ["state is not_started, in_progress, or completed", "required_lesson_count >= 1", "completed count does not exceed required count", "row_version >= 1", "scope and required count are immutable", "updates require the next row version"],
+      "indexes": ["ix_course_progress_enrollment (tenant_id,enrollment_id)"],
+      "delete_behavior": "retained history; all direct deletes rejected",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "table": "lesson_progress",
+      "migration": "learning.0001_initial",
+      "security_migration": "learning.0002_learning_security",
+      "columns": ["id", "tenant_id", "enrollment_id", "course_version_id", "lesson_id", "state", "completed_at", "row_version", "created_at", "updated_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,enrollment_id,lesson_id)", "FOREIGN KEY (tenant_id,enrollment_id) -> enrollments(tenant_id,id)", "FOREIGN KEY (tenant_id,course_version_id,lesson_id) -> lessons(tenant_id,course_version_id,id)"],
+      "checks": ["state is not_started, in_progress, or completed", "completed_at matches completed state", "row_version >= 1", "scope is immutable", "updates require the next row version"],
+      "indexes": ["ix_lesson_progress_lookup (tenant_id,enrollment_id,lesson_id)", "ix_lesson_progress_state (tenant_id,enrollment_id,state)"],
+      "delete_behavior": "retained history; all direct deletes rejected",
+      "rls": "ENABLE + FORCE"
+    }
+  ]
+}

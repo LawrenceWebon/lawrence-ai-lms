@@ -1,6 +1,6 @@
 # Implementation Plan — F-007 Learner Course Playback and Progress
 
-Status: **CONTRACT READY — #46 blocked pending post-merge approval disposition**
+Status: **#46 local implementation candidate complete; independent review and protected checks pending**
 
 ## Dependency graph
 
@@ -13,24 +13,25 @@ F-001 merged + F-002 implementation merged
                     v
        owner decisions + correction #50/PR #52
                     |
-          merge complete; distinct approval absent
-                    |
-          owner-approved disposition required
+         owner-approved launch disposition
                     |
                     v
-     one vertical F-007 implementation issue
+       #46 local implementation candidate
+                    |
+                    v
+       draft PR + protected independent review
 ```
 
 F-007 depends on the completed F-001 tenant context and F-002 canonical publication
-base. It does not depend on F-003–F-006 and may be implemented independently after its
-planning contract and owner-approved decision correction merge, after its remaining
-approval gate receives a valid disposition.
+base. It does not depend on F-003–F-006 and was implemented independently after its
+planning contract and owner-approved decision correction merge and the narrow
+project-owner disposition for the historical approval-record defect.
 
 | Issue | Agent | Objective | Primary owned paths | Contracts/fixtures | Depends on | Merge order |
 |---|---|---|---|---|---|---|
 | [#45](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/45) | Planning | Resolve private enrollment/playback/progress scope and freeze executable contracts | F-007 feature docs/contracts/test/index/manifest only | F-007 schemas/examples/synthetic fixtures | F-001/F-002 merged | 1 |
 | [#50](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/50) | Decision-correction owner | Freeze owner-approved Q01–Q04 behavior and exact executable acceptance | Declared product/locale/F-007 contract/test/manifest paths only | F-007 schemas/examples/synthetic fixtures | #45 merged; owner decisions approved | 2 |
-| [#46](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/46) | Vertical integration owner | Implement enrollment, pinned playback, explicit progress, generated client, minimal learner UI, and evidence | All declared F-007 code/migration/generated/web/test/status hotspots | Merged F-007 contract package | #50 merged; missing distinct-approval disposition required | 3 |
+| [#46](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/46) | Vertical integration owner | Implement enrollment, pinned playback, explicit progress, generated client, minimal learner UI, and evidence | All declared F-007 code/migration/generated/web/test/status hotspots | Merged F-007 contract package | #50 merged; owner disposition recorded; local candidate verified | 3 |
 
 Splitting this slice into concurrent persistence/service/adapter lanes would create
 avoidable contention in the permission catalog, migration graph, learning domain,
@@ -48,11 +49,14 @@ issue is the smallest safe delivery unit.
 The implementation issue uses host scratch
 `/home/lawrence/Project Neo/tmp/LMS-46`; it is not a repository worktree.
 
-PR #52 merged correction #50 and its exact reviewed tree, but GitHub records no
-distinct submitted approval. Issue #46 remains blocked until that already-merged gate
-has an explicit valid disposition. Its branch, worktree, host scratch child, and
-Compose resources must not be provisioned before the launch gate closes. The future
-host scratch path is `/home/lawrence/Project Neo/tmp/LMS-46`.
+The
+[project-owner launch disposition](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/46#issuecomment-5380754610)
+closed the historical PR #52 launch hold without claiming retroactive approval. Issue
+#46 started from exact base `ed4670e6fa765d3edfb84610a450bef371a653ca` with the
+declared isolated resources above and host scratch
+`/home/lawrence/Project Neo/tmp/LMS-46`. The application candidate is commit
+`dd758909e3060032ecbe28f8175d3849a4c26208`; its local results are in
+[the F-007 implementation evidence](../../evidence/f007-learner-playback-implementation.md).
 
 ## Implementation issue ownership
 
@@ -171,10 +175,10 @@ their integration owner and dependency merge order.
 - Dependency/lockfile changes, new providers/queues/caches, CI redesign, or unrelated
   cleanup.
 
-## Launch gate
+## Launch gate record
 
-Do not create the implementation branch/worktree or write application code until all
-conditions are true:
+The implementation branch/worktree could not be created and application code could not
+be written until all conditions below were true:
 
 1. P-014 records the owner-approved F007-Q01, F007-Q02, F007-Q03, and
    Q-P08/F007-Q04 decisions and no hidden product decision remains;
@@ -191,13 +195,18 @@ conditions are true:
    then-current `origin/develop`, and Compose resources are unique; and
 6. F-001/F-002 regressions plus the F-007 contract suite pass on that shared base.
 
-A valid disposition means a separately reviewed, distinctly approved corrective or
-ratification change, or a separately approved workflow-policy change. An issue comment
-or the existing merged state alone does not close item 3.
+A valid disposition ordinarily means a separately reviewed, distinctly approved
+corrective or ratification change, or a separately approved workflow-policy change.
+For #46, the project owner's
+[explicit narrow disposition](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/46#issuecomment-5380754610)
+accepted the residual historical risk and satisfied item 3 only for this launch. It did
+not claim retroactive approval and cannot satisfy the review/approval gate for the new
+implementation PR.
 
-## Verification for the future implementation
+## Implementation verification
 
-The implementation issue runs its dedicated Compose stack and records exact results:
+The implementation issue ran its dedicated Compose stack and recorded exact results in
+[F007-LOCAL-IMPLEMENTATION-2026-08-22](../../evidence/f007-learner-playback-implementation.md):
 
 ```text
 make lint
@@ -208,10 +217,13 @@ make openapi-check
 make web-build
 make e2e-f001
 make e2e-f002
+make e2e-f003
+make e2e-f007
 make docs-check
 ```
 
-It also runs the focused F-007 contract/unit/service/database/RLS/API/Admin/browser,
+It also ran the focused F-007 contract/unit/service/database/RLS/API/Admin/browser,
 concurrency/idempotency, architecture-boundary, migration-drift, event-compatibility,
-accessibility, secret/log-redaction, and `git diff --check` suites described in
-`test-plan.md`. No production or recovery claim is made by local implementation.
+automated accessibility, secret/log-redaction, and `git diff --check` suites described
+in `test-plan.md`. No production, recovery, or manual assistive-technology claim is
+made by local implementation.

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "Django",
   "schema_fingerprint": "sha256:28946d97bc27a1dde04437dac4bda65d7b102a58083ef52cfaed8f811b3763f6",
-  "database_fingerprint": "sha256:441241c44786015ea47a9cd1780a88b03e31cd29ddf90661c400f8ca70b1dd1b",
+  "database_fingerprint": "sha256:645b6eff7edeefce656456767e80b97cdd29835a8be99a98090fa5117101553f",
   "objects": [
     {
       "table": "courses",

@@ -9,9 +9,11 @@ from fastapi import FastAPI
 from lms.api.dependencies.authentication import AuthenticationDependency, IdentityAuthenticator
 from lms.api.routers.courses import create_course_router
 from lms.api.routers.documents import create_document_router
+from lms.api.routers.learning import create_learning_router
 from lms.api.routers.tenancy import create_tenancy_router
 from lms.api.schemas.courses import CourseAdministrationServiceV1
 from lms.api.schemas.documents import SourceAdmissionServiceV1
+from lms.api.schemas.learning import LearningServiceV1
 from lms.api.schemas.tenancy import MembershipAdministrationServiceV1
 from lms.modules.identity.entities import IdentityCandidate
 from lms.modules.identity.services import IdentityAuthenticationRejectedError
@@ -21,6 +23,7 @@ if not apps.ready:
 
 from lms.api.composition import DjangoCourseAdministrationService, DjangoTenancyService
 from lms.api.document_composition import DjangoSourceAdmissionService
+from lms.api.learning_composition import DjangoLearningService
 
 
 class HealthResponse(TypedDict):
@@ -43,10 +46,13 @@ def create_application(
     tenancy_service: MembershipAdministrationServiceV1,
     course_service: CourseAdministrationServiceV1,
     document_service: SourceAdmissionServiceV1 | None = None,
+    learning_service: LearningServiceV1 | None = None,
 ) -> FastAPI:
     capabilities = ["f001-identity-tenancy", "f002-course-lifecycle"]
     if document_service is not None:
         capabilities.append("f003-pdf-source-admission")
+    if learning_service is not None:
+        capabilities.append("f007-private-learner-playback")
     application = FastAPI(
         title="AI LMS API",
         version="0.1.0",
@@ -82,6 +88,13 @@ def create_application(
                 actor_dependency=AuthenticationDependency(identity_authenticator),
             )
         )
+    if learning_service is not None:
+        application.include_router(
+            create_learning_router(
+                service=learning_service,
+                actor_dependency=AuthenticationDependency(identity_authenticator),
+            )
+        )
     return application
 
 
@@ -90,4 +103,5 @@ app = create_application(
     tenancy_service=DjangoTenancyService(),
     course_service=DjangoCourseAdministrationService(),
     document_service=DjangoSourceAdmissionService(),
+    learning_service=DjangoLearningService(),
 )

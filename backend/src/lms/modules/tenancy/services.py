@@ -53,6 +53,8 @@ PERMISSION_DOCUMENT_SOURCES_READ = "documents.sources.read"
 PERMISSION_DOCUMENT_SOURCES_ADMIT = "documents.sources.admit"
 PERMISSION_DOCUMENT_SOURCES_CANCEL = "documents.sources.cancel"
 PERMISSION_DOCUMENT_SOURCE_RIGHTS_REVIEW = "documents.source_rights.review"
+PERMISSION_LEARNING_ENROLLMENTS_MANAGE = "learning.enrollments.manage"
+PERMISSION_LEARNING_PLAYBACK_READ = "learning.playback.read"
 FIXED_PERMISSIONS = {
     PERMISSION_MEMBERSHIPS_READ: "List tenant memberships",
     PERMISSION_INVITATIONS_CREATE: "Create tenant invitations",
@@ -65,6 +67,8 @@ FIXED_PERMISSIONS = {
     PERMISSION_DOCUMENT_SOURCES_ADMIT: "Declare and upload private PDF sources",
     PERMISSION_DOCUMENT_SOURCES_CANCEL: "Cancel tenant source admissions",
     PERMISSION_DOCUMENT_SOURCE_RIGHTS_REVIEW: "Review operation-scoped source rights",
+    PERMISSION_LEARNING_ENROLLMENTS_MANAGE: "Create and revoke manual learner enrollments",
+    PERMISSION_LEARNING_PLAYBACK_READ: "Read own enrolled courses and record progress",
 }
 ROLE_DISPLAY_NAMES = {
     "tenant_admin": "Tenant administrator",
@@ -73,7 +77,9 @@ ROLE_DISPLAY_NAMES = {
     "learner": "Learner",
 }
 ROLE_PERMISSION_CODES = {
-    "tenant_admin": tuple(sorted(FIXED_PERMISSIONS)),
+    "tenant_admin": tuple(
+        sorted(code for code in FIXED_PERMISSIONS if code != PERMISSION_LEARNING_PLAYBACK_READ)
+    ),
     "instructor": tuple(
         sorted(
             (
@@ -88,7 +94,7 @@ ROLE_PERMISSION_CODES = {
         )
     ),
     "reviewer": tuple(sorted((PERMISSION_COURSES_READ, PERMISSION_COURSES_REVIEW))),
-    "learner": (),
+    "learner": (PERMISSION_LEARNING_PLAYBACK_READ,),
 }
 _EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 

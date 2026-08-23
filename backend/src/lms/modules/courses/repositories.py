@@ -71,6 +71,21 @@ def _nodes(value: object, field: str) -> Sequence[Mapping[str, Any]]:
 class CourseRepository:
     """Tenant-scoped storage mechanics; lifecycle policy remains in the service lane."""
 
+    def lock_current_published_version_id(
+        self,
+        tenant_id: Identifier,
+        course_id: Identifier,
+    ) -> UUID | None:
+        """Lock one course pointer for a caller-owned publication-pinning transaction."""
+
+        _require_atomic_transaction()
+        return (
+            Course.objects.select_for_update()
+            .filter(tenant_id=_as_uuid(tenant_id), id=_as_uuid(course_id))
+            .values_list("current_published_version_id", flat=True)
+            .first()
+        )
+
     def load_snapshot(
         self,
         tenant_id: Identifier,

@@ -1,6 +1,9 @@
 # Readiness Audit — F-007 Learner Course Playback and Progress
 
-Status: **CONTRACT READY FOR IMPLEMENTATION; #46 EXECUTION BLOCKED ON APPROVAL RECORD**
+Status: **IMPLEMENTATION CANDIDATE VERIFIED LOCALLY; PR REVIEW/CHECKS PENDING**
+
+Launch transition: **READY FOR IMPLEMENTATION** was satisfied by the narrow owner
+disposition before #46 resources were provisioned.
 
 - [x] Outcome and non-goals match the focused product spec and F-007 inventory.
 - [x] F-001 identity/tenant and F-002 immutable publication dependencies are present.
@@ -31,23 +34,33 @@ Status: **CONTRACT READY FOR IMPLEMENTATION; #46 EXECUTION BLOCKED ON APPROVAL R
 - [x] Correction #50 merged through PR #52 as
   `eb0fb3e808c37073e99625609c1338ce4b1ce51e`; its reviewed head has the same tree,
   protected checks passed, and its clean worktree/task-local resources were removed.
-- [ ] PR #52 has a distinct authorized approval, or an explicit owner-approved
-  corrective disposition closes the already-merged approval defect without claiming
-  retroactive approval.
+- [x] The
+  [project-owner disposition](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/46#issuecomment-5380754610)
+  closes the PR #52 launch hold only for #46 without claiming retroactive approval.
+- [x] #46 started from exact base
+  `ed4670e6fa765d3edfb84610a450bef371a653ca` with its declared isolated worktree,
+  Compose project, PostgreSQL port, and host scratch child.
+- [x] Application commit `dd758909e3060032ecbe28f8175d3849a4c26208` has passing
+  local contract, service, migration, RLS, API/Admin, architecture, generated-client,
+  browser, accessibility-automation, and regression evidence.
+- [ ] The final draft-PR head has green protected checks, independent exact-head review,
+  a distinct authorized GitHub approval, and merge authorization.
 
 ## Readiness verdict
 
 No material product decision remains hidden in F-007. The accepted contract is
-independently testable against frozen DTO/event schemas and synthetic fixtures. PR #52
-has merged, but merge did not retroactively supply the required distinct approval.
-Issue #46 remains `BLOCKED` until that governance defect receives an explicit valid
-disposition; no implementation branch, worktree, host scratch child, or Compose project
-may be created first.
+independently testable against frozen DTO/event schemas and synthetic fixtures. The
+narrow owner disposition authorized #46 without rewriting PR #52's historical approval
+record. The implementation candidate is verified locally and ready for a draft PR, but
+this audit is not merge approval: protected checks, independent review of the exact
+final SHA, and a distinct authorized approval remain mandatory.
 
 ## Known limitations
 
 - F-007 uses synthetic learner/course data and local infrastructure only.
 - Initial locale acceptance is exactly `en`; no broader locale coverage is claimed.
+- Browser accessibility evidence is automated Chromium coverage; no manual
+  screen-reader or other assistive-technology interoperability claim is made.
 - Enrollment is tenant-admin manual assignment only. Self-enrollment, catalog,
   invitations, cohorts/groups/rules, and bulk enrollment remain absent.
 - The learner surface provides rich-text reading and deliberate progress only; assets,

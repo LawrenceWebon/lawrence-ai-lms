@@ -44,6 +44,9 @@ export type SourceAuthorizationStatus =
   | "expired"
   | "disputed";
 export type UploadIntentStatus = "active" | "consumed" | "expired" | "cancelled";
+export type EnrollmentStatus = "active" | "revoked";
+export type ProgressState = "not_started" | "in_progress" | "completed";
+export type ProgressCommandName = "open_lesson" | "complete_lesson" | "reopen_lesson";
 
 export interface paths {
   "/health": {
@@ -138,6 +141,38 @@ export interface paths {
   "/api/v1/source-upload-targets/{opaque_token}": {
     parameters: EmptyParameters;
     put: operations["uploadSourceDocument"];
+  };
+  "/api/v1/tenants/{tenant_id}/enrollments": {
+    parameters: EmptyParameters;
+    post: operations["createEnrollment"];
+  };
+  "/api/v1/tenants/{tenant_id}/enrollments/{enrollment_id}/revoke": {
+    parameters: EmptyParameters;
+    post: operations["revokeEnrollment"];
+  };
+  "/api/v1/tenants/{tenant_id}/learner/courses": {
+    parameters: EmptyParameters;
+    get: operations["listLearnerCourses"];
+  };
+  "/api/v1/tenants/{tenant_id}/learner/enrollments/{enrollment_id}/playback": {
+    parameters: EmptyParameters;
+    get: operations["getLearnerPlayback"];
+  };
+  "/api/v1/tenants/{tenant_id}/learner/enrollments/{enrollment_id}/lessons/{lesson_id}": {
+    parameters: EmptyParameters;
+    get: operations["getLearnerLesson"];
+  };
+  "/api/v1/tenants/{tenant_id}/learner/enrollments/{enrollment_id}/progress/open-lesson": {
+    parameters: EmptyParameters;
+    post: operations["openLearnerLesson"];
+  };
+  "/api/v1/tenants/{tenant_id}/learner/enrollments/{enrollment_id}/progress/complete-lesson": {
+    parameters: EmptyParameters;
+    post: operations["completeLearnerLesson"];
+  };
+  "/api/v1/tenants/{tenant_id}/learner/enrollments/{enrollment_id}/progress/reopen-lesson": {
+    parameters: EmptyParameters;
+    post: operations["reopenLearnerLesson"];
   };
 }
 
@@ -396,6 +431,120 @@ export interface components {
       source_version_id: string;
       successor_version_id: string;
       snapshot: components["schemas"]["CourseSnapshotV1"];
+    };
+    CreateEnrollmentV1: {
+      learner_membership_id: string;
+      course_id: string;
+    };
+    RevokeEnrollmentV1: {
+      expected_enrollment_row_version: number;
+      reason_code: string;
+    };
+    EnrollmentV1: {
+      id: string;
+      tenant_id: string;
+      learner_membership_id: string;
+      course_id: string;
+      course_version_id: string;
+      admission_source: "manual_assignment";
+      status: EnrollmentStatus;
+      enrolled_at: string;
+      revoked_at: string | null;
+      row_version: number;
+    };
+    CourseProgressV1: {
+      state: ProgressState;
+      required_lesson_count: number;
+      completed_required_lesson_count: number;
+      resume_lesson_id: string | null;
+      row_version: number;
+    };
+    DashboardCardV1: {
+      enrollment_id: string;
+      course_id: string;
+      course_version_id: string;
+      course_version_number: number;
+      primary_locale: string;
+      title: string;
+      description: string;
+      content_hash: string;
+      enrolled_at: string;
+      progress: components["schemas"]["CourseProgressV1"];
+    };
+    LearnerDashboardV1: {
+      tenant_id: string;
+      items: components["schemas"]["DashboardCardV1"][];
+      next_cursor: string | null;
+    };
+    OutlineLessonV1: {
+      id: string;
+      title: string;
+      position: number;
+      is_required: boolean;
+      progress_state: ProgressState;
+    };
+    OutlineSectionV1: {
+      id: string;
+      title: string;
+      position: number;
+      lessons: components["schemas"]["OutlineLessonV1"][];
+    };
+    PlaybackSnapshotV1: {
+      tenant_id: string;
+      enrollment_id: string;
+      course_id: string;
+      course_version_id: string;
+      course_version_number: number;
+      primary_locale: string;
+      title: string;
+      description: string;
+      content_hash: string;
+      sections: components["schemas"]["OutlineSectionV1"][];
+      progress: components["schemas"]["CourseProgressV1"];
+    };
+    LessonContentBlockV1: {
+      id: string;
+      kind: "rich_text";
+      position: number;
+      document: components["schemas"]["RichTextDocument"];
+    };
+    LessonDetailV1: {
+      id: string;
+      section_id: string;
+      title: string;
+      position: number;
+      is_required: boolean;
+      progress_state: ProgressState;
+      content_blocks: components["schemas"]["LessonContentBlockV1"][];
+    };
+    LessonPlaybackV1: {
+      tenant_id: string;
+      enrollment_id: string;
+      course_version_id: string;
+      primary_locale: string;
+      content_hash: string;
+      lesson: components["schemas"]["LessonDetailV1"];
+      previous_lesson_id: string | null;
+      next_lesson_id: string | null;
+      progress: components["schemas"]["CourseProgressV1"];
+    };
+    ProgressCommandV1: {
+      command: ProgressCommandName;
+      lesson_id: string;
+      expected_progress_row_version: number;
+    };
+    ProgressResultV1: {
+      tenant_id: string;
+      enrollment_id: string;
+      course_version_id: string;
+      lesson_id: string;
+      lesson_state: ProgressState;
+      course_state: ProgressState;
+      required_lesson_count: number;
+      completed_required_lesson_count: number;
+      resume_lesson_id: string | null;
+      progress_row_version: number;
+      updated_at: string;
     };
     CreateRightsDeclarationV1: {
       basis: RightsBasis;
@@ -663,6 +812,67 @@ export interface operations {
       500: ProblemResponse;
     };
   };
+  createEnrollment: {
+    parameters: EnrollmentCollectionCommandParameters;
+    requestBody: JsonRequest<components["schemas"]["CreateEnrollmentV1"]>;
+    responses: {
+      201: JsonResponse<components["schemas"]["EnrollmentV1"]>;
+      400: ProblemResponse;
+      401: ProblemResponse;
+      403: ProblemResponse;
+      404: ProblemResponse;
+      409: ProblemResponse;
+      422: ProblemResponse;
+      500: ProblemResponse;
+    };
+  };
+  revokeEnrollment: {
+    parameters: EnrollmentCommandParameters;
+    requestBody: JsonRequest<components["schemas"]["RevokeEnrollmentV1"]>;
+    responses: EnrollmentResponses;
+  };
+  listLearnerCourses: {
+    parameters: LearnerCourseListParameters;
+    requestBody?: never;
+    responses: {
+      200: JsonResponse<components["schemas"]["LearnerDashboardV1"]>;
+      400: ProblemResponse;
+      401: ProblemResponse;
+      403: ProblemResponse;
+      404: ProblemResponse;
+      422: ProblemResponse;
+      500: ProblemResponse;
+    };
+  };
+  getLearnerPlayback: {
+    parameters: LearnerEnrollmentParameters;
+    requestBody?: never;
+    responses: {
+      200: JsonResponse<components["schemas"]["PlaybackSnapshotV1"]>;
+      400: ProblemResponse;
+      401: ProblemResponse;
+      403: ProblemResponse;
+      404: ProblemResponse;
+      422: ProblemResponse;
+      500: ProblemResponse;
+    };
+  };
+  getLearnerLesson: {
+    parameters: LearnerLessonParameters;
+    requestBody?: never;
+    responses: {
+      200: JsonResponse<components["schemas"]["LessonPlaybackV1"]>;
+      400: ProblemResponse;
+      401: ProblemResponse;
+      403: ProblemResponse;
+      404: ProblemResponse;
+      422: ProblemResponse;
+      500: ProblemResponse;
+    };
+  };
+  openLearnerLesson: LearnerProgressOperation;
+  completeLearnerLesson: LearnerProgressOperation;
+  reopenLearnerLesson: LearnerProgressOperation;
   createSourceAdmission: {
     parameters: SourceCollectionCommandParameters;
     requestBody: JsonRequest<components["schemas"]["CreateSourceAdmissionV1"]>;
@@ -775,6 +985,58 @@ type CourseTransitionOperation = {
   parameters: CourseVersionCommandParameters;
   requestBody: JsonRequest<components["schemas"]["TransitionCourseVersionV1"]>;
   responses: CourseSnapshotResponses;
+};
+type LearningHeaders = AuthHeaders & { "X-Tenant-ID": string };
+type EnrollmentCollectionCommandParameters = {
+  query?: never;
+  header: LearningHeaders & { "Idempotency-Key": string };
+  path: { tenant_id: string };
+  cookie?: never;
+};
+type LearnerEnrollmentParameters = {
+  query?: never;
+  header: LearningHeaders;
+  path: { tenant_id: string; enrollment_id: string };
+  cookie?: never;
+};
+type EnrollmentCommandParameters = Omit<LearnerEnrollmentParameters, "header"> & {
+  header: LearningHeaders & { "Idempotency-Key": string };
+};
+type LearnerCourseListParameters = {
+  query?: { cursor?: string | null; limit?: number };
+  header: LearningHeaders;
+  path: { tenant_id: string };
+  cookie?: never;
+};
+type LearnerLessonParameters = Omit<LearnerEnrollmentParameters, "path"> & {
+  path: LearnerEnrollmentParameters["path"] & { lesson_id: string };
+};
+type LearnerProgressParameters = Omit<LearnerEnrollmentParameters, "header"> & {
+  header: LearningHeaders & { "Idempotency-Key": string };
+};
+type EnrollmentResponses = {
+  200: JsonResponse<components["schemas"]["EnrollmentV1"]>;
+  400: ProblemResponse;
+  401: ProblemResponse;
+  403: ProblemResponse;
+  404: ProblemResponse;
+  409: ProblemResponse;
+  422: ProblemResponse;
+  500: ProblemResponse;
+};
+type LearnerProgressOperation = {
+  parameters: LearnerProgressParameters;
+  requestBody: JsonRequest<components["schemas"]["ProgressCommandV1"]>;
+  responses: {
+    200: JsonResponse<components["schemas"]["ProgressResultV1"]>;
+    400: ProblemResponse;
+    401: ProblemResponse;
+    403: ProblemResponse;
+    404: ProblemResponse;
+    409: ProblemResponse;
+    422: ProblemResponse;
+    500: ProblemResponse;
+  };
 };
 type SourceHeaders = AuthHeaders & { "X-Tenant-ID": string };
 type SourceCollectionCommandParameters = {

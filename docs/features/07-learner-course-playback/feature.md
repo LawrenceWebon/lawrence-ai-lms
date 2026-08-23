@@ -1,10 +1,15 @@
 # F-007 — Learner Course Playback and Progress
 
-Status: **owner-approved contract merged; #46 blocked on unresolved approval gate**
+Status: **local implementation candidate complete; independent review and protected PR checks pending**
 
 Feature ID: `F-007`
 
 Planning issue: [#45](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/45)
+
+Implementation issue: [#46](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/46)
+
+Local implementation evidence:
+[F007-LOCAL-IMPLEMENTATION-2026-08-22](../../evidence/f007-learner-playback-implementation.md)
 
 ## Outcome
 

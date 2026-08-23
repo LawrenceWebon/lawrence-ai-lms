@@ -1,0 +1,11 @@
+F-007 learning schema v1
+
+- Django migrations are the only schema authority.
+- 0001 creates enrollment, aggregate-progress, and lesson-progress tables.
+- 0002 seeds the fixed learning permissions, adds composite same-tenant/version
+  foreign keys, terminal-history and optimistic-version triggers, forced RLS,
+  least-privilege runtime grants, and learner-safe additive F-002 read policies.
+- Rollback is destructive to F-007 tables and is intended only before production
+  data exists. The reverse security migration restores the prior F-003 shared
+  idempotency/audit/outbox policies before 0001 removes the empty learning tables.
+- Production enablement and real learner data remain outside this local MVP issue.
