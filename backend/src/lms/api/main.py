@@ -7,10 +7,12 @@ from django.apps import apps
 from fastapi import FastAPI
 
 from lms.api.dependencies.authentication import AuthenticationDependency, IdentityAuthenticator
+from lms.api.routers.course_generation import create_course_generation_router
 from lms.api.routers.courses import create_course_router
 from lms.api.routers.documents import create_document_router
 from lms.api.routers.learning import create_learning_router
 from lms.api.routers.tenancy import create_tenancy_router
+from lms.api.schemas.course_generation import CourseGenerationServiceV1
 from lms.api.schemas.courses import CourseAdministrationServiceV1
 from lms.api.schemas.documents import SourceAdmissionServiceV1
 from lms.api.schemas.learning import LearningServiceV1
@@ -23,6 +25,7 @@ if not apps.ready:
 
 from lms.api.composition import DjangoCourseAdministrationService, DjangoTenancyService
 from lms.api.document_composition import DjangoSourceAdmissionService
+from lms.api.generation_composition import DjangoCourseGenerationService
 from lms.api.learning_composition import DjangoLearningService
 
 
@@ -47,12 +50,15 @@ def create_application(
     course_service: CourseAdministrationServiceV1,
     document_service: SourceAdmissionServiceV1 | None = None,
     learning_service: LearningServiceV1 | None = None,
+    generation_service: CourseGenerationServiceV1 | None = None,
 ) -> FastAPI:
     capabilities = ["f001-identity-tenancy", "f002-course-lifecycle"]
     if document_service is not None:
         capabilities.append("f003-pdf-source-admission")
     if learning_service is not None:
         capabilities.append("f007-private-learner-playback")
+    if generation_service is not None:
+        capabilities.append("f005-structured-course-generation")
     application = FastAPI(
         title="AI LMS API",
         version="0.1.0",
@@ -95,6 +101,13 @@ def create_application(
                 actor_dependency=AuthenticationDependency(identity_authenticator),
             )
         )
+    if generation_service is not None:
+        application.include_router(
+            create_course_generation_router(
+                service=generation_service,
+                actor_dependency=AuthenticationDependency(identity_authenticator),
+            )
+        )
     return application
 
 
@@ -104,4 +117,5 @@ app = create_application(
     course_service=DjangoCourseAdministrationService(),
     document_service=DjangoSourceAdmissionService(),
     learning_service=DjangoLearningService(),
+    generation_service=DjangoCourseGenerationService(),
 )

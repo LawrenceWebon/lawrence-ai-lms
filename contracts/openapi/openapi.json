@@ -20,6 +20,39 @@
         "title": "AcceptInvitationRequest",
         "type": "object"
       },
+      "ApproveGenerationBlueprintV1": {
+        "additionalProperties": false,
+        "properties": {
+          "blueprint_id": {
+            "format": "uuid",
+            "title": "Blueprint Id",
+            "type": "string"
+          },
+          "blueprint_revision": {
+            "minimum": 1.0,
+            "title": "Blueprint Revision",
+            "type": "integer"
+          },
+          "expected_blueprint_content_sha256": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Expected Blueprint Content Sha256",
+            "type": "string"
+          },
+          "expected_run_row_version": {
+            "minimum": 1.0,
+            "title": "Expected Run Row Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expected_run_row_version",
+          "blueprint_id",
+          "blueprint_revision",
+          "expected_blueprint_content_sha256"
+        ],
+        "title": "ApproveGenerationBlueprintV1",
+        "type": "object"
+      },
       "AuthenticationContextResponse": {
         "additionalProperties": false,
         "properties": {
@@ -259,6 +292,389 @@
           "document"
         ],
         "title": "ContentBlockRecordV1",
+        "type": "object"
+      },
+      "CourseBlueprintItemV1": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 1000,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "module",
+              "lesson"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
+          },
+          "position": {
+            "minimum": 1.0,
+            "title": "Position",
+            "type": "integer"
+          },
+          "source_section_id": {
+            "format": "uuid",
+            "title": "Source Section Id",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "parent_id",
+          "position",
+          "title",
+          "description",
+          "source_section_id"
+        ],
+        "title": "CourseBlueprintItemV1",
+        "type": "object"
+      },
+      "CourseBlueprintV1": {
+        "additionalProperties": false,
+        "properties": {
+          "content_sha256": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 2000,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "intended_audience": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Intended Audience",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CourseBlueprintItemV1"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "learning_outcomes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Learning Outcomes",
+            "type": "array"
+          },
+          "prerequisites": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Prerequisites",
+            "type": "array"
+          },
+          "projection": {
+            "additionalProperties": true,
+            "title": "Projection",
+            "type": "object"
+          },
+          "schema_version": {
+            "const": "course-blueprint.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "schema_version",
+          "title",
+          "description",
+          "intended_audience",
+          "prerequisites",
+          "learning_outcomes",
+          "items",
+          "projection",
+          "content_sha256"
+        ],
+        "title": "CourseBlueprintV1",
+        "type": "object"
+      },
+      "CourseGenerationReviewPackageV1": {
+        "additionalProperties": false,
+        "properties": {
+          "blueprint": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CourseBlueprintV1"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lessons": {
+            "items": {
+              "$ref": "#/components/schemas/GeneratedLessonV1"
+            },
+            "title": "Lessons",
+            "type": "array"
+          },
+          "run": {
+            "$ref": "#/components/schemas/CourseGenerationRunV1"
+          }
+        },
+        "required": [
+          "run",
+          "blueprint",
+          "lessons"
+        ],
+        "title": "CourseGenerationReviewPackageV1",
+        "type": "object"
+      },
+      "CourseGenerationRunV1": {
+        "additionalProperties": false,
+        "properties": {
+          "adapter": {
+            "const": "deterministic-source-course-v1",
+            "title": "Adapter",
+            "type": "string"
+          },
+          "attempt_count": {
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Attempt Count",
+            "type": "integer"
+          },
+          "blueprint_content_sha256": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blueprint Content Sha256"
+          },
+          "checkpoint": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Checkpoint",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "ingestion_run_id": {
+            "format": "uuid",
+            "title": "Ingestion Run Id",
+            "type": "string"
+          },
+          "input_manifest_sha256": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Input Manifest Sha256",
+            "type": "string"
+          },
+          "intended_audience": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Intended Audience",
+            "type": "string"
+          },
+          "locale": {
+            "const": "en",
+            "title": "Locale",
+            "type": "string"
+          },
+          "max_attempts": {
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Max Attempts",
+            "type": "integer"
+          },
+          "model": {
+            "const": "none",
+            "title": "Model",
+            "type": "string"
+          },
+          "output_manifest_sha256": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Manifest Sha256"
+          },
+          "provider": {
+            "const": "local_deterministic",
+            "title": "Provider",
+            "type": "string"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
+          },
+          "row_version": {
+            "minimum": 1.0,
+            "title": "Row Version",
+            "type": "integer"
+          },
+          "source_document_id": {
+            "format": "uuid",
+            "title": "Source Document Id",
+            "type": "string"
+          },
+          "source_version_id": {
+            "format": "uuid",
+            "title": "Source Version Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "planning",
+              "blueprint_review",
+              "generation_queued",
+              "generating",
+              "review_ready",
+              "canonicalized",
+              "rejected",
+              "retryable",
+              "failed",
+              "rights_blocked"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "supersedes_run_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supersedes Run Id"
+          },
+          "target_duration_minutes": {
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Target Duration Minutes",
+            "type": "integer"
+          },
+          "target_level": {
+            "enum": [
+              "beginner",
+              "intermediate",
+              "advanced"
+            ],
+            "title": "Target Level",
+            "type": "string"
+          },
+          "teaching_style": {
+            "enum": [
+              "concise",
+              "guided",
+              "reference"
+            ],
+            "title": "Teaching Style",
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "source_document_id",
+          "source_version_id",
+          "ingestion_run_id",
+          "supersedes_run_id",
+          "status",
+          "target_level",
+          "target_duration_minutes",
+          "intended_audience",
+          "teaching_style",
+          "locale",
+          "adapter",
+          "provider",
+          "model",
+          "input_manifest_sha256",
+          "blueprint_content_sha256",
+          "output_manifest_sha256",
+          "attempt_count",
+          "max_attempts",
+          "checkpoint",
+          "reason_code",
+          "row_version",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CourseGenerationRunV1",
         "type": "object"
       },
       "CourseProgressV1": {
@@ -1485,6 +1901,58 @@
         "title": "EntitlementResponse",
         "type": "object"
       },
+      "GeneratedLessonV1": {
+        "additionalProperties": false,
+        "properties": {
+          "blueprint_lesson_item_id": {
+            "format": "uuid",
+            "title": "Blueprint Lesson Item Id",
+            "type": "string"
+          },
+          "content_sha256": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "document": {
+            "additionalProperties": true,
+            "title": "Document",
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "course-draft.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_section_id": {
+            "format": "uuid",
+            "title": "Source Section Id",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "schema_version",
+          "blueprint_lesson_item_id",
+          "source_section_id",
+          "title",
+          "document",
+          "content_sha256"
+        ],
+        "title": "GeneratedLessonV1",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -2321,6 +2789,36 @@
           "updated_at"
         ],
         "title": "ProgressResultV1",
+        "type": "object"
+      },
+      "RejectCourseGenerationV1": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_review_content_sha256": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Expected Review Content Sha256",
+            "type": "string"
+          },
+          "expected_run_row_version": {
+            "minimum": 1.0,
+            "title": "Expected Run Row Version",
+            "type": "integer"
+          },
+          "reason_code": {
+            "enum": [
+              "GENERATION_CONTENT_REJECTED",
+              "GENERATION_SOURCE_ALIGNMENT_REJECTED"
+            ],
+            "title": "Reason Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_run_row_version",
+          "expected_review_content_sha256",
+          "reason_code"
+        ],
+        "title": "RejectCourseGenerationV1",
         "type": "object"
       },
       "RemovalV1": {
@@ -3239,6 +3737,85 @@
         "title": "SourceVersionV1",
         "type": "object"
       },
+      "StartCourseGenerationV1": {
+        "additionalProperties": false,
+        "properties": {
+          "ingestion_run_id": {
+            "format": "uuid",
+            "title": "Ingestion Run Id",
+            "type": "string"
+          },
+          "intended_audience": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Intended Audience",
+            "type": "string"
+          },
+          "locale": {
+            "const": "en",
+            "default": "en",
+            "title": "Locale",
+            "type": "string"
+          },
+          "source_document_id": {
+            "format": "uuid",
+            "title": "Source Document Id",
+            "type": "string"
+          },
+          "source_version_id": {
+            "format": "uuid",
+            "title": "Source Version Id",
+            "type": "string"
+          },
+          "supersedes_run_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supersedes Run Id"
+          },
+          "target_duration_minutes": {
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Target Duration Minutes",
+            "type": "integer"
+          },
+          "target_level": {
+            "enum": [
+              "beginner",
+              "intermediate",
+              "advanced"
+            ],
+            "title": "Target Level",
+            "type": "string"
+          },
+          "teaching_style": {
+            "enum": [
+              "concise",
+              "guided",
+              "reference"
+            ],
+            "title": "Teaching Style",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_document_id",
+          "source_version_id",
+          "ingestion_run_id",
+          "target_level",
+          "target_duration_minutes",
+          "intended_audience",
+          "teaching_style"
+        ],
+        "title": "StartCourseGenerationV1",
+        "type": "object"
+      },
       "SuccessorDraftResultV1": {
         "additionalProperties": false,
         "properties": {
@@ -4140,6 +4717,701 @@
           }
         },
         "summary": "Accept Invitation"
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/course-generation-runs": {
+      "post": {
+        "operationId": "startCourseGeneration",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "X-Tenant-Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartCourseGenerationV1"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseGenerationRunV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          }
+        },
+        "summary": "Start Course Generation"
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/course-generation-runs/{run_id}": {
+      "get": {
+        "operationId": "getCourseGeneration",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "X-Tenant-Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseGenerationReviewPackageV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          }
+        },
+        "summary": "Get Course Generation"
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/course-generation-runs/{run_id}/approve-blueprint": {
+      "post": {
+        "operationId": "approveCourseGenerationBlueprint",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "X-Tenant-Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveGenerationBlueprintV1"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseGenerationRunV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          }
+        },
+        "summary": "Approve Course Generation Blueprint"
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/course-generation-runs/{run_id}/reject": {
+      "post": {
+        "operationId": "rejectCourseGeneration",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "X-Tenant-Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectCourseGenerationV1"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseGenerationRunV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          }
+        },
+        "summary": "Reject Course Generation"
       }
     },
     "/api/v1/tenants/{tenant_id}/courses": {

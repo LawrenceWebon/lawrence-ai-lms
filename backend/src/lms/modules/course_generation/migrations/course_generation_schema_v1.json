@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "authority": "Django",
+  "schema_fingerprint": "sha256:461d4b68303e1968abecdccfd8bce30afd06601ec681635a22d0e97c7edea9f3",
+  "database_fingerprint": "sha256:91d0ba52d5534e4eca3df0d50bfac02e2f74c429e59ba4bc5591e8635cd63c4c",
+  "objects": [
+    {
+      "schema": "integration",
+      "table": "course_generation_runs",
+      "migration": "course_generation.0001_generation_schema",
+      "security_migration": "course_generation.0004_generation_security",
+      "columns": ["id", "tenant_id", "source_document_id", "source_version_id", "ingestion_run_id", "generate_authorization_id", "supersedes_run_id", "requested_by_actor_id", "status", "target_level", "target_duration_minutes", "intended_audience", "teaching_style", "locale", "adapter", "provider", "model", "normalized_schema_version", "blueprint_schema_version", "draft_schema_version", "policy_version", "prompt_template_sha256", "input_manifest_sha256", "blueprint_content_sha256", "output_manifest_sha256", "attempt_count", "max_attempts", "lease_owner", "lease_expires_at", "heartbeat_at", "checkpoint", "reason_code", "row_version", "created_at", "updated_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE active (tenant_id,ingestion_run_id,adapter)", "composite tenant foreign keys to source, ingestion, authorization, and superseded run"],
+      "checks": ["fixed durable status and intent", "local deterministic provider/model", "canonical provenance hashes", "lease/result shapes", "bounded attempts"],
+      "indexes": ["ix_generation_claim (tenant_id,status,created_at)", "ix_generation_source (tenant_id,source_version_id,created_at)", "uq_generation_runs_active_ingestion partial unique"],
+      "lifecycle": "durable leased two-stage generation run; human review gates and terminal evidence are immutable",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "integration",
+      "table": "course_generation_attempts",
+      "migration": "course_generation.0001_generation_schema",
+      "security_migration": "course_generation.0004_generation_security",
+      "columns": ["id", "tenant_id", "generation_run_id", "attempt_number", "stage", "outcome", "reason_code", "checkpoint", "input_manifest_sha256", "output_manifest_sha256", "observation", "started_at", "completed_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,generation_run_id,attempt_number)", "FOREIGN KEY (tenant_id,generation_run_id) -> course_generation_runs(tenant_id,id)"],
+      "checks": ["stage in planning/generating", "fixed outcome", "completion timestamp shape", "observation is object", "canonical manifest hashes"],
+      "indexes": ["ix_generation_attempts_run (tenant_id,generation_run_id,attempt_number)"],
+      "lifecycle": "immutable completed generation attempt evidence",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "integration",
+      "table": "course_generation_snapshots",
+      "migration": "course_generation.0001_generation_schema",
+      "security_migration": "course_generation.0004_generation_security",
+      "columns": ["id", "tenant_id", "generation_run_id", "metadata", "content_sha256", "created_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,generation_run_id)", "FOREIGN KEY (tenant_id,generation_run_id) -> course_generation_runs(tenant_id,id)"],
+      "checks": ["metadata is object", "canonical content hash", "zero token/cost local adapter provenance"],
+      "indexes": ["unique generation run snapshot"],
+      "lifecycle": "immutable content-minimized input and adapter provenance snapshot",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "app",
+      "table": "course_generation_blueprints",
+      "migration": "course_generation.0001_generation_schema",
+      "security_migration": "course_generation.0004_generation_security",
+      "columns": ["id", "tenant_id", "generation_run_id", "revision", "schema_version", "status", "title", "description", "intended_audience", "prerequisites", "learning_outcomes", "projection", "content_sha256", "created_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,generation_run_id,revision)", "composite tenant foreign key to generation run"],
+      "checks": ["fixed review status", "projection is object", "prerequisites/outcomes are arrays", "canonical content hash"],
+      "indexes": ["unique run revision"],
+      "lifecycle": "immutable structured blueprint projection with reviewable-to-decision status only",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "app",
+      "table": "course_generation_blueprint_items",
+      "migration": "course_generation.0001_generation_schema",
+      "security_migration": "course_generation.0004_generation_security",
+      "columns": ["id", "tenant_id", "generation_run_id", "blueprint_id", "parent_id", "source_version_id", "source_section_id", "kind", "position", "title", "description", "created_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "composite tenant foreign keys to run, blueprint, parent, version, and normalized section"],
+      "checks": ["kind in module/lesson", "modules are roots and lessons have parents", "position >= 1"],
+      "indexes": ["unique ordered item within blueprint parent"],
+      "lifecycle": "immutable ordered source-linked blueprint item",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "app",
+      "table": "generated_lesson_artifacts",
+      "migration": "course_generation.0001_generation_schema",
+      "security_migration": "course_generation.0004_generation_security",
+      "columns": ["id", "tenant_id", "generation_run_id", "blueprint_item_id", "source_version_id", "source_section_id", "revision", "schema_version", "title", "document", "content_sha256", "created_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,generation_run_id,blueprint_item_id,revision)", "composite tenant foreign keys to run, item, version, and section"],
+      "checks": ["revision >= 1", "strict rich-text document object", "canonical content hash"],
+      "indexes": ["unique lesson artifact revision"],
+      "lifecycle": "immutable generated lesson review artifact; not a canonical course row",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "app",
+      "table": "course_generation_source_edges",
+      "migration": "course_generation.0001_generation_schema",
+      "security_migration": "course_generation.0004_generation_security",
+      "columns": ["id", "tenant_id", "generation_run_id", "source_version_id", "source_section_id", "edge_kind", "blueprint_item_id", "generated_artifact_id", "created_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "composite tenant foreign keys to run, source, item, and artifact"],
+      "checks": ["edge kind in blueprint_item/generated_lesson", "exactly one matching target"],
+      "indexes": ["primary and tenant edge identities"],
+      "lifecycle": "immutable exact normalized-source provenance edge",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "audit",
+      "table": "course_generation_blueprint_decisions",
+      "migration": "course_generation.0001_generation_schema",
+      "security_migration": "course_generation.0004_generation_security",
+      "columns": ["id", "tenant_id", "generation_run_id", "blueprint_id", "decided_by_actor_id", "decision", "reviewed_content_sha256", "reason_code", "decided_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,generation_run_id,blueprint_id)", "composite tenant foreign keys to run and blueprint"],
+      "checks": ["decision in approve/reject", "exact reviewed hash", "reason required only for rejection"],
+      "indexes": ["one decision per blueprint"],
+      "lifecycle": "append-only immutable human blueprint decision",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "audit",
+      "table": "course_generation_rejections",
+      "migration": "course_generation.0003_generation_rejections",
+      "security_migration": "course_generation.0004_generation_security",
+      "columns": ["id", "tenant_id", "generation_run_id", "rejected_by_actor_id", "reviewed_output_sha256", "reason_code", "rejected_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,generation_run_id)", "FOREIGN KEY (tenant_id,generation_run_id) -> course_generation_runs(tenant_id,id)"],
+      "checks": ["exact reviewed output hash", "bounded human rejection reason"],
+      "indexes": ["one final rejection per generation run"],
+      "lifecycle": "append-only immutable human generated-revision rejection",
+      "rls": "ENABLE + FORCE"
+    }
+  ]
+}

@@ -100,6 +100,22 @@ const expectedOperations = {
     "get",
     "getDocumentIngestion",
   ],
+  "/api/v1/tenants/{tenant_id}/course-generation-runs": [
+    "post",
+    "startCourseGeneration",
+  ],
+  "/api/v1/tenants/{tenant_id}/course-generation-runs/{run_id}": [
+    "get",
+    "getCourseGeneration",
+  ],
+  "/api/v1/tenants/{tenant_id}/course-generation-runs/{run_id}/approve-blueprint": [
+    "post",
+    "approveCourseGenerationBlueprint",
+  ],
+  "/api/v1/tenants/{tenant_id}/course-generation-runs/{run_id}/reject": [
+    "post",
+    "rejectCourseGeneration",
+  ],
   "/api/v1/tenants/{tenant_id}/enrollments": ["post", "createEnrollment"],
   "/api/v1/tenants/{tenant_id}/enrollments/{enrollment_id}/revoke": [
     "post",
@@ -137,6 +153,14 @@ const expectedSchemas = [
   "AuthenticationPrincipalResponse",
   "CreateInvitationRequest",
   "CreateEnrollmentV1",
+  "StartCourseGenerationV1",
+  "ApproveGenerationBlueprintV1",
+  "RejectCourseGenerationV1",
+  "CourseGenerationRunV1",
+  "CourseBlueprintItemV1",
+  "CourseBlueprintV1",
+  "GeneratedLessonV1",
+  "CourseGenerationReviewPackageV1",
   "CreateRightsDeclarationV1",
   "CreateSourceAdmissionV1",
   "CreateCourseV1",
@@ -267,6 +291,23 @@ export type IngestionStatus =
   | "failed"
   | "cancelled"
   | "rights_blocked";
+export type GenerationStatus =
+  | "queued"
+  | "planning"
+  | "blueprint_review"
+  | "generation_queued"
+  | "generating"
+  | "review_ready"
+  | "canonicalized"
+  | "rejected"
+  | "retryable"
+  | "failed"
+  | "rights_blocked";
+export type GenerationTargetLevel = "beginner" | "intermediate" | "advanced";
+export type GenerationTeachingStyle = "concise" | "guided" | "reference";
+export type GenerationRejectionReason =
+  | "GENERATION_CONTENT_REJECTED"
+  | "GENERATION_SOURCE_ALIGNMENT_REJECTED";
 export type UploadIntentStatus = "active" | "consumed" | "expired" | "cancelled";
 export type EnrollmentStatus = "active" | "revoked";
 export type ProgressState = "not_started" | "in_progress" | "completed";
@@ -381,6 +422,22 @@ export interface paths {
   "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/ingestion-runs/{run_id}": {
     parameters: EmptyParameters;
     get: operations["getDocumentIngestion"];
+  };
+  "/api/v1/tenants/{tenant_id}/course-generation-runs": {
+    parameters: EmptyParameters;
+    post: operations["startCourseGeneration"];
+  };
+  "/api/v1/tenants/{tenant_id}/course-generation-runs/{run_id}": {
+    parameters: EmptyParameters;
+    get: operations["getCourseGeneration"];
+  };
+  "/api/v1/tenants/{tenant_id}/course-generation-runs/{run_id}/approve-blueprint": {
+    parameters: EmptyParameters;
+    post: operations["approveCourseGenerationBlueprint"];
+  };
+  "/api/v1/tenants/{tenant_id}/course-generation-runs/{run_id}/reject": {
+    parameters: EmptyParameters;
+    post: operations["rejectCourseGeneration"];
   };
   "/api/v1/source-upload-targets/{opaque_token}": {
     parameters: EmptyParameters;
@@ -914,6 +971,90 @@ export interface components {
       created_at: string;
       updated_at: string;
     };
+    StartCourseGenerationV1: {
+      source_document_id: string;
+      source_version_id: string;
+      ingestion_run_id: string;
+      target_level: GenerationTargetLevel;
+      target_duration_minutes: number;
+      intended_audience: string;
+      teaching_style: GenerationTeachingStyle;
+      locale: "en";
+      supersedes_run_id?: string | null;
+    };
+    ApproveGenerationBlueprintV1: {
+      expected_run_row_version: number;
+      blueprint_id: string;
+      blueprint_revision: number;
+      expected_blueprint_content_sha256: string;
+    };
+    RejectCourseGenerationV1: {
+      expected_run_row_version: number;
+      expected_review_content_sha256: string;
+      reason_code: GenerationRejectionReason;
+    };
+    CourseGenerationRunV1: {
+      id: string;
+      tenant_id: string;
+      source_document_id: string;
+      source_version_id: string;
+      ingestion_run_id: string;
+      supersedes_run_id: string | null;
+      status: GenerationStatus;
+      target_level: GenerationTargetLevel;
+      target_duration_minutes: number;
+      intended_audience: string;
+      teaching_style: GenerationTeachingStyle;
+      locale: "en";
+      adapter: "deterministic-source-course-v1";
+      provider: "local_deterministic";
+      model: "none";
+      input_manifest_sha256: string;
+      blueprint_content_sha256: string | null;
+      output_manifest_sha256: string | null;
+      attempt_count: number;
+      max_attempts: number;
+      checkpoint: string;
+      reason_code: string | null;
+      row_version: number;
+      created_at: string;
+      updated_at: string;
+    };
+    CourseBlueprintItemV1: {
+      id: string;
+      kind: "module" | "lesson";
+      parent_id: string | null;
+      position: number;
+      title: string;
+      description: string;
+      source_section_id: string;
+    };
+    CourseBlueprintV1: {
+      id: string;
+      schema_version: "course-blueprint.v1";
+      title: string;
+      description: string;
+      intended_audience: string;
+      prerequisites: string[];
+      learning_outcomes: string[];
+      items: components["schemas"]["CourseBlueprintItemV1"][];
+      projection: Record<string, unknown>;
+      content_sha256: string;
+    };
+    GeneratedLessonV1: {
+      id: string;
+      schema_version: "course-draft.v1";
+      blueprint_lesson_item_id: string;
+      source_section_id: string;
+      title: string;
+      document: Record<string, unknown>;
+      content_sha256: string;
+    };
+    CourseGenerationReviewPackageV1: {
+      run: components["schemas"]["CourseGenerationRunV1"];
+      blueprint: components["schemas"]["CourseBlueprintV1"] | null;
+      lessons: components["schemas"]["GeneratedLessonV1"][];
+    };
     UploadIntentSummaryV1: {
       id: string;
       status: UploadIntentStatus;
@@ -1269,6 +1410,42 @@ export interface operations {
       500: ProblemResponse;
     };
   };
+  startCourseGeneration: {
+    parameters: GenerationCollectionCommandParameters;
+    requestBody: JsonRequest<components["schemas"]["StartCourseGenerationV1"]>;
+    responses: {
+      202: JsonResponse<components["schemas"]["CourseGenerationRunV1"]>;
+      400: ProblemResponse;
+      401: ProblemResponse;
+      403: ProblemResponse;
+      404: ProblemResponse;
+      409: ProblemResponse;
+      422: ProblemResponse;
+      500: ProblemResponse;
+    };
+  };
+  getCourseGeneration: {
+    parameters: GenerationRunParameters;
+    requestBody?: never;
+    responses: {
+      200: JsonResponse<components["schemas"]["CourseGenerationReviewPackageV1"]>;
+      400: ProblemResponse;
+      401: ProblemResponse;
+      403: ProblemResponse;
+      404: ProblemResponse;
+      500: ProblemResponse;
+    };
+  };
+  approveCourseGenerationBlueprint: {
+    parameters: GenerationRunParameters;
+    requestBody: JsonRequest<components["schemas"]["ApproveGenerationBlueprintV1"]>;
+    responses: GenerationRunResponses;
+  };
+  rejectCourseGeneration: {
+    parameters: GenerationRunParameters;
+    requestBody: JsonRequest<components["schemas"]["RejectCourseGenerationV1"]>;
+    responses: GenerationRunResponses;
+  };
 }
 
 type EmptyParameters = {
@@ -1397,6 +1574,29 @@ type SourceOperationCommandParameters = Omit<SourceVersionCommandParameters, "pa
 };
 type DocumentIngestionParameters = Omit<SourceVersionParameters, "path"> & {
   path: SourceVersionParameters["path"] & { run_id: string };
+};
+type GenerationHeaders = AuthHeaders & { "X-Tenant-ID": string };
+type GenerationCollectionCommandParameters = {
+  query?: never;
+  header: GenerationHeaders & { "Idempotency-Key": string };
+  path: { tenant_id: string };
+  cookie?: never;
+};
+type GenerationRunParameters = {
+  query?: never;
+  header: GenerationHeaders;
+  path: { tenant_id: string; run_id: string };
+  cookie?: never;
+};
+type GenerationRunResponses = {
+  200: JsonResponse<components["schemas"]["CourseGenerationRunV1"]>;
+  400: ProblemResponse;
+  401: ProblemResponse;
+  403: ProblemResponse;
+  404: ProblemResponse;
+  409: ProblemResponse;
+  422: ProblemResponse;
+  500: ProblemResponse;
 };
 type SourceOperationAuthorizationResponses = {
   200: JsonResponse<components["schemas"]["SourceOperationAuthorizationV1"]>;
