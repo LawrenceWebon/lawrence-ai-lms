@@ -1,16 +1,16 @@
 {
   "schema_version": 1,
   "authority": "Django",
-  "schema_fingerprint": "sha256:80310048160ddcc04222c1491c281c5e693f133dfee040a2f8c4bd6990495925",
-  "database_fingerprint": "sha256:4c8519719e05db95f2438a1085d835598ffd5c6b992af484cac7250ea6361657",
+  "schema_fingerprint": "sha256:b12bb3df78b48c3c923c2b6e5e37166f8fc3574c3485aa077a5f1e680ca6be29",
+  "database_fingerprint": "sha256:a0ca768a4e9e16902307778bdee8b7207e45352697737a62fb7416ae0cc3f800",
   "objects": [
     {
       "table": "enrollments",
       "migration": "learning.0001_initial",
-      "security_migration": "learning.0002_learning_security",
+      "security_migration": "learning.0003_enrollment_management_only",
       "columns": ["id", "tenant_id", "learner_membership_id", "course_id", "course_version_id", "admission_source", "status", "enrolled_at", "revoked_at", "revocation_reason_code", "assigned_by_actor_id", "row_version", "created_at", "updated_at"],
       "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,learner_membership_id,course_id) WHERE status = active", "FOREIGN KEY (tenant_id,learner_membership_id) -> tenant_memberships(tenant_id,id)", "FOREIGN KEY (tenant_id,course_id) -> courses(tenant_id,id)", "FOREIGN KEY (tenant_id,course_id,course_version_id) -> course_versions(tenant_id,course_id,id)"],
-      "checks": ["admission_source = manual_assignment", "status is active or revoked", "revocation timestamp and reason match status", "row_version >= 1", "identity and pinned version are immutable", "only active-to-revoked transition is allowed"],
+      "checks": ["admission_source = manual_assignment", "status is active or revoked", "revocation timestamp and reason match status", "row_version >= 1", "identity and pinned version are immutable", "only active-to-revoked transition is allowed", "resulting updates require learning.enrollments.manage"],
       "indexes": ["ix_enrollments_dashboard (tenant_id,learner_membership_id,status,enrolled_at DESC,id DESC)", "ix_enrollments_course_status (tenant_id,course_id,status)"],
       "delete_behavior": "retained history; all direct deletes rejected",
       "rls": "ENABLE + FORCE"

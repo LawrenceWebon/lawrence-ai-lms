@@ -33,6 +33,16 @@ DOCUMENT_TABLES = {
 }
 
 
+def _mutated_digest(digest: str) -> str:
+    replacement = "1" if digest.startswith("0") else "0"
+    return f"{replacement}{digest[1:]}"
+
+
+def test_mutated_upload_digest_is_always_distinct() -> None:
+    assert _mutated_digest("0" * 64) != "0" * 64
+    assert _mutated_digest("f" * 64) != "f" * 64
+
+
 def command(name: str) -> CreateAdmissionCommand:
     return CreateAdmissionCommand(
         display_name=name,
@@ -243,7 +253,7 @@ def test_upload_token_scope_is_exact_and_mutated_digest_is_neutral(
         assert list(UploadIntent.objects.values_list("id", flat=True)) == [intent.id]
 
     with transaction.atomic():
-        set_upload_context(f"0{digest[1:]}")
+        set_upload_context(_mutated_digest(digest))
         set_role("lms_api_runtime")
         assert SourceDocument.objects.count() == 0
         assert UploadIntent.objects.count() == 0

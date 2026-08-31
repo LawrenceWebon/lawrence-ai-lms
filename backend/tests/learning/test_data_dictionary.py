@@ -106,10 +106,14 @@ def test_learning_dictionary_has_a_reproducible_fingerprint() -> None:
     assert dictionary["schema_fingerprint"] == f"sha256:{hashlib.sha256(encoded).hexdigest()}"
     assert {item["table"] for item in dictionary["objects"]} == set(LEARNING_TABLES)
     assert all(item["migration"] == "learning.0001_initial" for item in dictionary["objects"])
-    assert all(
-        item["security_migration"] == "learning.0002_learning_security"
-        for item in dictionary["objects"]
-    )
+    security_migrations = {
+        item["table"]: item["security_migration"] for item in dictionary["objects"]
+    }
+    assert security_migrations == {
+        "enrollments": "learning.0003_enrollment_management_only",
+        "course_progress": "learning.0002_learning_security",
+        "lesson_progress": "learning.0002_learning_security",
+    }
 
 
 @pytest.mark.django_db
