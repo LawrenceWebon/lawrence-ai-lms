@@ -7,7 +7,7 @@
       "origin": "Repository-authored deterministic ASCII PDF fixture; contains no book or user content.",
       "license": "CC0-1.0",
       "path": "backend/tests/documents/fixtures/synthetic-valid-one-page.pdf",
-      "sha256": "6350af32579ffbd7b251a6244bf9bd036d303cbc7404ae06d5e02f1b8f5b994f",
+      "sha256": "3be1c6ba99cbc5f4ccf3d75257baaefd8bab593082b2f2a1aea662a13c1cf115",
       "expected_rejection_code": null
     },
     {

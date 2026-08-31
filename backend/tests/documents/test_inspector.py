@@ -26,6 +26,24 @@ def test_local_inspector_derives_admitted_evidence_from_synthetic_pdf(
     assert result.rejection_code is None
 
 
+def test_local_inspector_rejects_marker_only_pseudo_pdf() -> None:
+    pseudo_pdf = (
+        b"%PDF-1.4\n"
+        b"/Catalog\n"
+        b"/Type /Page\n"
+        b"/MediaBox [0 0 612 792]\n"
+        b"arbitrary non-object text 123\n"
+        b"%%EOF\n"
+    )
+
+    result = LocalPdfInspector().inspect(pseudo_pdf, policy=ADMISSION_POLICY)
+
+    assert len(pseudo_pdf) == 90
+    assert result.outcome == "rejected"
+    assert result.rejection_code == "PDF_CORRUPT"
+    assert result.parser_accepted is False
+
+
 def test_local_inspector_rejects_signature_encryption_corruption_and_polyglot(
     valid_pdf_bytes: bytes,
 ) -> None:

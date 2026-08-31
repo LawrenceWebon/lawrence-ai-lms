@@ -1,15 +1,20 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import math
 import re
+import subprocess
+import sys
 import time
 import zlib
-from typing import TypedDict
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Literal, TypedDict
 
 from .types import AdmissionPolicy, AdmissionValidationResult
 
-INSPECTOR_VERSION = "bounded-local-pdf-inspector-v1"
+INSPECTOR_VERSION = "bounded-local-pypdf-6.16.2-v2"
 _PAGE_PATTERN = re.compile(rb"/Type\s*/Page(?!s)\b")
 _MEDIA_BOX_PATTERN = re.compile(
     rb"/MediaBox\s*\[\s*(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s+"
@@ -28,12 +33,77 @@ class _CommonPdfObservation(TypedDict):
     signature: bool
 
 
-class LocalPdfInspector:
-    """Bounded, network-free structural inspection for local synthetic fixtures.
+_StrictParserOutcome = Literal["accepted", "corrupt", "encrypted", "unavailable"]
 
-    This intentionally does not claim production malware detection or full PDF parsing.
-    Any unknown structural observation fails closed.
-    """
+
+@dataclass(frozen=True, slots=True)
+class _StrictParserObservation:
+    outcome: _StrictParserOutcome
+    page_boxes: tuple[tuple[float, float, float, float], ...] = ()
+
+
+def _strict_parser_probe(body: bytes, *, timeout_seconds: int) -> _StrictParserObservation:
+    probe_path = Path(__file__).with_name("pdf_probe.py")
+    try:
+        completed = subprocess.run(  # noqa: S603
+            [sys.executable, "-I", str(probe_path)],
+            check=False,
+            input=body,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            timeout=timeout_seconds,
+            env={},
+        )
+    except OSError, subprocess.TimeoutExpired:
+        return _StrictParserObservation(outcome="unavailable")
+    if completed.returncode != 0:
+        return _StrictParserObservation(outcome="unavailable")
+
+    try:
+        raw_observation = json.loads(completed.stdout)
+    except json.JSONDecodeError, TypeError, UnicodeDecodeError:
+        return _StrictParserObservation(outcome="unavailable")
+    if not isinstance(raw_observation, dict):
+        return _StrictParserObservation(outcome="unavailable")
+    outcome = raw_observation.get("outcome")
+    if outcome in {"corrupt", "encrypted"}:
+        return _StrictParserObservation(outcome=outcome)
+    if outcome != "accepted":
+        return _StrictParserObservation(outcome="unavailable")
+
+    raw_page_boxes = raw_observation.get("page_boxes")
+    if not isinstance(raw_page_boxes, list) or not raw_page_boxes:
+        return _StrictParserObservation(outcome="unavailable")
+    page_boxes: list[tuple[float, float, float, float]] = []
+    for raw_box in raw_page_boxes:
+        if not isinstance(raw_box, list) or len(raw_box) != 4:
+            return _StrictParserObservation(outcome="unavailable")
+        if any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in raw_box):
+            return _StrictParserObservation(outcome="unavailable")
+        box = tuple(float(value) for value in raw_box)
+        if not all(math.isfinite(value) for value in box):
+            return _StrictParserObservation(outcome="unavailable")
+        page_boxes.append(box)  # type: ignore[arg-type]
+    return _StrictParserObservation(outcome="accepted", page_boxes=tuple(page_boxes))
+
+
+def _rendered_pixels(
+    page_boxes: tuple[tuple[float, float, float, float], ...],
+) -> tuple[int, int]:
+    pixels: list[int] = []
+    for left, bottom, right, top in page_boxes:
+        width_points = right - left
+        height_points = top - bottom
+        if width_points <= 0 or height_points <= 0:
+            raise ValueError("PDF page boxes must have positive dimensions")
+        width_pixels = math.ceil(width_points * 150 / 72)
+        height_pixels = math.ceil(height_points * 150 / 72)
+        pixels.append(width_pixels * height_pixels)
+    return max(pixels), sum(pixels)
+
+
+class LocalPdfInspector:
+    """Bounded, network-free PDF admission with an isolated strict parser probe."""
 
     def __init__(self, *, available: bool = True) -> None:
         self._available = available
@@ -139,20 +209,18 @@ class LocalPdfInspector:
                 **common,
             )
 
-        media_boxes = _MEDIA_BOX_PATTERN.findall(body)
-        if not media_boxes:
-            return self._result(
-                outcome="rejected",
-                rejection_code="PDF_CORRUPT",
-                parser_accepted=False,
-                page_count=page_count,
-                **common,
-            )
-        pixels: list[int] = []
-        for left, bottom, right, top in media_boxes:
-            width_points = abs(float(right) - float(left))
-            height_points = abs(float(top) - float(bottom))
-            if width_points <= 0 or height_points <= 0:
+        raw_media_boxes = tuple(
+            tuple(float(value) for value in media_box)
+            for media_box in _MEDIA_BOX_PATTERN.findall(body)
+        )
+        max_pixels: int | None = None
+        total_pixels: int | None = None
+        if raw_media_boxes:
+            try:
+                raw_max_pixels, raw_total_pixels = _rendered_pixels(
+                    raw_media_boxes  # type: ignore[arg-type]
+                )
+            except ValueError:
                 return self._result(
                     outcome="rejected",
                     rejection_code="PDF_CORRUPT",
@@ -160,26 +228,21 @@ class LocalPdfInspector:
                     page_count=page_count,
                     **common,
                 )
-            width_pixels = math.ceil(width_points * 150 / 72)
-            height_pixels = math.ceil(height_points * 150 / 72)
-            pixels.append(width_pixels * height_pixels)
-        if len(pixels) < page_count:
-            pixels.extend([pixels[-1]] * (page_count - len(pixels)))
-        max_pixels = max(pixels)
-        total_pixels = sum(pixels[:page_count])
-        if (
-            max_pixels > policy.max_rendered_pixels_per_page
-            or total_pixels > policy.max_rendered_pixels_total
-        ):
-            return self._result(
-                outcome="rejected",
-                rejection_code="PDF_PIXEL_LIMIT_EXCEEDED",
-                parser_accepted=True,
-                page_count=page_count,
-                per_page_pixels=max_pixels,
-                total_pixels=total_pixels,
-                **common,
-            )
+            if len(raw_media_boxes) < page_count:
+                raw_total_pixels += raw_max_pixels * (page_count - len(raw_media_boxes))
+            if (
+                raw_max_pixels > policy.max_rendered_pixels_per_page
+                or raw_total_pixels > policy.max_rendered_pixels_total
+            ):
+                return self._result(
+                    outcome="rejected",
+                    rejection_code="PDF_PIXEL_LIMIT_EXCEEDED",
+                    parser_accepted=False,
+                    page_count=page_count,
+                    per_page_pixels=raw_max_pixels,
+                    total_pixels=raw_total_pixels,
+                    **common,
+                )
 
         decoded_bytes = len(body)
         for stream in _STREAM_PATTERN.finditer(body):
@@ -239,7 +302,7 @@ class LocalPdfInspector:
             return self._result(
                 outcome="rejected",
                 rejection_code="PDF_DECODED_LIMIT_EXCEEDED",
-                parser_accepted=True,
+                parser_accepted=False,
                 page_count=page_count,
                 per_page_pixels=max_pixels,
                 total_pixels=total_pixels,
@@ -250,12 +313,82 @@ class LocalPdfInspector:
             return self._result(
                 outcome="rejected",
                 rejection_code="PDF_UNSAFE",
-                parser_accepted=True,
+                parser_accepted=False,
                 page_count=page_count,
                 per_page_pixels=max_pixels,
                 total_pixels=total_pixels,
                 decoded_bytes=decoded_bytes,
                 inspection="unsafe",
+                **common,
+            )
+
+        strict_observation = _strict_parser_probe(
+            body,
+            timeout_seconds=policy.validation_wall_seconds,
+        )
+        if strict_observation.outcome == "unavailable":
+            return self._result(
+                outcome="retryable_failure",
+                parser_accepted=False,
+                page_count=page_count,
+                per_page_pixels=max_pixels,
+                total_pixels=total_pixels,
+                decoded_bytes=decoded_bytes,
+                inspection="unavailable",
+                **common,
+            )
+        if strict_observation.outcome == "encrypted":
+            return self._result(
+                outcome="rejected",
+                rejection_code="PDF_ENCRYPTED",
+                parser_accepted=False,
+                page_count=page_count,
+                decoded_bytes=decoded_bytes,
+                **common,
+            )
+        if strict_observation.outcome == "corrupt":
+            return self._result(
+                outcome="rejected",
+                rejection_code="PDF_CORRUPT",
+                parser_accepted=False,
+                page_count=page_count,
+                decoded_bytes=decoded_bytes,
+                **common,
+            )
+
+        page_count = len(strict_observation.page_boxes)
+        if page_count > policy.max_page_count:
+            return self._result(
+                outcome="rejected",
+                rejection_code="PDF_PAGE_LIMIT_EXCEEDED",
+                parser_accepted=True,
+                page_count=page_count,
+                decoded_bytes=decoded_bytes,
+                **common,
+            )
+        try:
+            max_pixels, total_pixels = _rendered_pixels(strict_observation.page_boxes)
+        except ValueError:
+            return self._result(
+                outcome="rejected",
+                rejection_code="PDF_CORRUPT",
+                parser_accepted=False,
+                page_count=page_count,
+                decoded_bytes=decoded_bytes,
+                **common,
+            )
+        if (
+            max_pixels > policy.max_rendered_pixels_per_page
+            or total_pixels > policy.max_rendered_pixels_total
+        ):
+            return self._result(
+                outcome="rejected",
+                rejection_code="PDF_PIXEL_LIMIT_EXCEEDED",
+                parser_accepted=True,
+                page_count=page_count,
+                per_page_pixels=max_pixels,
+                total_pixels=total_pixels,
+                decoded_bytes=decoded_bytes,
                 **common,
             )
         if (
