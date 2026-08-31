@@ -6,9 +6,17 @@ import pytest
 from django.db import DatabaseError, connection, transaction
 
 from lms.modules.documents.models import (
+    DocumentElement,
+    DocumentIngestionAttempt,
+    DocumentIngestionRun,
     DocumentJob,
     DocumentJobAttempt,
+    DocumentPage,
+    DocumentSection,
+    DocumentSectionElement,
+    SourceArtifact,
     SourceDocument,
+    SourceUseAuthorization,
     SourceVersion,
     UploadIntent,
 )
@@ -30,6 +38,13 @@ DOCUMENT_TABLES = {
     "source_storage_objects",
     "document_jobs",
     "document_job_attempts",
+    "document_ingestion_runs",
+    "document_ingestion_attempts",
+    "source_artifacts",
+    "document_pages",
+    "document_elements",
+    "document_sections",
+    "document_section_elements",
 }
 
 
@@ -114,8 +129,15 @@ def test_document_tables_are_non_runtime_owned_with_forced_rls() -> None:
                     ('app', 'source_use_authorizations'),
                     ('app', 'source_upload_intents'),
                     ('app', 'source_storage_objects'),
+                    ('app', 'source_artifacts'),
+                    ('app', 'document_pages'),
+                    ('app', 'document_elements'),
+                    ('app', 'document_sections'),
+                    ('app', 'document_section_elements'),
                     ('integration', 'document_jobs'),
-                    ('integration', 'document_job_attempts')
+                    ('integration', 'document_job_attempts'),
+                    ('integration', 'document_ingestion_runs'),
+                    ('integration', 'document_ingestion_attempts')
              )
             """
         )
@@ -375,3 +397,179 @@ def test_worker_can_claim_only_its_exact_job_scope(
         assert DocumentJob.objects.count() == 0
         assert SourceDocument.objects.count() == 0
         assert DocumentJobAttempt.objects.count() == 0
+
+
+def test_ingestion_api_and_worker_roles_are_tenant_and_exact_run_scoped(
+    tenancy_seed: dict[str, Any],
+    documents_service: Any,
+    ingestion_service: Any,
+    valid_pdf_bytes: bytes,
+) -> None:
+    from tests.documents.test_ingestion_service import _activate_operation, _admit
+
+    actor = tenancy_seed["profiles"]["instructor"].provider_subject
+    tenant_id = tenancy_seed["alpha"].id
+    first = _admit(
+        tenancy_seed=tenancy_seed,
+        documents_service=documents_service,
+        body=valid_pdf_bytes,
+        key_suffix="rls-ingestion-first",
+    )
+    _activate_operation(
+        tenancy_seed=tenancy_seed,
+        documents_service=documents_service,
+        admitted=first,
+        operation="extract",
+        key_suffix="rls-ingestion-first",
+    )
+    first_run = ingestion_service.start_ingestion(
+        actor_id=actor,
+        tenant_id=tenant_id,
+        source_document_id=first.source_document.id,
+        source_version_id=first.source_version.id,
+        idempotency_key="rls-ingestion-first-start",
+    )
+    completed = ingestion_service.run_ingestion(
+        tenant_id=tenant_id,
+        run_id=first_run.id,
+        worker_id="rls-ingestion-worker",
+    )
+    assert completed.run.status == "ready_for_generation"
+
+    second = _admit(
+        tenancy_seed=tenancy_seed,
+        documents_service=documents_service,
+        body=valid_pdf_bytes,
+        key_suffix="rls-ingestion-second",
+    )
+    _activate_operation(
+        tenancy_seed=tenancy_seed,
+        documents_service=documents_service,
+        admitted=second,
+        operation="extract",
+        key_suffix="rls-ingestion-second",
+    )
+    second_run = ingestion_service.start_ingestion(
+        actor_id=actor,
+        tenant_id=tenant_id,
+        source_document_id=second.source_document.id,
+        source_version_id=second.source_version.id,
+        idempotency_key="rls-ingestion-second-start",
+    )
+
+    with transaction.atomic():
+        set_user_context(actor, tenant_id)
+        set_role("lms_api_runtime")
+        assert set(DocumentIngestionRun.objects.values_list("id", flat=True)) == {
+            first_run.id,
+            second_run.id,
+        }
+        assert DocumentPage.objects.filter(source_version_id=first.source_version.id).exists()
+
+    with transaction.atomic():
+        set_user_context(tenancy_seed["profiles"]["learner"].provider_subject, tenant_id)
+        set_role("lms_api_runtime")
+        assert DocumentIngestionRun.objects.count() == 0
+        assert DocumentPage.objects.count() == 0
+
+    with transaction.atomic():
+        set_job_context(first_run.id, "ingestion_quality_commit", tenant_id)
+        set_role("lms_worker_runtime")
+        assert list(DocumentIngestionRun.objects.values_list("id", flat=True)) == [first_run.id]
+        assert DocumentIngestionAttempt.objects.filter(ingestion_run_id=first_run.id).count() == 1
+        assert DocumentPage.objects.filter(source_version_id=first.source_version.id).exists()
+        assert not DocumentPage.objects.filter(source_version_id=second.source_version.id).exists()
+        assert SourceArtifact.objects.filter(source_version_id=first.source_version.id).count() == 2
+        with pytest.raises(DatabaseError), transaction.atomic():
+            DocumentPage.objects.filter(source_version_id=first.source_version.id).update(
+                text="forbidden mutation"
+            )
+        with pytest.raises(DatabaseError), transaction.atomic():
+            DocumentPage.objects.create(
+                tenant_id=tenant_id,
+                source_document_id=second.source_document.id,
+                source_version_id=second.source_version.id,
+                created_by_run_id=first_run.id,
+                parser_version="forbidden",
+                configuration_version="forbidden",
+                page_number=1,
+                width_points=612,
+                height_points=792,
+                text="forbidden cross-run insert",
+                text_sha256="sha256:" + "0" * 64,
+            )
+
+    with transaction.atomic():
+        set_job_context(first_run.id, "unrelated_stage", tenant_id)
+        set_role("lms_worker_runtime")
+        assert DocumentIngestionRun.objects.count() == 0
+        assert DocumentPage.objects.count() == 0
+
+    assert DocumentElement.objects.filter(source_version_id=first.source_version.id).exists()
+    assert DocumentSection.objects.filter(source_version_id=first.source_version.id).exists()
+    assert DocumentSectionElement.objects.filter(source_version_id=first.source_version.id).exists()
+
+
+def test_operation_rights_and_ingestion_start_succeed_through_api_runtime_role(
+    tenancy_seed: dict[str, Any],
+    documents_service: Any,
+    ingestion_service: Any,
+    valid_pdf_bytes: bytes,
+) -> None:
+    from tests.documents.test_ingestion_service import _admit
+
+    instructor = tenancy_seed["profiles"]["instructor"].provider_subject
+    admin = tenancy_seed["profiles"]["admin"].provider_subject
+    tenant_id = tenancy_seed["alpha"].id
+    admitted = _admit(
+        tenancy_seed=tenancy_seed,
+        documents_service=documents_service,
+        body=valid_pdf_bytes,
+        key_suffix="runtime-ingestion-start",
+    )
+
+    with transaction.atomic():
+        set_user_context(instructor, tenant_id)
+        set_role("lms_api_runtime")
+        with pytest.raises(DatabaseError), transaction.atomic():
+            SourceUseAuthorization.objects.filter(
+                source_version_id=admitted.source_version.id,
+                operation="store",
+            ).update(row_version=3)
+        requested = documents_service.request_operation_authorization(
+            actor_id=instructor,
+            tenant_id=tenant_id,
+            source_document_id=admitted.source_document.id,
+            source_version_id=admitted.source_version.id,
+            operation="extract",
+            idempotency_key="runtime-extract-request-0001",
+        )
+
+    with transaction.atomic():
+        set_user_context(admin, tenant_id)
+        set_role("lms_api_runtime")
+        documents_service.review_operation_authorization(
+            actor_id=admin,
+            tenant_id=tenant_id,
+            source_document_id=admitted.source_document.id,
+            source_version_id=admitted.source_version.id,
+            operation="extract",
+            command=ReviewAuthorizationCommand(
+                decision="activate",
+                expected_authorization_row_version=requested.row_version,
+                decision_code="RIGHTS_EVIDENCE_ACCEPTED",
+            ),
+            idempotency_key="runtime-extract-review-0001",
+        )
+
+    with transaction.atomic():
+        set_user_context(instructor, tenant_id)
+        set_role("lms_api_runtime")
+        run = ingestion_service.start_ingestion(
+            actor_id=instructor,
+            tenant_id=tenant_id,
+            source_document_id=admitted.source_document.id,
+            source_version_id=admitted.source_version.id,
+            idempotency_key="runtime-ingestion-start-0001",
+        )
+        assert run.status == "queued"

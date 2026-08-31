@@ -53,6 +53,8 @@ PERMISSION_DOCUMENT_SOURCES_READ = "documents.sources.read"
 PERMISSION_DOCUMENT_SOURCES_ADMIT = "documents.sources.admit"
 PERMISSION_DOCUMENT_SOURCES_CANCEL = "documents.sources.cancel"
 PERMISSION_DOCUMENT_SOURCE_RIGHTS_REVIEW = "documents.source_rights.review"
+PERMISSION_DOCUMENT_INGESTION_START = "documents.ingestion.start"
+PERMISSION_DOCUMENT_INGESTION_READ = "documents.ingestion.read"
 PERMISSION_LEARNING_ENROLLMENTS_MANAGE = "learning.enrollments.manage"
 PERMISSION_LEARNING_PLAYBACK_READ = "learning.playback.read"
 FIXED_PERMISSIONS = {
@@ -67,6 +69,8 @@ FIXED_PERMISSIONS = {
     PERMISSION_DOCUMENT_SOURCES_ADMIT: "Declare and upload private PDF sources",
     PERMISSION_DOCUMENT_SOURCES_CANCEL: "Cancel tenant source admissions",
     PERMISSION_DOCUMENT_SOURCE_RIGHTS_REVIEW: "Review operation-scoped source rights",
+    PERMISSION_DOCUMENT_INGESTION_START: "Start parser-backed source ingestion",
+    PERMISSION_DOCUMENT_INGESTION_READ: ("Read source ingestion status and normalized evidence"),
     PERMISSION_LEARNING_ENROLLMENTS_MANAGE: "Create and revoke manual learner enrollments",
     PERMISSION_LEARNING_PLAYBACK_READ: "Read own enrolled courses and record progress",
 }
@@ -90,6 +94,8 @@ ROLE_PERMISSION_CODES = {
                 PERMISSION_DOCUMENT_SOURCES_READ,
                 PERMISSION_DOCUMENT_SOURCES_ADMIT,
                 PERMISSION_DOCUMENT_SOURCES_CANCEL,
+                PERMISSION_DOCUMENT_INGESTION_START,
+                PERMISSION_DOCUMENT_INGESTION_READ,
             )
         )
     ),

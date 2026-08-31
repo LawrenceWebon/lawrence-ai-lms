@@ -31,6 +31,20 @@ AdmissionStatus = Literal[
 UploadIntentStatus = Literal["active", "consumed", "expired", "cancelled"]
 RemovalStatus = Literal["not_required", "pending", "completed", "failed"]
 CancellationReason = Literal["USER_CANCELLED", "SOURCE_REPLACED"]
+SourceOperation = Literal["store", "extract", "ocr", "generate"]
+RequestedSourceOperation = Literal["extract", "ocr", "generate"]
+IngestionStatus = Literal[
+    "queued",
+    "claimed",
+    "extracting",
+    "normalizing",
+    "quality_check",
+    "ready_for_generation",
+    "retryable",
+    "failed",
+    "cancelled",
+    "rights_blocked",
+]
 AdmissionRejectionCode = Literal[
     "RIGHTS_AUTHORIZATION_DENIED",
     "PDF_SIGNATURE_MISMATCH",
@@ -151,6 +165,10 @@ class ReviewSourceStoreAuthorizationV1(StrictSchema):
         return self
 
 
+class ReviewSourceOperationAuthorizationV1(ReviewSourceStoreAuthorizationV1):
+    pass
+
+
 class CancelSourceAdmissionV1(StrictSchema):
     expected_source_version_row_version: int = Field(ge=1, strict=True)
     reason_code: CancellationReason
@@ -229,6 +247,63 @@ class SourceUseAuthorizationV1(StrictSchema):
 
     _from_timezone = field_validator("valid_from")(_require_timezone)
     _until_timezone = field_validator("valid_until")(_require_timezone)
+
+
+class SourceOperationAuthorizationV1(StrictSchema):
+    id: UUID
+    tenant_id: UUID
+    source_document_id: UUID
+    source_version_id: UUID
+    rights_declaration_id: UUID
+    operation: SourceOperation
+    status: AuthorizationStatus
+    requested_by_actor_id: UUID
+    reviewed_by_actor_id: UUID | None
+    decision_code: str | None = Field(max_length=80)
+    valid_from: datetime | None
+    valid_until: datetime | None
+    row_version: int = Field(ge=1, strict=True)
+
+    _from_timezone = field_validator("valid_from")(_require_timezone)
+    _until_timezone = field_validator("valid_until")(_require_timezone)
+
+
+class DocumentIngestionRunV1(StrictSchema):
+    id: UUID
+    tenant_id: UUID
+    source_document_id: UUID
+    source_version_id: UUID
+    status: IngestionStatus
+    parser_version: str = Field(min_length=1, max_length=80)
+    configuration_version: str = Field(min_length=1, max_length=64)
+    locale: Literal["en"]
+    attempt_count: int = Field(ge=0, le=10, strict=True)
+    max_attempts: int = Field(ge=1, le=10, strict=True)
+    checkpoint: str = Field(min_length=1, max_length=64)
+    input_manifest_sha256: Sha256
+    output_manifest_sha256: Sha256 | None
+    reason_code: str | None = Field(max_length=80)
+    quality_summary: dict[str, object]
+    row_version: int = Field(ge=1, strict=True)
+    created_at: datetime
+    updated_at: datetime
+
+    _created_timezone = field_validator("created_at")(_require_timezone)
+    _updated_timezone = field_validator("updated_at")(_require_timezone)
+
+    @model_validator(mode="after")
+    def require_terminal_evidence_shape(self) -> Self:
+        if self.attempt_count > self.max_attempts:
+            raise ValueError("attempt_count exceeds max_attempts")
+        if self.status == "ready_for_generation":
+            if self.output_manifest_sha256 is None or self.reason_code is not None:
+                raise ValueError("ready ingestion requires only an output manifest")
+        elif self.status in {"retryable", "failed", "rights_blocked"}:
+            if self.reason_code is None:
+                raise ValueError("failed ingestion state requires a reason")
+        elif self.output_manifest_sha256 is not None:
+            raise ValueError("non-ready ingestion cannot expose an output manifest")
+        return self
 
 
 class UploadIntentSummaryV1(StrictSchema):
@@ -398,4 +473,56 @@ class SourceAdmissionServiceV1(Protocol):
         source_version_id: UUID,
         command: CancelSourceAdmissionV1,
         idempotency_key: str,
+    ) -> object: ...
+
+    def list_operation_authorizations(
+        self,
+        *,
+        actor_id: UUID,
+        tenant_id: UUID,
+        source_document_id: UUID,
+        source_version_id: UUID,
+    ) -> object: ...
+
+    def request_operation_authorization(
+        self,
+        *,
+        actor_id: UUID,
+        tenant_id: UUID,
+        source_document_id: UUID,
+        source_version_id: UUID,
+        operation: RequestedSourceOperation,
+        idempotency_key: str,
+    ) -> object: ...
+
+    def review_operation_authorization(
+        self,
+        *,
+        actor_id: UUID,
+        tenant_id: UUID,
+        source_document_id: UUID,
+        source_version_id: UUID,
+        operation: RequestedSourceOperation,
+        command: ReviewSourceOperationAuthorizationV1,
+        idempotency_key: str,
+    ) -> object: ...
+
+    def start_ingestion(
+        self,
+        *,
+        actor_id: UUID,
+        tenant_id: UUID,
+        source_document_id: UUID,
+        source_version_id: UUID,
+        idempotency_key: str,
+    ) -> object: ...
+
+    def get_ingestion(
+        self,
+        *,
+        actor_id: UUID,
+        tenant_id: UUID,
+        source_document_id: UUID,
+        source_version_id: UUID,
+        run_id: UUID,
     ) -> object: ...

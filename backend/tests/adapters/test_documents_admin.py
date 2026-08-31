@@ -13,6 +13,7 @@ from lms.adapters.admin.documents import (
 from lms.api.schemas.documents import (
     CancelSourceAdmissionV1,
     CreateSourceAdmissionV1,
+    ReviewSourceOperationAuthorizationV1,
     ReviewSourceStoreAuthorizationV1,
     SourceAdmissionContractError,
 )
@@ -21,6 +22,7 @@ from tests.contract_fakes.f003_source_admission import (
     ALPHA_TENANT_ID,
     AUTHORIZATION_ID,
     IDEMPOTENCY_KEY,
+    INGESTION_RUN_ID,
     OPAQUE_TOKEN,
     SOURCE_DOCUMENT_ID,
     SOURCE_VERSION_ID,
@@ -76,6 +78,40 @@ def test_admin_delegates_all_human_and_upload_operations_to_shared_service() -> 
         request=CancelSourceAdmissionV1.model_validate(examples["CancelSourceAdmissionV1"]),
         idempotency_key=IDEMPOTENCY_KEY,
     )
+    actions.list_operation_authorizations(
+        context=context(),
+        source_document_id=SOURCE_DOCUMENT_ID,
+        source_version_id=SOURCE_VERSION_ID,
+    )
+    actions.request_operation_authorization(
+        context=context(),
+        source_document_id=SOURCE_DOCUMENT_ID,
+        source_version_id=SOURCE_VERSION_ID,
+        operation="extract",
+        idempotency_key=IDEMPOTENCY_KEY,
+    )
+    actions.review_operation_authorization(
+        context=context(),
+        source_document_id=SOURCE_DOCUMENT_ID,
+        source_version_id=SOURCE_VERSION_ID,
+        operation="extract",
+        request=ReviewSourceOperationAuthorizationV1.model_validate(
+            examples["ReviewSourceStoreAuthorizationV1"]
+        ),
+        idempotency_key=IDEMPOTENCY_KEY,
+    )
+    actions.start_ingestion(
+        context=context(),
+        source_document_id=SOURCE_DOCUMENT_ID,
+        source_version_id=SOURCE_VERSION_ID,
+        idempotency_key=IDEMPOTENCY_KEY,
+    )
+    actions.get_ingestion(
+        context=context(),
+        source_document_id=SOURCE_DOCUMENT_ID,
+        source_version_id=SOURCE_VERSION_ID,
+        run_id=INGESTION_RUN_ID,
+    )
 
     assert [call.operation for call in service.calls] == [
         "create_admission",
@@ -84,6 +120,11 @@ def test_admin_delegates_all_human_and_upload_operations_to_shared_service() -> 
         "upload_to_intent",
         "get_admission",
         "cancel_admission",
+        "list_operation_authorizations",
+        "request_operation_authorization",
+        "review_operation_authorization",
+        "start_ingestion",
+        "get_ingestion",
     ]
     assert all(
         call.tenant_id == ALPHA_TENANT_ID and call.actor_id == ACTOR_ID

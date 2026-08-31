@@ -10,10 +10,13 @@ from django.db import close_old_connections
 from lms.api.schemas.documents import (
     CancelSourceAdmissionV1,
     CreateSourceAdmissionV1,
+    RequestedSourceOperation,
+    ReviewSourceOperationAuthorizationV1,
     ReviewSourceStoreAuthorizationV1,
     SourceAdmissionContractError,
 )
 from lms.modules.documents.errors import SourceAdmissionError
+from lms.modules.documents.ingestion import DocumentIngestionService
 from lms.modules.documents.inspector import LocalPdfInspector
 from lms.modules.documents.services import SourceAdmissionService
 from lms.modules.documents.storage import LocalQuarantineStorage
@@ -53,10 +56,12 @@ class DjangoSourceAdmissionService:
         inspector: LocalPdfInspector | None = None,
     ) -> None:
         quarantine_root = Path(settings.AI_LMS_LOCAL_QUARANTINE_ROOT)
+        resolved_storage = storage or LocalQuarantineStorage(quarantine_root)
         self._service = SourceAdmissionService(
-            storage=storage or LocalQuarantineStorage(quarantine_root),
+            storage=resolved_storage,
             inspector=inspector or LocalPdfInspector(),
         )
+        self._ingestion = DocumentIngestionService(storage=resolved_storage)
 
     def create_admission(
         self,
@@ -188,6 +193,124 @@ class DjangoSourceAdmissionService:
                     reason_code=command.reason_code,
                 ),
                 idempotency_key=idempotency_key,
+            )
+        )
+
+    def list_operation_authorizations(
+        self,
+        *,
+        actor_id: UUID,
+        tenant_id: UUID,
+        source_document_id: UUID,
+        source_version_id: UUID,
+    ) -> object:
+        return _translate(
+            lambda: self._service.list_operation_authorizations(
+                actor_id=actor_id,
+                tenant_id=tenant_id,
+                source_document_id=source_document_id,
+                source_version_id=source_version_id,
+            )
+        )
+
+    def request_operation_authorization(
+        self,
+        *,
+        actor_id: UUID,
+        tenant_id: UUID,
+        source_document_id: UUID,
+        source_version_id: UUID,
+        operation: RequestedSourceOperation,
+        idempotency_key: str,
+    ) -> object:
+        return _translate(
+            lambda: self._service.request_operation_authorization(
+                actor_id=actor_id,
+                tenant_id=tenant_id,
+                source_document_id=source_document_id,
+                source_version_id=source_version_id,
+                operation=operation,
+                idempotency_key=idempotency_key,
+            )
+        )
+
+    def review_operation_authorization(
+        self,
+        *,
+        actor_id: UUID,
+        tenant_id: UUID,
+        source_document_id: UUID,
+        source_version_id: UUID,
+        operation: RequestedSourceOperation,
+        command: ReviewSourceOperationAuthorizationV1,
+        idempotency_key: str,
+    ) -> object:
+        return _translate(
+            lambda: self._service.review_operation_authorization(
+                actor_id=actor_id,
+                tenant_id=tenant_id,
+                source_document_id=source_document_id,
+                source_version_id=source_version_id,
+                operation=operation,
+                command=ReviewAuthorizationCommand(
+                    decision=command.decision,
+                    expected_authorization_row_version=(command.expected_authorization_row_version),
+                    decision_code=command.decision_code,
+                ),
+                idempotency_key=idempotency_key,
+            )
+        )
+
+    def start_ingestion(
+        self,
+        *,
+        actor_id: UUID,
+        tenant_id: UUID,
+        source_document_id: UUID,
+        source_version_id: UUID,
+        idempotency_key: str,
+    ) -> object:
+        return _translate(
+            lambda: self._ingestion.start_ingestion(
+                actor_id=actor_id,
+                tenant_id=tenant_id,
+                source_document_id=source_document_id,
+                source_version_id=source_version_id,
+                idempotency_key=idempotency_key,
+            )
+        )
+
+    def get_ingestion(
+        self,
+        *,
+        actor_id: UUID,
+        tenant_id: UUID,
+        source_document_id: UUID,
+        source_version_id: UUID,
+        run_id: UUID,
+    ) -> object:
+        return _translate(
+            lambda: self._ingestion.get_ingestion(
+                actor_id=actor_id,
+                tenant_id=tenant_id,
+                source_document_id=source_document_id,
+                source_version_id=source_version_id,
+                run_id=run_id,
+            )
+        )
+
+    def run_ingestion(
+        self,
+        *,
+        tenant_id: UUID,
+        run_id: UUID,
+        worker_id: str,
+    ) -> object:
+        return _translate(
+            lambda: self._ingestion.run_ingestion(
+                tenant_id=tenant_id,
+                run_id=run_id,
+                worker_id=worker_id,
             )
         )
 

@@ -1227,6 +1227,153 @@
         "title": "DashboardCardV1",
         "type": "object"
       },
+      "DocumentIngestionRunV1": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt_count": {
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Attempt Count",
+            "type": "integer"
+          },
+          "checkpoint": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Checkpoint",
+            "type": "string"
+          },
+          "configuration_version": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Configuration Version",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "input_manifest_sha256": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Input Manifest Sha256",
+            "type": "string"
+          },
+          "locale": {
+            "const": "en",
+            "title": "Locale",
+            "type": "string"
+          },
+          "max_attempts": {
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Max Attempts",
+            "type": "integer"
+          },
+          "output_manifest_sha256": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Manifest Sha256"
+          },
+          "parser_version": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Parser Version",
+            "type": "string"
+          },
+          "quality_summary": {
+            "additionalProperties": true,
+            "title": "Quality Summary",
+            "type": "object"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
+          },
+          "row_version": {
+            "minimum": 1.0,
+            "title": "Row Version",
+            "type": "integer"
+          },
+          "source_document_id": {
+            "format": "uuid",
+            "title": "Source Document Id",
+            "type": "string"
+          },
+          "source_version_id": {
+            "format": "uuid",
+            "title": "Source Version Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "claimed",
+              "extracting",
+              "normalizing",
+              "quality_check",
+              "ready_for_generation",
+              "retryable",
+              "failed",
+              "cancelled",
+              "rights_blocked"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "source_document_id",
+          "source_version_id",
+          "status",
+          "parser_version",
+          "configuration_version",
+          "locale",
+          "attempt_count",
+          "max_attempts",
+          "checkpoint",
+          "input_manifest_sha256",
+          "output_manifest_sha256",
+          "reason_code",
+          "quality_summary",
+          "row_version",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "DocumentIngestionRunV1",
+        "type": "object"
+      },
       "EnrollmentV1": {
         "additionalProperties": false,
         "properties": {
@@ -2238,6 +2385,41 @@
         "title": "ReplaceCurriculumV1",
         "type": "object"
       },
+      "ReviewSourceOperationAuthorizationV1": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "enum": [
+              "activate",
+              "deny",
+              "revoke"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "decision_code": {
+            "enum": [
+              "RIGHTS_EVIDENCE_ACCEPTED",
+              "RIGHTS_EVIDENCE_INSUFFICIENT",
+              "RIGHTS_REVOKED"
+            ],
+            "title": "Decision Code",
+            "type": "string"
+          },
+          "expected_authorization_row_version": {
+            "minimum": 1.0,
+            "title": "Expected Authorization Row Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "decision",
+          "expected_authorization_row_version",
+          "decision_code"
+        ],
+        "title": "ReviewSourceOperationAuthorizationV1",
+        "type": "object"
+      },
       "ReviewSourceStoreAuthorizationV1": {
         "additionalProperties": false,
         "properties": {
@@ -2572,6 +2754,133 @@
           "row_version"
         ],
         "title": "SourceDocumentV1",
+        "type": "object"
+      },
+      "SourceOperationAuthorizationV1": {
+        "additionalProperties": false,
+        "properties": {
+          "decision_code": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Code"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "operation": {
+            "enum": [
+              "store",
+              "extract",
+              "ocr",
+              "generate"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "requested_by_actor_id": {
+            "format": "uuid",
+            "title": "Requested By Actor Id",
+            "type": "string"
+          },
+          "reviewed_by_actor_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed By Actor Id"
+          },
+          "rights_declaration_id": {
+            "format": "uuid",
+            "title": "Rights Declaration Id",
+            "type": "string"
+          },
+          "row_version": {
+            "minimum": 1.0,
+            "title": "Row Version",
+            "type": "integer"
+          },
+          "source_document_id": {
+            "format": "uuid",
+            "title": "Source Document Id",
+            "type": "string"
+          },
+          "source_version_id": {
+            "format": "uuid",
+            "title": "Source Version Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "requested",
+              "active",
+              "denied",
+              "revoked",
+              "expired",
+              "disputed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "valid_from": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid From"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "source_document_id",
+          "source_version_id",
+          "rights_declaration_id",
+          "operation",
+          "status",
+          "requested_by_actor_id",
+          "reviewed_by_actor_id",
+          "decision_code",
+          "valid_from",
+          "valid_until",
+          "row_version"
+        ],
+        "title": "SourceOperationAuthorizationV1",
         "type": "object"
       },
       "SourceUseAuthorizationV1": {
@@ -8487,6 +8796,593 @@
         "summary": "Get Source Admission"
       }
     },
+    "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/authorizations": {
+      "get": {
+        "operationId": "listSourceOperationAuthorizations",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "X-Tenant-Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SourceOperationAuthorizationV1"
+                  },
+                  "title": "Response Listsourceoperationauthorizations",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          }
+        },
+        "summary": "List Source Operation Authorizations"
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/authorizations/{operation}": {
+      "post": {
+        "operationId": "requestSourceOperationAuthorization",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "operation",
+            "required": true,
+            "schema": {
+              "enum": [
+                "extract",
+                "ocr",
+                "generate"
+              ],
+              "title": "Operation",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "X-Tenant-Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceOperationAuthorizationV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          }
+        },
+        "summary": "Request Source Operation Authorization"
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/authorizations/{operation}/review": {
+      "post": {
+        "operationId": "reviewSourceOperationAuthorization",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "operation",
+            "required": true,
+            "schema": {
+              "enum": [
+                "extract",
+                "ocr",
+                "generate"
+              ],
+              "title": "Operation",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "X-Tenant-Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewSourceOperationAuthorizationV1"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceOperationAuthorizationV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          }
+        },
+        "summary": "Review Source Operation Authorization"
+      }
+    },
     "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/cancel": {
       "post": {
         "operationId": "cancelSourceAdmission",
@@ -8687,6 +9583,369 @@
           }
         },
         "summary": "Cancel Source Admission"
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/ingestion-runs": {
+      "post": {
+        "operationId": "startDocumentIngestion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "X-Tenant-Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentIngestionRunV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          }
+        },
+        "summary": "Start Document Ingestion"
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/ingestion-runs/{run_id}": {
+      "get": {
+        "operationId": "getDocumentIngestion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "X-Tenant-Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentIngestionRunV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          }
+        },
+        "summary": "Get Document Ingestion"
       }
     },
     "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/rights-authorizations/{authorization_id}/decisions": {

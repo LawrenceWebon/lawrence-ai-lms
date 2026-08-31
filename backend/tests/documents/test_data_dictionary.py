@@ -15,9 +15,26 @@ DOCUMENT_TABLES = (
     ("app", "source_use_authorizations"),
     ("app", "source_upload_intents"),
     ("app", "source_storage_objects"),
+    ("app", "source_artifacts"),
+    ("app", "document_pages"),
+    ("app", "document_elements"),
+    ("app", "document_sections"),
+    ("app", "document_section_elements"),
     ("integration", "document_jobs"),
     ("integration", "document_job_attempts"),
+    ("integration", "document_ingestion_runs"),
+    ("integration", "document_ingestion_attempts"),
 )
+
+INGESTION_TABLES = {
+    "source_artifacts",
+    "document_pages",
+    "document_elements",
+    "document_sections",
+    "document_section_elements",
+    "document_ingestion_runs",
+    "document_ingestion_attempts",
+}
 
 
 def database_fingerprint() -> str:
@@ -119,11 +136,19 @@ def test_document_dictionary_has_a_reproducible_fingerprint() -> None:
     assert {(item["schema"], item["table"]) for item in dictionary["objects"]} == set(
         DOCUMENT_TABLES
     )
-    assert all(item["migration"] == "documents.0001_initial" for item in dictionary["objects"])
-    assert all(
-        item["security_migration"] == "documents.0002_document_security"
-        for item in dictionary["objects"]
-    )
+    for item in dictionary["objects"]:
+        expected_migration = (
+            "documents.0003_ingestion_schema"
+            if item["table"] in INGESTION_TABLES
+            else "documents.0001_initial"
+        )
+        expected_security = (
+            "documents.0005_ingestion_security"
+            if item["table"] in INGESTION_TABLES or item["table"] == "source_use_authorizations"
+            else "documents.0002_document_security"
+        )
+        assert item["migration"] == expected_migration
+        assert item["security_migration"] == expected_security
 
 
 @pytest.mark.django_db
@@ -153,9 +178,23 @@ def test_catalog_contains_named_tenant_edges_checks_and_active_intent_guard() ->
         "fk_document_jobs_same_tenant_version",
         "fk_document_jobs_same_tenant_object",
         "fk_document_attempts_same_tenant_job",
+        "fk_ingestion_runs_same_tenant_document",
+        "fk_ingestion_runs_same_tenant_version",
+        "fk_ingestion_runs_same_tenant_object",
+        "fk_ingestion_runs_same_tenant_authorization",
+        "fk_ingestion_attempts_same_tenant_run",
+        "fk_source_artifacts_same_tenant_run",
+        "fk_document_pages_same_tenant_run",
+        "fk_document_elements_same_tenant_page",
+        "fk_document_sections_same_tenant_run",
+        "fk_section_elements_same_tenant_section",
+        "fk_section_elements_same_tenant_element",
         "ck_source_versions_admitted_evidence",
         "ck_document_jobs_attempt_bounds",
+        "ck_ingestion_runs_lease_shape",
+        "ck_ingestion_runs_result_shape",
         "uq_source_intents_active_version",
+        "uq_ingestion_runs_active_version",
     }
     with connection.cursor() as cursor:
         cursor.execute(
@@ -171,8 +210,15 @@ def test_catalog_contains_named_tenant_edges_checks_and_active_intent_guard() ->
                 ('app', 'source_use_authorizations'),
                 ('app', 'source_upload_intents'),
                 ('app', 'source_storage_objects'),
+                ('app', 'source_artifacts'),
+                ('app', 'document_pages'),
+                ('app', 'document_elements'),
+                ('app', 'document_sections'),
+                ('app', 'document_section_elements'),
                 ('integration', 'document_jobs'),
-                ('integration', 'document_job_attempts')
+                ('integration', 'document_job_attempts'),
+                ('integration', 'document_ingestion_runs'),
+                ('integration', 'document_ingestion_attempts')
              )
             """
         )
@@ -181,7 +227,10 @@ def test_catalog_contains_named_tenant_edges_checks_and_active_intent_guard() ->
             """
             SELECT indexname
               FROM pg_indexes
-             WHERE schemaname = 'app' AND tablename = 'source_upload_intents'
+             WHERE (schemaname, tablename) IN (
+                ('app', 'source_upload_intents'),
+                ('integration', 'document_ingestion_runs')
+             )
             """
         )
         indexes = {row[0] for row in cursor.fetchall()}

@@ -43,6 +43,19 @@ export type SourceAuthorizationStatus =
   | "revoked"
   | "expired"
   | "disputed";
+export type SourceOperation = "store" | "extract" | "ocr" | "generate";
+export type RequestedSourceOperation = "extract" | "ocr" | "generate";
+export type IngestionStatus =
+  | "queued"
+  | "claimed"
+  | "extracting"
+  | "normalizing"
+  | "quality_check"
+  | "ready_for_generation"
+  | "retryable"
+  | "failed"
+  | "cancelled"
+  | "rights_blocked";
 export type UploadIntentStatus = "active" | "consumed" | "expired" | "cancelled";
 export type EnrollmentStatus = "active" | "revoked";
 export type ProgressState = "not_started" | "in_progress" | "completed";
@@ -137,6 +150,26 @@ export interface paths {
   "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/upload-intents": {
     parameters: EmptyParameters;
     post: operations["createSourceUploadIntent"];
+  };
+  "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/authorizations": {
+    parameters: EmptyParameters;
+    get: operations["listSourceOperationAuthorizations"];
+  };
+  "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/authorizations/{operation}": {
+    parameters: EmptyParameters;
+    post: operations["requestSourceOperationAuthorization"];
+  };
+  "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/authorizations/{operation}/review": {
+    parameters: EmptyParameters;
+    post: operations["reviewSourceOperationAuthorization"];
+  };
+  "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/ingestion-runs": {
+    parameters: EmptyParameters;
+    post: operations["startDocumentIngestion"];
+  };
+  "/api/v1/tenants/{tenant_id}/source-documents/{source_document_id}/versions/{source_version_id}/ingestion-runs/{run_id}": {
+    parameters: EmptyParameters;
+    get: operations["getDocumentIngestion"];
   };
   "/api/v1/source-upload-targets/{opaque_token}": {
     parameters: EmptyParameters;
@@ -567,6 +600,14 @@ export interface components {
         | "RIGHTS_EVIDENCE_INSUFFICIENT"
         | "RIGHTS_REVOKED";
     };
+    ReviewSourceOperationAuthorizationV1: {
+      decision: "activate" | "deny" | "revoke";
+      expected_authorization_row_version: number;
+      decision_code:
+        | "RIGHTS_EVIDENCE_ACCEPTED"
+        | "RIGHTS_EVIDENCE_INSUFFICIENT"
+        | "RIGHTS_REVOKED";
+    };
     CancelSourceAdmissionV1: {
       expected_source_version_row_version: number;
       reason_code: "USER_CANCELLED" | "SOURCE_REPLACED";
@@ -626,6 +667,41 @@ export interface components {
       valid_from: string | null;
       valid_until: string | null;
       row_version: number;
+    };
+    SourceOperationAuthorizationV1: {
+      id: string;
+      tenant_id: string;
+      source_document_id: string;
+      source_version_id: string;
+      rights_declaration_id: string;
+      operation: SourceOperation;
+      status: SourceAuthorizationStatus;
+      requested_by_actor_id: string;
+      reviewed_by_actor_id: string | null;
+      decision_code: string | null;
+      valid_from: string | null;
+      valid_until: string | null;
+      row_version: number;
+    };
+    DocumentIngestionRunV1: {
+      id: string;
+      tenant_id: string;
+      source_document_id: string;
+      source_version_id: string;
+      status: IngestionStatus;
+      parser_version: string;
+      configuration_version: string;
+      locale: "en";
+      attempt_count: number;
+      max_attempts: number;
+      checkpoint: string;
+      input_manifest_sha256: string;
+      output_manifest_sha256: string | null;
+      reason_code: string | null;
+      quality_summary: Record<string, unknown>;
+      row_version: number;
+      created_at: string;
+      updated_at: string;
     };
     UploadIntentSummaryV1: {
       id: string;
@@ -934,6 +1010,54 @@ export interface operations {
     requestBody: JsonRequest<components["schemas"]["CancelSourceAdmissionV1"]>;
     responses: SourceSnapshotResponses;
   };
+  listSourceOperationAuthorizations: {
+    parameters: SourceVersionParameters;
+    requestBody?: never;
+    responses: {
+      200: JsonResponse<components["schemas"]["SourceOperationAuthorizationV1"][]>;
+      400: ProblemResponse;
+      401: ProblemResponse;
+      403: ProblemResponse;
+      404: ProblemResponse;
+      500: ProblemResponse;
+    };
+  };
+  requestSourceOperationAuthorization: {
+    parameters: SourceOperationCommandParameters;
+    requestBody?: never;
+    responses: SourceOperationAuthorizationResponses;
+  };
+  reviewSourceOperationAuthorization: {
+    parameters: SourceOperationCommandParameters;
+    requestBody: JsonRequest<components["schemas"]["ReviewSourceOperationAuthorizationV1"]>;
+    responses: SourceOperationAuthorizationResponses;
+  };
+  startDocumentIngestion: {
+    parameters: SourceVersionCommandParameters;
+    requestBody?: never;
+    responses: {
+      202: JsonResponse<components["schemas"]["DocumentIngestionRunV1"]>;
+      400: ProblemResponse;
+      401: ProblemResponse;
+      403: ProblemResponse;
+      404: ProblemResponse;
+      409: ProblemResponse;
+      422: ProblemResponse;
+      500: ProblemResponse;
+    };
+  };
+  getDocumentIngestion: {
+    parameters: DocumentIngestionParameters;
+    requestBody?: never;
+    responses: {
+      200: JsonResponse<components["schemas"]["DocumentIngestionRunV1"]>;
+      400: ProblemResponse;
+      401: ProblemResponse;
+      403: ProblemResponse;
+      404: ProblemResponse;
+      500: ProblemResponse;
+    };
+  };
 }
 
 type EmptyParameters = {
@@ -1056,6 +1180,22 @@ type SourceVersionCommandParameters = Omit<SourceVersionParameters, "header"> & 
 };
 type SourceAuthorizationCommandParameters = Omit<SourceVersionCommandParameters, "path"> & {
   path: SourceVersionParameters["path"] & { authorization_id: string };
+};
+type SourceOperationCommandParameters = Omit<SourceVersionCommandParameters, "path"> & {
+  path: SourceVersionParameters["path"] & { operation: RequestedSourceOperation };
+};
+type DocumentIngestionParameters = Omit<SourceVersionParameters, "path"> & {
+  path: SourceVersionParameters["path"] & { run_id: string };
+};
+type SourceOperationAuthorizationResponses = {
+  200: JsonResponse<components["schemas"]["SourceOperationAuthorizationV1"]>;
+  400: ProblemResponse;
+  401: ProblemResponse;
+  403: ProblemResponse;
+  404: ProblemResponse;
+  409: ProblemResponse;
+  422: ProblemResponse;
+  500: ProblemResponse;
 };
 type SourceSnapshotResponses = {
   200: JsonResponse<components["schemas"]["SourceAdmissionV1"]>;
