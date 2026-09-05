@@ -56,3 +56,7 @@ checks, independent review, release, deployment, retention/recovery, provider, a
 production gates remain pending or blocked. The
 [F-003 planning review correction](f003-planning-review-correction.md) remains a
 governance record rather than implementation or release evidence.
+
+The [backend MVP completion record](backend-mvp-completion.md) tracks PR #64's
+local extraction, generation, human canonicalization, and backend integration
+candidate, including its outstanding PR #59 dependency and verification status.

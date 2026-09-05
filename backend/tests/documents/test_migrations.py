@@ -8,6 +8,7 @@ from django.db.migrations.executor import MigrationExecutor
 @pytest.mark.django_db(transaction=True)
 def test_document_migrations_reverse_and_roll_forward() -> None:
     executor = MigrationExecutor(connection)
+    targets = executor.loader.graph.leaf_nodes()
     try:
         executor.migrate([("documents", None)])
         with connection.cursor() as cursor:
@@ -38,4 +39,4 @@ def test_document_migrations_reverse_and_roll_forward() -> None:
             ]
     finally:
         executor = MigrationExecutor(connection)
-        executor.migrate([("documents", "0005_ingestion_security")])
+        executor.migrate(targets)
