@@ -1,6 +1,6 @@
 # Readiness Audit — F-003 PDF Source Admission
 
-Status: **IMPLEMENTATION CANDIDATE VERIFIED LOCALLY — PR REVIEW/CHECKS PENDING**
+Status: **IMPLEMENTATION MERGED — POST-MERGE AUDIT CHANGES REQUIRED; #61 BLOCKS F-004**
 
 - [x] F-003 remains inside the focused PDF-to-course MVP and has no expanded source
   format, OCR, provider, or production scope.
@@ -50,18 +50,23 @@ Status: **IMPLEMENTATION CANDIDATE VERIFIED LOCALLY — PR REVIEW/CHECKS PENDING
   passed the focused, full non-RLS, production-role RLS, migration, OpenAPI/client,
   build, F-001/F-002/F-003 browser, architecture, lint, and type gates recorded in the
   [implementation evidence](../../evidence/f003-source-admission-implementation.md).
-- [ ] The exact final PR head has passed protected checks and received an independent
-  exact-SHA review plus distinct authorized approval.
+- [x] PR #56 merged exact head
+  `ecbac896157fe157973f5116da91366cdacb8304` as
+  `ed4670e6fa765d3edfb84610a450bef371a653ca`; its configured protected checks passed,
+  but GitHub records no submitted review or distinct pre-merge approval.
+- [x] An independent post-merge audit reproduced a marker-shaped 90-byte pseudo-PDF
+  being admitted with `parser_accepted=True` without a real PDF parser and returned
+  `CHANGES REQUIRED` on the exact merged head.
+- [ ] #61 freezes the parser-backed boundary and its follow-up implementation
+  remediation is independently reviewed and merged.
 
 ## Verdict
 
-The audit performed the missing review and rejected ratification of #44's contradictory
-contract. Correction #51 addressed every blocking finding while retaining the
-historical fact that PR #53's merge did not retroactively satisfy its final-head review
-or distinct-approval gate. The project owner then issued a narrow disposition that
-authorized #43 to start after PR #55; the application candidate is now locally verified.
-This is not an approval or merge verdict: protected checks and independent review of
-the exact final PR head remain required.
+PR #56 is merged and its configured checks passed, but merge did not predetermine the
+independent audit result. The post-merge audit found that marker/regex inspection can
+report parser acceptance for structurally invalid pseudo-PDF bytes. F-003 therefore
+remains implemented but not a clean dependency for F-004. Issue #61 must freeze and
+launch a parser-backed fail-closed correction with RED-to-GREEN evidence.
 
 ## Known limitations and blocked gates
 
@@ -73,6 +78,8 @@ the exact final PR head remain required.
 - F-004 owns extraction/OCR, normalized source structure, and its quality thresholds;
   F-005 owns generation/provider/evaluation; F-006 owns generated-draft review;
   F-007 owns learner access.
+- F-004 planning may continue only as non-implementing contract work; F-004
+  implementation cannot start until #61 and its follow-up remediation merge cleanly.
 - The exception applies only to PR #44's historical ordering defect. PR #53's head
   changed after its `851d8fbb...` review and merged at `57bb2692...`; the owner
   disposition closes only #43's launch hold and waives no future approval.

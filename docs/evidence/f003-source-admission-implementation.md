@@ -1,6 +1,6 @@
 # F-003 Local Source-Admission Implementation Evidence
 
-Status: **local implementation candidate verified; protected PR checks and independent review pending**
+Status: **implementation merged; independent post-merge audit returned CHANGES REQUIRED; #61 pending**
 
 - Evidence ID: `F003-LOCAL-IMPLEMENTATION-2026-08-22`
 - Classification: internal, synthetic/local-only implementation evidence
@@ -113,6 +113,7 @@ Additional reproducibility identities:
   synthetic slice. They are not marked passed.
 - No external provider, network document service, real document, production data,
   credential, deployment, release, or production mutation was used.
-- Protected GitHub checks, an independent exact-head review, a distinct authorized
-  approval, and merge are pending. The implementation producer must not approve or
-  merge its own PR.
+- PR #56 merged with configured checks green. Its independent post-merge audit proved
+  that a 90-byte marker-shaped pseudo-PDF is admitted with `parser_accepted=True`
+  without a real parser. This local evidence therefore does not satisfy parser-backed
+  fail-closed admission; remediation #61 is required before F-004 implementation.

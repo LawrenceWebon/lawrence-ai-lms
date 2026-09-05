@@ -1,6 +1,6 @@
 # F-003 — PDF Source Admission
 
-Status: **local implementation candidate complete; independent review and protected PR checks pending**
+Status: **implementation merged; independent post-merge audit requires parser-backed remediation #61**
 
 Feature ID: `F-003`
 Planning issue: [#42](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/42)

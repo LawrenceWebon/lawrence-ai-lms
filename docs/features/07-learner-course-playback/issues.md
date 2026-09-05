@@ -11,7 +11,8 @@ recorded the narrow launch disposition required for #46 to start.
 |---|---|---|
 | Initial planning | [#45](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/45) — private enrollment, version-pinned playback, and explicit progress | merged in PR #47 |
 | Decision correction | [#50](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/50) — freeze P-014 and F007-Q01–Q04 | merged in PR #52; distinct approval was not recorded |
-| Implementation | [#46](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/46) — one vertical learner playback/progress slice | local candidate at `dd758909e3060032ecbe28f8175d3849a4c26208`; draft PR, protected checks, and independent review pending |
+| Implementation | [#46](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/46) — one vertical learner playback/progress slice | merged in PR #57; post-merge audit returned `CHANGES REQUIRED` |
+| Remediation | [#60](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/60) — deny learner enrollment revocation through RLS | ready after workflow reconciliation #59; required before F-008 |
 
 The contract contains no remaining product decision hidden behind implementation.
 PR #52 merged as `eb0fb3e808c37073e99625609c1338ce4b1ce51e`; its reviewed head has
@@ -26,10 +27,13 @@ retroactive approval.
 project, PostgreSQL port, and host scratch child. Its application candidate is
 `dd758909e3060032ecbe28f8175d3849a4c26208`, with results in the
 [local implementation evidence](../../evidence/f007-learner-playback-implementation.md).
-Protected checks, independent exact-head review, distinct authorized approval, and
-merge remain pending.
+PR #57 later merged at exact head `843d34b168f7cb0b140f7663e775585c80b35cfd` as
+`7c891c30d5281ed40eab592aa2ab4d14c0c83a33`; configured checks passed. The independent
+[post-merge audit](https://github.com/LawrenceWebon/lawrence-ai-lms/pull/57#issuecomment-5384244065)
+returned `CHANGES REQUIRED` after proving learner-runtime self-revocation. #60 owns the
+narrow forward RLS correction.
 
 The authoritative owned paths, tests, dependencies, non-goals, shared-hotspot owner,
-and merge order are in `implementation-plan.md`. The active task resources must be
-preserved until GitHub reports the implementation PR merged or the project owner
-explicitly abandons it.
+and merge order are in `implementation-plan.md`. The merged #46 author resources were
+cleaned and verified absent; review-only resources are removed after durable audit
+evidence is recorded.

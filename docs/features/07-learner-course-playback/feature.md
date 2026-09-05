@@ -1,6 +1,6 @@
 # F-007 — Learner Course Playback and Progress
 
-Status: **local implementation candidate complete; independent review and protected PR checks pending**
+Status: **implementation merged; independent post-merge audit requires enrollment-RLS remediation #60**
 
 Feature ID: `F-007`
 

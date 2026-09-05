@@ -1,6 +1,6 @@
 # F-007 Local Learner-Playback Implementation Evidence
 
-Status: **local implementation candidate verified; protected PR checks and independent review pending**
+Status: **implementation merged; independent post-merge audit returned CHANGES REQUIRED; #60 pending**
 
 - Evidence ID: `F007-LOCAL-IMPLEMENTATION-2026-08-22`
 - Classification: internal, synthetic/local-only implementation evidence
@@ -113,14 +113,15 @@ evidence.
 - Tests use deterministic synthetic tenant, learner, course, and rich-text data only.
   No private PDF, production identity, provider payload, prompt, chat, or credential was
   introduced.
-- The isolated Compose stack and exact host scratch child are development resources
-  only. They remain allocated while the unmerged task worktree is active, as required
-  by the repository workflow.
+- The implementation Compose stack, worktree, and exact host scratch child were
+  removed after GitHub reported PR #57 merged. Independent review used separate
+  disposable resources.
 - Retention/legal hold, production capacity, recovery, deployment, real-data, broader
   locale, and manual assistive-technology acceptance remain pending or out of scope.
   They are not marked passed.
 - No external provider, production data, deployment, release, or production mutation
   was used.
-- Protected GitHub checks, an independent exact-head review, a distinct authorized
-  approval, and merge are pending. The implementation producer must not approve or
-  merge its own PR.
+- PR #57 merged with configured checks green. Its independent post-merge audit proved
+  that an enrolled learner using the production runtime can directly revoke its own
+  enrollment and bypass service idempotency/audit/outbox facts. Remediation #60 is
+  required before F-008 integration.
