@@ -6,9 +6,11 @@ from uuid import UUID
 from lms.adapters.admin.documents import AdminActorContext
 from lms.api.schemas.course_generation import (
     ApproveGenerationBlueprintV1,
+    CanonicalizeCourseGenerationV1,
     CourseGenerationReviewPackageV1,
     CourseGenerationRunV1,
     CourseGenerationServiceV1,
+    GenerationCanonicalizationV1,
     GenerationContractError,
     RejectCourseGenerationV1,
     StartCourseGenerationV1,
@@ -97,12 +99,14 @@ class CourseGenerationAdminActions:
         context: AdminActorContext,
         run_id: UUID,
         request: ApproveGenerationBlueprintV1,
+        idempotency_key: str,
     ) -> CourseGenerationRunV1:
         result = self._service.approve_blueprint(
             actor_id=context.actor_id,
             tenant_id=self._tenant_id(context),
             run_id=run_id,
             command=request,
+            idempotency_key=self._idempotency_key(idempotency_key),
         )
         return CourseGenerationRunV1.model_validate(result, from_attributes=True)
 
@@ -112,11 +116,30 @@ class CourseGenerationAdminActions:
         context: AdminActorContext,
         run_id: UUID,
         request: RejectCourseGenerationV1,
+        idempotency_key: str,
     ) -> CourseGenerationRunV1:
         result = self._service.reject_generation(
             actor_id=context.actor_id,
             tenant_id=self._tenant_id(context),
             run_id=run_id,
             command=request,
+            idempotency_key=self._idempotency_key(idempotency_key),
         )
         return CourseGenerationRunV1.model_validate(result, from_attributes=True)
+
+    def canonicalize_generation(
+        self,
+        *,
+        context: AdminActorContext,
+        run_id: UUID,
+        request: CanonicalizeCourseGenerationV1,
+        idempotency_key: str,
+    ) -> GenerationCanonicalizationV1:
+        result = self._service.canonicalize_generation(
+            actor_id=context.actor_id,
+            tenant_id=self._tenant_id(context),
+            run_id=run_id,
+            command=request,
+            idempotency_key=self._idempotency_key(idempotency_key),
+        )
+        return GenerationCanonicalizationV1.model_validate(result, from_attributes=True)

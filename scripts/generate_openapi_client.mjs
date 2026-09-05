@@ -116,6 +116,10 @@ const expectedOperations = {
     "post",
     "rejectCourseGeneration",
   ],
+  "/api/v1/tenants/{tenant_id}/course-generation-runs/{run_id}/canonicalize": [
+    "post",
+    "canonicalizeCourseGeneration",
+  ],
   "/api/v1/tenants/{tenant_id}/enrollments": ["post", "createEnrollment"],
   "/api/v1/tenants/{tenant_id}/enrollments/{enrollment_id}/revoke": [
     "post",
@@ -156,6 +160,8 @@ const expectedSchemas = [
   "StartCourseGenerationV1",
   "ApproveGenerationBlueprintV1",
   "RejectCourseGenerationV1",
+  "CanonicalizeCourseGenerationV1",
+  "GenerationCanonicalizationV1",
   "CourseGenerationRunV1",
   "CourseBlueprintItemV1",
   "CourseBlueprintV1",
@@ -438,6 +444,10 @@ export interface paths {
   "/api/v1/tenants/{tenant_id}/course-generation-runs/{run_id}/reject": {
     parameters: EmptyParameters;
     post: operations["rejectCourseGeneration"];
+  };
+  "/api/v1/tenants/{tenant_id}/course-generation-runs/{run_id}/canonicalize": {
+    parameters: EmptyParameters;
+    post: operations["canonicalizeCourseGeneration"];
   };
   "/api/v1/source-upload-targets/{opaque_token}": {
     parameters: EmptyParameters;
@@ -993,6 +1003,23 @@ export interface components {
       expected_review_content_sha256: string;
       reason_code: GenerationRejectionReason;
     };
+    CanonicalizeCourseGenerationV1: {
+      expected_run_row_version: number;
+      expected_output_manifest_sha256: string;
+      course_slug: string;
+    };
+    GenerationCanonicalizationV1: {
+      id: string;
+      tenant_id: string;
+      generation_run_id: string;
+      course_id: string;
+      course_version_id: string;
+      reviewed_output_sha256: string;
+      canonical_content_sha256: string;
+      canonicalization_sha256: string;
+      canonicalized_by_actor_id: string;
+      created_at: string;
+    };
     CourseGenerationRunV1: {
       id: string;
       tenant_id: string;
@@ -1437,14 +1464,28 @@ export interface operations {
     };
   };
   approveCourseGenerationBlueprint: {
-    parameters: GenerationRunParameters;
+    parameters: GenerationRunCommandParameters;
     requestBody: JsonRequest<components["schemas"]["ApproveGenerationBlueprintV1"]>;
     responses: GenerationRunResponses;
   };
   rejectCourseGeneration: {
-    parameters: GenerationRunParameters;
+    parameters: GenerationRunCommandParameters;
     requestBody: JsonRequest<components["schemas"]["RejectCourseGenerationV1"]>;
     responses: GenerationRunResponses;
+  };
+  canonicalizeCourseGeneration: {
+    parameters: GenerationRunCommandParameters;
+    requestBody: JsonRequest<components["schemas"]["CanonicalizeCourseGenerationV1"]>;
+    responses: {
+      201: JsonResponse<components["schemas"]["GenerationCanonicalizationV1"]>;
+      400: ProblemResponse;
+      401: ProblemResponse;
+      403: ProblemResponse;
+      404: ProblemResponse;
+      409: ProblemResponse;
+      422: ProblemResponse;
+      500: ProblemResponse;
+    };
   };
 }
 
@@ -1587,6 +1628,9 @@ type GenerationRunParameters = {
   header: GenerationHeaders;
   path: { tenant_id: string; run_id: string };
   cookie?: never;
+};
+type GenerationRunCommandParameters = Omit<GenerationRunParameters, "header"> & {
+  header: GenerationHeaders & { "Idempotency-Key": string };
 };
 type GenerationRunResponses = {
   200: JsonResponse<components["schemas"]["CourseGenerationRunV1"]>;

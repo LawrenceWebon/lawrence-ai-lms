@@ -44,6 +44,27 @@ class RejectGenerationCommand:
 
 
 @dataclass(frozen=True, slots=True)
+class CanonicalizeGenerationCommand:
+    expected_run_row_version: int
+    expected_output_manifest_sha256: str
+    course_slug: str
+
+
+@dataclass(frozen=True, slots=True)
+class CanonicalizationRecord:
+    id: UUID
+    tenant_id: UUID
+    generation_run_id: UUID
+    course_id: UUID
+    course_version_id: UUID
+    reviewed_output_sha256: str
+    canonical_content_sha256: str
+    canonicalization_sha256: str
+    canonicalized_by_actor_id: UUID
+    created_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
 class SourceElementInput:
     id: UUID
     position: int

@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "authority": "Django",
-  "schema_fingerprint": "sha256:461d4b68303e1968abecdccfd8bce30afd06601ec681635a22d0e97c7edea9f3",
-  "database_fingerprint": "sha256:91d0ba52d5534e4eca3df0d50bfac02e2f74c429e59ba4bc5591e8635cd63c4c",
+  "schema_fingerprint": "sha256:f2f67e7b8dec25b6dfd481079066e341ef9f75f9e610c796536fa5b74bcc5943",
+  "database_fingerprint": "sha256:d96ad030c23c3022430a0c84586b0cbce801cef17b773e225566f700048095b2",
   "objects": [
     {
       "schema": "integration",
@@ -110,6 +110,30 @@
       "checks": ["exact reviewed output hash", "bounded human rejection reason"],
       "indexes": ["one final rejection per generation run"],
       "lifecycle": "append-only immutable human generated-revision rejection",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "audit",
+      "table": "course_generation_canonicalizations",
+      "migration": "course_generation.0005_generationcanonicalization_and_more",
+      "security_migration": "course_generation.0006_canonicalization_security",
+      "columns": ["id", "tenant_id", "generation_run_id", "course_id", "course_version_id", "canonicalized_by_actor_id", "requested_course_slug", "reviewed_output_sha256", "canonical_content_sha256", "canonicalization_sha256", "created_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,generation_run_id)", "UNIQUE (tenant_id,course_id)", "composite tenant foreign keys to generation run, course, and course version"],
+      "checks": ["canonical requested slug", "exact reviewed output, canonical content, and canonicalization hashes"],
+      "indexes": ["one canonicalization per generation run and canonical course"],
+      "lifecycle": "append-only immutable human canonicalization decision and exact course target",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "app",
+      "table": "course_generation_canonicalization_edges",
+      "migration": "course_generation.0005_generationcanonicalization_and_more",
+      "security_migration": "course_generation.0006_canonicalization_security",
+      "columns": ["id", "tenant_id", "canonicalization_id", "generation_run_id", "generated_artifact_id", "source_version_id", "source_section_id", "course_id", "course_version_id", "curriculum_section_id", "lesson_id", "content_block_id", "created_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE one artifact and block per canonicalization", "composite tenant foreign keys to canonicalization, generation/source evidence, course and version"],
+      "checks": ["database-enforced same-tenant source and canonical targets", "insert trigger locks and validates historical section/lesson/block hierarchy and artifact content"],
+      "indexes": ["unique canonical artifact and content-block mappings"],
+      "lifecycle": "immutable exact generated-artifact-to-canonical-curriculum provenance edge",
       "rls": "ENABLE + FORCE"
     }
   ]

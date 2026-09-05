@@ -14,9 +14,11 @@ from starlette.responses import Response
 from lms.api.dependencies.authentication import AuthenticationProblem
 from lms.api.schemas.course_generation import (
     ApproveGenerationBlueprintV1,
+    CanonicalizeCourseGenerationV1,
     CourseGenerationReviewPackageV1,
     CourseGenerationRunV1,
     CourseGenerationServiceV1,
+    GenerationCanonicalizationV1,
     GenerationContractError,
     RejectCourseGenerationV1,
     StartCourseGenerationV1,
@@ -58,6 +60,9 @@ _SAFE_LOCATION_PARTS = frozenset(
         "blueprint_revision",
         "expected_blueprint_content_sha256",
         "expected_review_content_sha256",
+        "expected_output_manifest_sha256",
+        "course_slug",
+        "course",
         "reason_code",
         "idempotency_key",
     }
@@ -101,6 +106,16 @@ _SAFE_PROBLEMS: dict[str, tuple[int, str, str]] = {
         "Source alignment invalid",
         "Generated source alignment is invalid.",
     ),
+    "GENERATION_SCHEMA_INVALID": (
+        422,
+        "Generation schema invalid",
+        "The generated schema is invalid.",
+    ),
+    "GENERATION_PROVENANCE_INVALID": (
+        422,
+        "Generation provenance invalid",
+        "The generated provenance is invalid.",
+    ),
     "GENERATION_OUTPUT_INVALID": (
         422,
         "Generation output invalid",
@@ -110,6 +125,21 @@ _SAFE_PROBLEMS: dict[str, tuple[int, str, str]] = {
         409,
         "Generation state conflict",
         "The generation state changed.",
+    ),
+    "GENERATION_SOURCE_NOT_READY": (
+        409,
+        "Generation source unavailable",
+        "The generation source is not ready.",
+    ),
+    "GENERATION_OUTPUT_HASH_MISMATCH": (
+        409,
+        "Generation output changed",
+        "The generated output revision changed.",
+    ),
+    "GENERATION_SLUG_CONFLICT": (
+        409,
+        "Course slug unavailable",
+        "The requested course slug is unavailable.",
     ),
     "GENERATION_VERSION_CONFLICT": (
         409,
@@ -269,6 +299,10 @@ def _package(result: object) -> CourseGenerationReviewPackageV1:
     return CourseGenerationReviewPackageV1.model_validate(result, from_attributes=True)
 
 
+def _canonicalization(result: object) -> GenerationCanonicalizationV1:
+    return GenerationCanonicalizationV1.model_validate(result, from_attributes=True)
+
+
 def create_course_generation_router(
     *,
     service: CourseGenerationServiceV1,
@@ -330,6 +364,7 @@ def create_course_generation_router(
         tenant_id: UUID,
         run_id: UUID,
         command: ApproveGenerationBlueprintV1,
+        idempotency_key: IdempotencyHeader,
         x_tenant_id: TenantHeader,
         verified_actor: VerifiedActorResult = actor_requirement,
     ) -> CourseGenerationRunV1:
@@ -339,6 +374,7 @@ def create_course_generation_router(
                 tenant_id=_tenant(tenant_id, x_tenant_id),
                 run_id=run_id,
                 command=command,
+                idempotency_key=idempotency_key,
             )
         )
 
@@ -352,6 +388,7 @@ def create_course_generation_router(
         tenant_id: UUID,
         run_id: UUID,
         command: RejectCourseGenerationV1,
+        idempotency_key: IdempotencyHeader,
         x_tenant_id: TenantHeader,
         verified_actor: VerifiedActorResult = actor_requirement,
     ) -> CourseGenerationRunV1:
@@ -361,6 +398,32 @@ def create_course_generation_router(
                 tenant_id=_tenant(tenant_id, x_tenant_id),
                 run_id=run_id,
                 command=command,
+                idempotency_key=idempotency_key,
+            )
+        )
+
+    @router.post(
+        "/tenants/{tenant_id}/course-generation-runs/{run_id}/canonicalize",
+        operation_id="canonicalizeCourseGeneration",
+        response_model=GenerationCanonicalizationV1,
+        status_code=status.HTTP_201_CREATED,
+        responses=_problem_responses(400, 401, 403, 404, 409, 422, 500),
+    )
+    def canonicalize_course_generation(
+        tenant_id: UUID,
+        run_id: UUID,
+        command: CanonicalizeCourseGenerationV1,
+        idempotency_key: IdempotencyHeader,
+        x_tenant_id: TenantHeader,
+        verified_actor: VerifiedActorResult = actor_requirement,
+    ) -> GenerationCanonicalizationV1:
+        return _canonicalization(
+            service.canonicalize_generation(
+                actor_id=verified_actor.principal_id,
+                tenant_id=_tenant(tenant_id, x_tenant_id),
+                run_id=run_id,
+                command=command,
+                idempotency_key=idempotency_key,
             )
         )
 

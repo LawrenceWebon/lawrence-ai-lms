@@ -18,6 +18,7 @@ from lms.adapters.admin.documents import AdminActorContext
 from lms.api.routers.course_generation import create_course_generation_router
 from lms.api.schemas.course_generation import (
     ApproveGenerationBlueprintV1,
+    CanonicalizeCourseGenerationV1,
     GenerationContractError,
     RejectCourseGenerationV1,
     StartCourseGenerationV1,
@@ -33,6 +34,9 @@ BLUEPRINT_ID = UUID("00000000-0000-4000-8000-0000000005a5")
 MODULE_ID = UUID("00000000-0000-4000-8000-0000000005a6")
 LESSON_ID = UUID("00000000-0000-4000-8000-0000000005a7")
 SECTION_ID = UUID("00000000-0000-4000-8000-0000000005a8")
+CANONICALIZATION_ID = UUID("00000000-0000-4000-8000-0000000005a9")
+COURSE_ID = UUID("00000000-0000-4000-8000-0000000005aa")
+COURSE_VERSION_ID = UUID("00000000-0000-4000-8000-0000000005ab")
 HASH = "sha256:" + "1" * 64
 NOW = datetime(2026, 8, 31, tzinfo=UTC)
 
@@ -129,6 +133,21 @@ class RecordingGenerationService:
             reason="GENERATION_CONTENT_REJECTED",
         )
 
+    def canonicalize_generation(self, *, actor_id: UUID, tenant_id: UUID, **_: object) -> object:
+        self.calls.append(("canonicalize", actor_id, tenant_id))
+        return SimpleNamespace(
+            id=CANONICALIZATION_ID,
+            tenant_id=tenant_id,
+            generation_run_id=RUN_ID,
+            course_id=COURSE_ID,
+            course_version_id=COURSE_VERSION_ID,
+            reviewed_output_sha256=HASH,
+            canonical_content_sha256=HASH,
+            canonicalization_sha256=HASH,
+            canonicalized_by_actor_id=actor_id,
+            created_at=NOW,
+        )
+
 
 def _start_request() -> dict[str, object]:
     return {
@@ -192,6 +211,7 @@ def test_generation_http_contract_delegates_all_human_actions_and_is_tenant_boun
             "blueprint_revision": 1,
             "expected_blueprint_content_sha256": HASH,
         },
+        idempotency=True,
     )
     rejected = _send(
         app,
@@ -202,6 +222,18 @@ def test_generation_http_contract_delegates_all_human_actions_and_is_tenant_boun
             "expected_review_content_sha256": HASH,
             "reason_code": "GENERATION_CONTENT_REJECTED",
         },
+        idempotency=True,
+    )
+    canonicalized = _send(
+        app,
+        "POST",
+        f"{base}/{RUN_ID}/canonicalize",
+        body={
+            "expected_run_row_version": 3,
+            "expected_output_manifest_sha256": HASH,
+            "course_slug": "synthetic-course",
+        },
+        idempotency=True,
     )
 
     statuses = [
@@ -209,15 +241,23 @@ def test_generation_http_contract_delegates_all_human_actions_and_is_tenant_boun
         reviewed.status_code,
         approved.status_code,
         rejected.status_code,
+        canonicalized.status_code,
     ]
     assert statuses == [
         202,
         200,
         200,
         200,
+        201,
     ]
     assert reviewed.json()["blueprint"]["items"][1]["parent_id"] == str(MODULE_ID)
-    assert [call[0] for call in service.calls] == ["start", "get", "approve", "reject"]
+    assert [call[0] for call in service.calls] == [
+        "start",
+        "get",
+        "approve",
+        "reject",
+        "canonicalize",
+    ]
     assert all(call[1:] == (ACTOR_ID, TENANT_ID) for call in service.calls)
 
     mismatched = _send(
@@ -230,7 +270,7 @@ def test_generation_http_contract_delegates_all_human_actions_and_is_tenant_boun
     )
     assert mismatched.status_code == 404
     assert mismatched.json()["code"] == "GENERATION_RESOURCE_NOT_FOUND"
-    assert len(service.calls) == 4
+    assert len(service.calls) == 5
 
 
 def test_generation_admin_delegates_without_an_orm_escape_hatch() -> None:
@@ -254,6 +294,7 @@ def test_generation_admin_delegates_without_an_orm_escape_hatch() -> None:
             blueprint_revision=1,
             expected_blueprint_content_sha256=HASH,
         ),
+        idempotency_key="generation-admin-approve-0001",
     )
     actions.reject_generation(
         context=context,
@@ -263,9 +304,26 @@ def test_generation_admin_delegates_without_an_orm_escape_hatch() -> None:
             expected_review_content_sha256=HASH,
             reason_code="GENERATION_CONTENT_REJECTED",
         ),
+        idempotency_key="generation-admin-reject-0001",
+    )
+    actions.canonicalize_generation(
+        context=context,
+        run_id=RUN_ID,
+        request=CanonicalizeCourseGenerationV1(
+            expected_run_row_version=3,
+            expected_output_manifest_sha256=HASH,
+            course_slug="synthetic-course",
+        ),
+        idempotency_key="generation-admin-canonicalize-0001",
     )
 
-    assert [call[0] for call in service.calls] == ["start", "get", "approve", "reject"]
+    assert [call[0] for call in service.calls] == [
+        "start",
+        "get",
+        "approve",
+        "reject",
+        "canonicalize",
+    ]
     assert {"status", "provider", "model", "source_edges", "row_version"} <= (
         COURSE_GENERATION_READONLY_FIELDS
     )

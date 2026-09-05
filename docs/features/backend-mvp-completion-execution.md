@@ -329,7 +329,7 @@ idempotency key. In one top-level transaction it:
 1. locks and reauthorizes the generation run, source, `generate` right, and exact
    review-ready revision;
 2. invokes the Courses domain public command boundary to create one unpublished
-   `ai_generated` course/version and replace its curriculum;
+   `ai_assisted` course/version (the existing F-002 origin enum) and replace its curriculum;
 3. records normalized artifact-to-course/version/section/lesson/block edges plus the
    canonicalization hash;
 4. marks only that generation revision canonicalized; and
@@ -343,6 +343,21 @@ through the existing F-002/F-007 services.
 
 Canonicalization is not approval or publication. No new publication endpoint, worker
 shortcut, model actor, direct ORM adapter mutation, or automatic enrollment is added.
+
+The immutable canonicalization edges record the curriculum identities at acceptance.
+Their source, artifact, run, course, and version relationships retain composite
+same-tenant foreign keys. Section, lesson, and block IDs are historical identities:
+a database insert trigger locks and validates their exact tenant/version/hierarchy
+and artifact content before recording them. Later human curriculum replacement may
+remove those mutable rows while the original identity mapping and artifact remain
+immutable. These historical IDs never grant access to current curriculum. This
+distinction preserves both the required editable draft and its original provenance.
+
+Approval and publication recheck and lock the source and active `generate` right in
+the existing Courses transaction. The check follows predecessor versions back to
+their canonicalization evidence so a successor cannot shed source rights. A database
+trigger enforces the same rule for direct mutations. Missing evidence, revoked or
+expired rights, and unavailable sources fail closed.
 
 ## Frozen HTTP contract
 
@@ -412,6 +427,10 @@ The single integration owner owns the complete migration graph in this PR:
 3. New Course Generation app initial schema then security migration, permissions,
    same-tenant FKs, forced RLS, worker/API policies, triggers, and fingerprint.
 4. Composition/settings registration only after migrations and domain tests pass.
+
+Checkpoint 5 also adds `courses.0004_submission_actor_lookup`: course review resolves
+only the submitting actor for the exact authorized tenant/version through a scoped
+database function. Runtime roles receive no general audit-table read grant.
 
 Runtime roles remain non-owner and non-`BYPASSRLS`. Every tenant table has non-null
 `tenant_id`, `UNIQUE (tenant_id,id)`, composite same-tenant relationships, tenant-first
@@ -512,7 +531,14 @@ contracts/events/
 contracts/openapi/
 packages/api-client/
 scripts/
+tests/foundation/test_step0_contract.py
+apps/e2e/tests/f003-source-admission.spec.ts
 ```
+
+The two test-only paths above were recorded in issue #63 before editing on 2026-09-05.
+They align the deferred-capability baseline with the enabled generation scope and
+replace the browser test's marker-only positive PDF with the parser-valid synthetic
+fixture. They do not change frontend application behavior or styling.
 
 Root lockfiles, CI, Compose, Docker inputs, frontend feature/UI/style files, and another
 task's paths/resources are not owned unless an unavoidable generated-contract change is

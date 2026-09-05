@@ -3,15 +3,29 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import re
 import uuid
 from datetime import timedelta
-from typing import Literal, cast
+from typing import Literal, Protocol, cast
 from uuid import UUID
 
 from django.conf import settings
 from django.db import connection, transaction
 from django.utils import timezone
 
+from lms.modules.courses.errors import CourseLifecycleError
+from lms.modules.courses.types import (
+    ContentBlockInput,
+    CourseSnapshot,
+    CourseStatus,
+    CreateAiAssistedDraftCommand,
+    CurriculumSection,
+    CurriculumSectionInput,
+    Lesson,
+    LessonInput,
+    OriginType,
+    RichTextBlock,
+)
 from lms.modules.courses.validation import validate_rich_text_document
 from lms.modules.documents.models import (
     DocumentIngestionRun,
@@ -36,17 +50,20 @@ from .adapter import (
 from .errors import CourseGenerationError, FieldError
 from .models import (
     BlueprintReviewDecision,
+    CanonicalizationSourceEdge,
     CourseBlueprint,
     CourseBlueprintItem,
     CourseGenerationAttempt,
     CourseGenerationRejection,
     CourseGenerationRun,
     GeneratedLessonArtifact,
+    GenerationCanonicalization,
     GenerationRunSnapshot,
     GenerationSourceEdge,
 )
 from .policy import (
     PERMISSION_BLUEPRINT_REVIEW,
+    PERMISSION_DRAFT_CANONICALIZE,
     PERMISSION_GENERATION_CREATE,
     PERMISSION_GENERATION_READ,
 )
@@ -55,6 +72,8 @@ from .types import (
     BlueprintDraft,
     BlueprintItemDraft,
     BlueprintItemKind,
+    CanonicalizationRecord,
+    CanonicalizeGenerationCommand,
     GeneratedLessonDraft,
     GenerationIntent,
     GenerationReviewPackage,
@@ -74,10 +93,22 @@ _WORKER_ACTOR_ID = uuid.uuid5(uuid.NAMESPACE_URL, "ai-lms:service:course-generat
 _TERMINAL_STATES = frozenset({"canonicalized", "rejected", "failed", "rights_blocked"})
 _WORKER_STATES = frozenset({"planning", "generating"})
 _RETRYABLE_REASON_CODES = frozenset({"GENERATION_ADAPTER_FAILED"})
+_SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
 class _RightsBlockedError(Exception):
     pass
+
+
+class CourseDraftCanonicalizationPort(Protocol):
+    def create_ai_assisted_draft(
+        self,
+        *,
+        actor_id: UUID,
+        tenant_id: UUID,
+        command: CreateAiAssistedDraftCommand,
+        idempotency_key: str,
+    ) -> CourseSnapshot: ...
 
 
 def _canonical_json(value: object) -> bytes:
@@ -147,8 +178,14 @@ def _as_string_tuple(value: object) -> tuple[str, ...]:
 class CourseGenerationService:
     """Durable deterministic generation boundary shared by API, Admin, and worker."""
 
-    def __init__(self, *, adapter: DeterministicSourceCourseAdapter | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        adapter: DeterministicSourceCourseAdapter | None = None,
+        course_drafts: CourseDraftCanonicalizationPort | None = None,
+    ) -> None:
         self._adapter = adapter or DeterministicSourceCourseAdapter()
+        self._course_drafts = course_drafts
 
     @staticmethod
     def _authorize(*, actor_id: UUID, tenant_id: UUID, permission: str) -> None:
@@ -198,13 +235,14 @@ class CourseGenerationService:
         tenant_id: UUID,
         key: str,
         request: object,
+        operation: str = PERMISSION_GENERATION_CREATE,
     ) -> tuple[IdempotencyReservation, dict[str, object] | None]:
         cls._validate_idempotency_key(key)
         digest = _request_hash(request)
         reservation, created = IdempotencyReservation.objects.select_for_update().get_or_create(
             tenant_id=tenant_id,
             actor_id=actor_id,
-            operation=PERMISSION_GENERATION_CREATE,
+            operation=operation,
             key_digest=_secret_digest(key),
             defaults={"request_hash": digest},
         )
@@ -222,16 +260,28 @@ class CourseGenerationService:
     def _complete_idempotency(
         reservation: IdempotencyReservation,
         *,
-        run: CourseGenerationRun,
+        payload: dict[str, object],
     ) -> None:
         reservation.status = "completed"
-        reservation.response_payload = {
-            "resource_id": str(run.id),
-            "source_document_id": str(run.source_document_id),
-            "source_version_id": str(run.source_version_id),
-            "ingestion_run_id": str(run.ingestion_run_id),
-        }
+        reservation.response_payload = payload
         reservation.save(update_fields=("status", "response_payload", "updated_at"))
+
+    @classmethod
+    def _complete_run_idempotency(
+        cls,
+        reservation: IdempotencyReservation,
+        *,
+        run: CourseGenerationRun,
+    ) -> None:
+        cls._complete_idempotency(
+            reservation,
+            payload={
+                "resource_id": str(run.id),
+                "source_document_id": str(run.source_document_id),
+                "source_version_id": str(run.source_version_id),
+                "ingestion_run_id": str(run.ingestion_run_id),
+            },
+        )
 
     @staticmethod
     def _authorization_is_active(authorization: SourceUseAuthorization) -> bool:
@@ -597,7 +647,7 @@ class CourseGenerationService:
                 .first()
             )
             if active is not None:
-                self._complete_idempotency(reservation, run=active)
+                self._complete_run_idempotency(reservation, run=active)
                 return self._record(active)
 
             sections = self._load_source_sections(
@@ -675,7 +725,7 @@ class CourseGenerationService:
                 run=run,
                 event_type="course_generation.requested.v1",
             )
-            self._complete_idempotency(reservation, run=run)
+            self._complete_run_idempotency(reservation, run=run)
             return self._record(run)
 
     def get_generation(
@@ -1303,13 +1353,37 @@ class CourseGenerationService:
         tenant_id: UUID,
         run_id: UUID,
         command: ApproveBlueprintCommand,
+        idempotency_key: str,
     ) -> GenerationRunRecord:
+        request = {
+            "run_id": run_id,
+            "expected_run_row_version": command.expected_run_row_version,
+            "blueprint_id": command.blueprint_id,
+            "blueprint_revision": command.blueprint_revision,
+            "expected_blueprint_content_sha256": command.expected_blueprint_content_sha256,
+        }
         with transaction.atomic():
             self._authorize(
                 actor_id=actor_id,
                 tenant_id=tenant_id,
                 permission=PERMISSION_BLUEPRINT_REVIEW,
             )
+            reservation, replay = self._reserve_idempotency(
+                actor_id=actor_id,
+                tenant_id=tenant_id,
+                key=idempotency_key,
+                request=request,
+                operation="course_generation.blueprints.approve",
+            )
+            if replay is not None:
+                try:
+                    replayed = CourseGenerationRun.objects.get(
+                        tenant_id=tenant_id,
+                        id=UUID(str(replay["resource_id"])),
+                    )
+                except (KeyError, ValueError, CourseGenerationRun.DoesNotExist) as error:
+                    raise CourseGenerationError("SERVICE_CONTRACT_ERROR") from error
+                return self._record(replayed)
             try:
                 run = CourseGenerationRun.objects.select_for_update().get(
                     tenant_id=tenant_id, id=run_id
@@ -1364,6 +1438,7 @@ class CourseGenerationService:
                 event_type="course_generation.blueprint_approved.v1",
                 reviewed_content_sha256=command.expected_blueprint_content_sha256,
             )
+            self._complete_run_idempotency(reservation, run=run)
             return self._record(run)
 
     def reject_generation(
@@ -1373,13 +1448,36 @@ class CourseGenerationService:
         tenant_id: UUID,
         run_id: UUID,
         command: RejectGenerationCommand,
+        idempotency_key: str,
     ) -> GenerationRunRecord:
+        request = {
+            "run_id": run_id,
+            "expected_run_row_version": command.expected_run_row_version,
+            "expected_review_content_sha256": command.expected_review_content_sha256,
+            "reason_code": command.reason_code,
+        }
         with transaction.atomic():
             self._authorize(
                 actor_id=actor_id,
                 tenant_id=tenant_id,
                 permission=PERMISSION_BLUEPRINT_REVIEW,
             )
+            reservation, replay = self._reserve_idempotency(
+                actor_id=actor_id,
+                tenant_id=tenant_id,
+                key=idempotency_key,
+                request=request,
+                operation="course_generation.runs.reject",
+            )
+            if replay is not None:
+                try:
+                    replayed = CourseGenerationRun.objects.get(
+                        tenant_id=tenant_id,
+                        id=UUID(str(replay["resource_id"])),
+                    )
+                except (KeyError, ValueError, CourseGenerationRun.DoesNotExist) as error:
+                    raise CourseGenerationError("SERVICE_CONTRACT_ERROR") from error
+                return self._record(replayed)
             try:
                 run = CourseGenerationRun.objects.select_for_update().get(
                     tenant_id=tenant_id, id=run_id
@@ -1446,4 +1544,447 @@ class CourseGenerationService:
                 run=run,
                 event_type="course_generation.rejected.v1",
             )
+            self._complete_run_idempotency(reservation, run=run)
             return self._record(run)
+
+    @staticmethod
+    def _canonicalization_record(
+        canonicalization: GenerationCanonicalization,
+    ) -> CanonicalizationRecord:
+        return CanonicalizationRecord(
+            id=canonicalization.id,
+            tenant_id=canonicalization.tenant_id,
+            generation_run_id=canonicalization.generation_run_id,
+            course_id=canonicalization.course_id,
+            course_version_id=canonicalization.course_version_id,
+            reviewed_output_sha256=canonicalization.reviewed_output_sha256,
+            canonical_content_sha256=canonicalization.canonical_content_sha256,
+            canonicalization_sha256=canonicalization.canonicalization_sha256,
+            canonicalized_by_actor_id=canonicalization.canonicalized_by_actor_id,
+            created_at=canonicalization.created_at,
+        )
+
+    @staticmethod
+    def _lock_canonicalization_scope(
+        *,
+        tenant_id: UUID,
+        run_id: UUID,
+        expected_run_row_version: int,
+        expected_output_manifest_sha256: str,
+    ) -> bool:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT app.lock_generation_canonicalization_scope(%s, %s, %s, %s)
+                """,
+                [
+                    str(tenant_id),
+                    str(run_id),
+                    expected_run_row_version,
+                    expected_output_manifest_sha256,
+                ],
+            )
+            row = cursor.fetchone()
+        return row is not None and row[0] is True
+
+    @staticmethod
+    def _translate_course_error(error: CourseLifecycleError) -> CourseGenerationError:
+        if error.code in {"COURSE_PERMISSION_DENIED", "TENANT_ACCESS_INACTIVE"}:
+            return CourseGenerationError("GENERATION_PERMISSION_DENIED")
+        if error.code == "COURSE_VALIDATION_FAILED":
+            return CourseGenerationError(
+                "GENERATION_VALIDATION_FAILED",
+                field_errors=tuple(
+                    FieldError(f"course.{item.path}", item.code) for item in error.field_errors
+                ),
+            )
+        if error.code == "IDEMPOTENCY_CONFLICT":
+            return CourseGenerationError("IDEMPOTENCY_CONFLICT")
+        if error.code == "VERSION_CONFLICT":
+            return CourseGenerationError("GENERATION_SLUG_CONFLICT")
+        if error.code == "RESOURCE_NOT_FOUND":
+            return CourseGenerationError("GENERATION_RESOURCE_NOT_FOUND")
+        return CourseGenerationError("SERVICE_CONTRACT_ERROR")
+
+    @staticmethod
+    def _record_canonicalization_fact(
+        *,
+        actor_id: UUID,
+        run: CourseGenerationRun,
+        canonicalization: GenerationCanonicalization,
+    ) -> None:
+        request_id = uuid.uuid4()
+        now = timezone.now()
+        payload: dict[str, JsonValue] = {
+            "course_generation_run_id": str(run.id),
+            "course_generation_canonicalization_id": str(canonicalization.id),
+            "course_id": str(canonicalization.course_id),
+            "course_version_id": str(canonicalization.course_version_id),
+            "reviewed_output_sha256": canonicalization.reviewed_output_sha256,
+            "canonical_content_sha256": canonicalization.canonical_content_sha256,
+            "canonicalization_sha256": canonicalization.canonicalization_sha256,
+            "status": run.status,
+            "row_version": run.row_version,
+        }
+        AuditFact.objects.create(
+            tenant_id=run.tenant_id,
+            event_type="course_generation.canonicalized.v1",
+            actor_id=actor_id,
+            subject_type="course_generation_run",
+            subject_id=run.id,
+            request_id=request_id,
+            payload=payload,
+        )
+        OutboxFact.objects.create(
+            tenant_id=run.tenant_id,
+            event_type="course_generation.canonicalized.v1",
+            aggregate_type="course_generation_run",
+            aggregate_id=run.id,
+            actor_id=actor_id,
+            request_id=request_id,
+            payload={
+                "event_version": 1,
+                "producer": "course_generation",
+                "recorded_at": now.isoformat(),
+                "privacy_class": "internal",
+                **payload,
+            },
+        )
+
+    def canonicalize_generation(
+        self,
+        *,
+        actor_id: UUID,
+        tenant_id: UUID,
+        run_id: UUID,
+        command: CanonicalizeGenerationCommand,
+        idempotency_key: str,
+    ) -> CanonicalizationRecord:
+        errors: list[FieldError] = []
+        if command.expected_run_row_version < 1:
+            errors.append(FieldError("expected_run_row_version", "out_of_range"))
+        if not re.fullmatch(r"sha256:[0-9a-f]{64}", command.expected_output_manifest_sha256):
+            errors.append(FieldError("expected_output_manifest_sha256", "invalid"))
+        if not _SLUG.fullmatch(command.course_slug) or len(command.course_slug) > 63:
+            errors.append(FieldError("course_slug", "invalid_slug"))
+        if errors:
+            raise CourseGenerationError("GENERATION_VALIDATION_FAILED", field_errors=tuple(errors))
+        request = {
+            "run_id": run_id,
+            "expected_run_row_version": command.expected_run_row_version,
+            "expected_output_manifest_sha256": command.expected_output_manifest_sha256,
+            "course_slug": command.course_slug,
+        }
+        with transaction.atomic():
+            self._authorize(
+                actor_id=actor_id,
+                tenant_id=tenant_id,
+                permission=PERMISSION_DRAFT_CANONICALIZE,
+            )
+            reservation, replay = self._reserve_idempotency(
+                actor_id=actor_id,
+                tenant_id=tenant_id,
+                key=idempotency_key,
+                request=request,
+                operation=PERMISSION_DRAFT_CANONICALIZE,
+            )
+            if replay is not None:
+                try:
+                    canonicalization = GenerationCanonicalization.objects.get(
+                        tenant_id=tenant_id,
+                        id=UUID(str(replay["canonicalization_id"])),
+                        generation_run_id=run_id,
+                    )
+                except (
+                    KeyError,
+                    ValueError,
+                    GenerationCanonicalization.DoesNotExist,
+                ) as error:
+                    raise CourseGenerationError("SERVICE_CONTRACT_ERROR") from error
+                return self._canonicalization_record(canonicalization)
+            if self._course_drafts is None:
+                raise CourseGenerationError("SERVICE_CONTRACT_ERROR")
+            try:
+                run = CourseGenerationRun.objects.select_for_update().get(
+                    tenant_id=tenant_id,
+                    id=run_id,
+                )
+            except CourseGenerationRun.DoesNotExist as error:
+                raise CourseGenerationError("GENERATION_RESOURCE_NOT_FOUND") from error
+            if (
+                run.status != "review_ready"
+                or run.row_version != command.expected_run_row_version
+                or run.output_manifest_sha256 != command.expected_output_manifest_sha256
+            ):
+                raise CourseGenerationError("GENERATION_OUTPUT_HASH_MISMATCH")
+            if not self._lock_canonicalization_scope(
+                tenant_id=tenant_id,
+                run_id=run_id,
+                expected_run_row_version=command.expected_run_row_version,
+                expected_output_manifest_sha256=command.expected_output_manifest_sha256,
+            ):
+                raise CourseGenerationError("GENERATION_STATE_CONFLICT")
+            try:
+                SourceDocument.objects.get(
+                    tenant_id=tenant_id,
+                    id=run.source_document_id,
+                    current_version_id=run.source_version_id,
+                )
+                SourceVersion.objects.get(
+                    tenant_id=tenant_id,
+                    source_document_id=run.source_document_id,
+                    id=run.source_version_id,
+                    admission_status="admitted",
+                )
+                DocumentIngestionRun.objects.get(
+                    tenant_id=tenant_id,
+                    source_document_id=run.source_document_id,
+                    source_version_id=run.source_version_id,
+                    id=run.ingestion_run_id,
+                    status="ready_for_generation",
+                )
+                authorization = SourceUseAuthorization.objects.get(
+                    tenant_id=tenant_id,
+                    source_document_id=run.source_document_id,
+                    source_version_id=run.source_version_id,
+                    id=run.generate_authorization_id,
+                    operation="generate",
+                )
+                blueprint = CourseBlueprint.objects.get(
+                    tenant_id=tenant_id,
+                    generation_run_id=run.id,
+                    status="approved",
+                )
+            except (
+                CourseBlueprint.DoesNotExist,
+                DocumentIngestionRun.DoesNotExist,
+                SourceDocument.DoesNotExist,
+                SourceUseAuthorization.DoesNotExist,
+                SourceVersion.DoesNotExist,
+            ) as error:
+                raise CourseGenerationError("GENERATION_SOURCE_NOT_READY") from error
+            if not self._authorization_is_active(authorization):
+                raise CourseGenerationError("GENERATION_RIGHTS_INACTIVE")
+
+            modules = tuple(
+                CourseBlueprintItem.objects.filter(
+                    tenant_id=tenant_id,
+                    generation_run_id=run.id,
+                    blueprint_id=blueprint.id,
+                    kind="module",
+                ).order_by("position", "id")
+            )
+            lesson_items = tuple(
+                CourseBlueprintItem.objects.filter(
+                    tenant_id=tenant_id,
+                    generation_run_id=run.id,
+                    blueprint_id=blueprint.id,
+                    kind="lesson",
+                ).order_by("parent_id", "position", "id")
+            )
+            artifacts = tuple(
+                GeneratedLessonArtifact.objects.filter(
+                    tenant_id=tenant_id,
+                    generation_run_id=run.id,
+                    revision=1,
+                ).order_by("blueprint_item__position", "id")
+            )
+            generated_edges = tuple(
+                GenerationSourceEdge.objects.filter(
+                    tenant_id=tenant_id,
+                    generation_run_id=run.id,
+                    edge_kind="generated_lesson",
+                ).order_by("generated_artifact_id", "id")
+            )
+            lessons_by_parent: dict[UUID, CourseBlueprintItem] = {}
+            for item in lesson_items:
+                if item.parent_id is None or item.parent_id in lessons_by_parent:
+                    raise CourseGenerationError("GENERATION_PROVENANCE_INVALID")
+                lessons_by_parent[item.parent_id] = item
+            artifacts_by_item = {artifact.blueprint_item_id: artifact for artifact in artifacts}
+            edges_by_artifact = {
+                edge.generated_artifact_id: edge
+                for edge in generated_edges
+                if edge.generated_artifact_id is not None
+            }
+            if (
+                not modules
+                or [module.position for module in modules] != list(range(1, len(modules) + 1))
+                or len(lesson_items) != len(modules)
+                or len(artifacts) != len(modules)
+                or len(artifacts_by_item) != len(artifacts)
+                or len(generated_edges) != len(artifacts)
+                or len(edges_by_artifact) != len(artifacts)
+            ):
+                raise CourseGenerationError("GENERATION_PROVENANCE_INVALID")
+
+            ordered_artifacts: list[GeneratedLessonArtifact] = []
+            section_inputs: list[CurriculumSectionInput] = []
+            for module in modules:
+                lesson_item = lessons_by_parent.get(module.id)
+                artifact = None if lesson_item is None else artifacts_by_item.get(lesson_item.id)
+                edge = None if artifact is None else edges_by_artifact.get(artifact.id)
+                if (
+                    lesson_item is None
+                    or artifact is None
+                    or edge is None
+                    or module.source_version_id != run.source_version_id
+                    or lesson_item.source_version_id != run.source_version_id
+                    or artifact.source_version_id != run.source_version_id
+                    or edge.source_version_id != run.source_version_id
+                    or module.source_section_id != lesson_item.source_section_id
+                    or lesson_item.source_section_id != artifact.source_section_id
+                    or artifact.source_section_id != edge.source_section_id
+                ):
+                    raise CourseGenerationError("GENERATION_PROVENANCE_INVALID")
+                document_value = _as_json_object(artifact.document)
+                try:
+                    validate_rich_text_document(document_value)
+                except CourseLifecycleError as error:
+                    raise CourseGenerationError("GENERATION_SCHEMA_INVALID") from error
+                ordered_artifacts.append(artifact)
+                section_inputs.append(
+                    CurriculumSectionInput(
+                        title=module.title,
+                        position=module.position,
+                        lessons=(
+                            LessonInput(
+                                title=artifact.title,
+                                position=1,
+                                is_required=True,
+                                content_blocks=(
+                                    ContentBlockInput(
+                                        kind="rich_text",
+                                        position=1,
+                                        document=document_value,
+                                    ),
+                                ),
+                            ),
+                        ),
+                    )
+                )
+
+            try:
+                snapshot = self._course_drafts.create_ai_assisted_draft(
+                    actor_id=actor_id,
+                    tenant_id=tenant_id,
+                    command=CreateAiAssistedDraftCommand(
+                        slug=command.course_slug,
+                        primary_locale=run.locale,
+                        title=blueprint.title,
+                        description=blueprint.description,
+                        sections=tuple(section_inputs),
+                    ),
+                    idempotency_key=f"canonical-course-{_request_hash(idempotency_key)}",
+                )
+            except CourseLifecycleError as error:
+                raise self._translate_course_error(error) from error
+            if (
+                snapshot.course.tenant_id != tenant_id
+                or snapshot.course.current_published_version_id is not None
+                or snapshot.version.tenant_id != tenant_id
+                or snapshot.version.course_id != snapshot.course.id
+                or snapshot.version.status is not CourseStatus.DRAFT
+                or snapshot.version.origin_type is not OriginType.AI_ASSISTED
+                or snapshot.version.submitted_hash is not None
+                or snapshot.version.approved_hash is not None
+                or len(snapshot.sections) != len(ordered_artifacts)
+            ):
+                raise CourseGenerationError("SERVICE_CONTRACT_ERROR")
+            mappings: list[dict[str, object]] = []
+            canonical_rows: list[
+                tuple[GeneratedLessonArtifact, CurriculumSection, Lesson, RichTextBlock]
+            ] = []
+            for artifact, section in zip(ordered_artifacts, snapshot.sections, strict=True):
+                if len(section.lessons) != 1 or len(section.lessons[0].content_blocks) != 1:
+                    raise CourseGenerationError("SERVICE_CONTRACT_ERROR")
+                lesson = section.lessons[0]
+                block = lesson.content_blocks[0]
+                if block.document != artifact.document:
+                    raise CourseGenerationError("SERVICE_CONTRACT_ERROR")
+                mappings.append(
+                    {
+                        "generated_artifact_id": str(artifact.id),
+                        "source_version_id": str(artifact.source_version_id),
+                        "source_section_id": str(artifact.source_section_id),
+                        "course_id": str(snapshot.course.id),
+                        "course_version_id": str(snapshot.version.id),
+                        "curriculum_section_id": str(section.id),
+                        "lesson_id": str(lesson.id),
+                        "content_block_id": str(block.id),
+                        "artifact_content_sha256": artifact.content_sha256,
+                    }
+                )
+                canonical_rows.append((artifact, section, lesson, block))
+            canonicalization_id = _stable_id(
+                "generation-canonicalization",
+                run.id,
+                snapshot.course.id,
+                snapshot.version.id,
+            )
+            canonicalization_sha256 = _manifest_hash(
+                {
+                    "id": str(canonicalization_id),
+                    "generation_run_id": str(run.id),
+                    "reviewed_output_sha256": command.expected_output_manifest_sha256,
+                    "course_id": str(snapshot.course.id),
+                    "course_version_id": str(snapshot.version.id),
+                    "canonical_content_sha256": snapshot.version.content_hash,
+                    "mappings": mappings,
+                }
+            )
+            canonicalization = GenerationCanonicalization.objects.create(
+                id=canonicalization_id,
+                tenant_id=tenant_id,
+                generation_run=run,
+                course_id=snapshot.course.id,
+                course_version_id=snapshot.version.id,
+                canonicalized_by_actor_id=actor_id,
+                requested_course_slug=command.course_slug,
+                reviewed_output_sha256=command.expected_output_manifest_sha256,
+                canonical_content_sha256=snapshot.version.content_hash,
+                canonicalization_sha256=canonicalization_sha256,
+            )
+            for artifact, section, lesson, block in canonical_rows:
+                CanonicalizationSourceEdge.objects.create(
+                    id=_stable_id("canonicalization-source-edge", canonicalization.id, artifact.id),
+                    tenant_id=tenant_id,
+                    canonicalization=canonicalization,
+                    generation_run=run,
+                    generated_artifact=artifact,
+                    source_version_id=artifact.source_version_id,
+                    source_section_id=artifact.source_section_id,
+                    course_id=snapshot.course.id,
+                    course_version_id=snapshot.version.id,
+                    curriculum_section_id=section.id,
+                    lesson_id=lesson.id,
+                    content_block_id=block.id,
+                )
+            run.status = "canonicalized"
+            run.checkpoint = "canonicalized"
+            run.reason_code = None
+            run.row_version += 1
+            run.save(
+                update_fields=(
+                    "status",
+                    "checkpoint",
+                    "reason_code",
+                    "row_version",
+                    "updated_at",
+                )
+            )
+            self._record_canonicalization_fact(
+                actor_id=actor_id,
+                run=run,
+                canonicalization=canonicalization,
+            )
+            self._complete_idempotency(
+                reservation,
+                payload={
+                    "canonicalization_id": str(canonicalization.id),
+                    "resource_id": str(run.id),
+                    "course_id": str(canonicalization.course_id),
+                    "course_version_id": str(canonicalization.course_version_id),
+                },
+            )
+            return self._canonicalization_record(canonicalization)

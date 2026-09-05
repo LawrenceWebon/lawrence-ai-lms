@@ -275,6 +275,21 @@ AS $$
 $$;
 REVOKE ALL ON FUNCTION app.has_generation_event_scope(uuid, uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION app.has_generation_source_scope(uuid, uuid) FROM PUBLIC;
+
+CREATE OR REPLACE FUNCTION app.has_generation_canonicalization_evidence(
+    p_tenant_id uuid,
+    p_generation_run_id uuid,
+    p_output_manifest_sha256 text
+)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SET search_path = pg_catalog
+AS $$
+    SELECT false
+$$;
+REVOKE ALL ON FUNCTION app.has_generation_canonicalization_evidence(uuid, uuid, text)
+    FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION app.has_generation_event_scope(uuid, uuid),
     app.has_generation_source_scope(uuid, uuid)
     TO lms_api_runtime, lms_worker_runtime;
@@ -382,7 +397,7 @@ BEGIN
     ) THEN
         RAISE EXCEPTION 'invalid generation transition' USING ERRCODE = '23514';
     ELSIF OLD.status = 'review_ready' AND NEW.status NOT IN (
-        'review_ready', 'rejected'
+        'review_ready', 'canonicalized', 'rejected'
     ) THEN
         RAISE EXCEPTION 'invalid generation transition' USING ERRCODE = '23514';
     ELSIF OLD.status = 'retryable' AND NEW.status NOT IN (
@@ -425,6 +440,15 @@ BEGIN
                AND rejection.reviewed_output_sha256 = OLD.output_manifest_sha256
        ) THEN
         RAISE EXCEPTION 'exact generated revision rejection is required'
+            USING ERRCODE = '42501';
+    END IF;
+    IF OLD.status = 'review_ready' AND NEW.status = 'canonicalized'
+       AND NOT app.has_generation_canonicalization_evidence(
+            NEW.tenant_id,
+            NEW.id,
+            OLD.output_manifest_sha256
+       ) THEN
+        RAISE EXCEPTION 'exact generated revision canonicalization is required'
             USING ERRCODE = '42501';
     END IF;
     IF OLD.status IN ('canonicalized', 'rejected', 'failed', 'rights_blocked')
@@ -837,6 +861,7 @@ DROP FUNCTION IF EXISTS app.reject_generation_evidence_mutation();
 DROP FUNCTION IF EXISTS app.enforce_generation_blueprint_mutation();
 DROP FUNCTION IF EXISTS app.enforce_generation_attempt_mutation();
 DROP FUNCTION IF EXISTS app.enforce_generation_run_mutation();
+DROP FUNCTION IF EXISTS app.has_generation_canonicalization_evidence(uuid, uuid, text);
 DROP FUNCTION IF EXISTS app.has_generation_source_scope(uuid, uuid);
 DROP FUNCTION IF EXISTS app.has_generation_event_scope(uuid, uuid);
 

@@ -81,6 +81,30 @@ class RejectCourseGenerationV1(StrictSchema):
     reason_code: GenerationRejectionReason
 
 
+class CanonicalizeCourseGenerationV1(StrictSchema):
+    expected_run_row_version: int = Field(ge=1, strict=True)
+    expected_output_manifest_sha256: Sha256
+    course_slug: Annotated[
+        str,
+        Field(min_length=1, max_length=63, pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$"),
+    ]
+
+
+class GenerationCanonicalizationV1(StrictSchema):
+    id: UUID
+    tenant_id: UUID
+    generation_run_id: UUID
+    course_id: UUID
+    course_version_id: UUID
+    reviewed_output_sha256: Sha256
+    canonical_content_sha256: Sha256
+    canonicalization_sha256: Sha256
+    canonicalized_by_actor_id: UUID
+    created_at: datetime
+
+    _created_timezone = field_validator("created_at")(_require_timezone)
+
+
 class CourseGenerationRunV1(StrictSchema):
     id: UUID
     tenant_id: UUID
@@ -212,6 +236,7 @@ class CourseGenerationServiceV1(Protocol):
         tenant_id: UUID,
         run_id: UUID,
         command: ApproveGenerationBlueprintV1,
+        idempotency_key: str,
     ) -> object: ...
 
     def reject_generation(
@@ -221,4 +246,15 @@ class CourseGenerationServiceV1(Protocol):
         tenant_id: UUID,
         run_id: UUID,
         command: RejectCourseGenerationV1,
+        idempotency_key: str,
+    ) -> object: ...
+
+    def canonicalize_generation(
+        self,
+        *,
+        actor_id: UUID,
+        tenant_id: UUID,
+        run_id: UUID,
+        command: CanonicalizeCourseGenerationV1,
+        idempotency_key: str,
     ) -> object: ...

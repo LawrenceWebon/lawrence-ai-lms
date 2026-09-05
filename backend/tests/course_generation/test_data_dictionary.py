@@ -20,6 +20,8 @@ GENERATION_TABLES = (
     ("app", "course_generation_source_edges"),
     ("audit", "course_generation_blueprint_decisions"),
     ("audit", "course_generation_rejections"),
+    ("audit", "course_generation_canonicalizations"),
+    ("app", "course_generation_canonicalization_edges"),
 )
 
 
@@ -122,10 +124,10 @@ def test_generation_dictionary_has_a_reproducible_fingerprint() -> None:
     assert {(item["schema"], item["table"]) for item in dictionary["objects"]} == set(
         GENERATION_TABLES
     )
-    assert all(
-        item["security_migration"] == "course_generation.0004_generation_security"
-        for item in dictionary["objects"]
-    )
+    assert {item["security_migration"] for item in dictionary["objects"]} == {
+        "course_generation.0004_generation_security",
+        "course_generation.0006_canonicalization_security",
+    }
 
 
 @pytest.mark.django_db
@@ -151,6 +153,9 @@ def test_catalog_contains_generation_tenant_edges_checks_and_human_guards() -> N
         "fk_generation_edges_same_tenant_section",
         "fk_generation_decisions_same_tenant_blueprint",
         "fk_generation_rejections_same_tenant_run",
+        "fk_generation_canonical_same_tenant_version",
+        "fk_canonical_edges_same_tenant_artifact",
+        "ck_canonical_edges_target_ids",
         "ck_generation_runs_lease_shape",
         "ck_generation_runs_result_shape",
         "uq_generation_runs_active_ingestion",
@@ -197,4 +202,9 @@ def test_catalog_contains_generation_tenant_edges_checks_and_human_guards() -> N
         )
         triggers = {row[0] for row in cursor.fetchall()}
     assert expected <= constraints | indexes
-    assert {"trg_generation_runs_guard", "trg_generation_decisions_immutable"} <= triggers
+    assert {
+        "trg_generation_runs_guard",
+        "trg_generation_decisions_immutable",
+        "trg_generation_canonicalizations_immutable",
+        "trg_canonicalization_edges_immutable",
+    } <= triggers

@@ -13,6 +13,7 @@ from tests.tenancy.conftest import tenancy_seed as tenancy_seed
 
 @pytest.fixture
 def generation_service() -> Any:
+    from lms.api.course_composition import DjangoCourseAdministrationService
     from lms.modules.course_generation.services import CourseGenerationService
 
-    return CourseGenerationService()
+    return CourseGenerationService(course_drafts=DjangoCourseAdministrationService())

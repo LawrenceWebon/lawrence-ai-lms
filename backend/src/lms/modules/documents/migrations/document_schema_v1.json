@@ -2,7 +2,7 @@
   "schema_version": 1,
   "authority": "Django",
   "schema_fingerprint": "sha256:2390502c971d303b736a28acc734e3a86afdd0f1116e89804f7570879df5102e",
-  "database_fingerprint": "sha256:cd2351a66023a075dec03e298dc7b1c3de9d2c5c6d9d7466b8a251e57d54edb9",
+  "database_fingerprint": "sha256:ba236c2c97c71402ec745ebf503683ceb8c8158af975ba918e3c65e6d08b8d02",
   "objects": [
     {
       "schema": "app",

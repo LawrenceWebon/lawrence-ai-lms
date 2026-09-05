@@ -14,6 +14,7 @@ EVENT_TYPES = (
     "course_generation.blueprint_ready",
     "course_generation.review_ready",
     "course_generation.rejected",
+    "course_generation.canonicalized",
 )
 FORBIDDEN_KEYS = {
     "body",

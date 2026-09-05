@@ -573,3 +573,97 @@ class CourseGenerationRejection(models.Model):
                 name="ck_generation_rejections_reason",
             ),
         ]
+
+
+class GenerationCanonicalization(models.Model):
+    objects: models.Manager[GenerationCanonicalization] = models.Manager()
+    tenant_id: UUID
+    generation_run_id: UUID
+    course_id: UUID
+    course_version_id: UUID
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    tenant = models.ForeignKey("tenancy.Tenant", on_delete=models.RESTRICT)
+    generation_run = models.OneToOneField(
+        CourseGenerationRun,
+        on_delete=models.RESTRICT,
+        related_name="canonicalization",
+    )
+    course = models.ForeignKey("courses.Course", on_delete=models.RESTRICT)
+    course_version = models.ForeignKey("courses.CourseVersion", on_delete=models.RESTRICT)
+    canonicalized_by_actor_id = models.UUIDField()
+    requested_course_slug = models.SlugField(max_length=63)
+    reviewed_output_sha256 = models.CharField(max_length=71)
+    canonical_content_sha256 = models.CharField(max_length=71)
+    canonicalization_sha256 = models.CharField(max_length=71)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'audit"."course_generation_canonicalizations'
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant", "id"), name="uq_generation_canonical_tenant_id"
+            ),
+            models.UniqueConstraint(
+                fields=("tenant", "generation_run"), name="uq_generation_canonical_run"
+            ),
+            models.UniqueConstraint(
+                fields=("tenant", "course"), name="uq_generation_canonical_course"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(reviewed_output_sha256__regex=HASH_PATTERN)
+                & models.Q(canonical_content_sha256__regex=HASH_PATTERN)
+                & models.Q(canonicalization_sha256__regex=HASH_PATTERN),
+                name="ck_generation_canonical_hashes",
+            ),
+        ]
+
+
+class CanonicalizationSourceEdge(models.Model):
+    objects: models.Manager[CanonicalizationSourceEdge] = models.Manager()
+    tenant_id: UUID
+    canonicalization_id: UUID
+    generation_run_id: UUID
+    generated_artifact_id: UUID
+    source_version_id: UUID
+    source_section_id: UUID
+    course_id: UUID
+    course_version_id: UUID
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    tenant = models.ForeignKey("tenancy.Tenant", on_delete=models.RESTRICT)
+    canonicalization = models.ForeignKey(
+        GenerationCanonicalization,
+        on_delete=models.RESTRICT,
+        related_name="source_edges",
+    )
+    generation_run = models.ForeignKey(CourseGenerationRun, on_delete=models.RESTRICT)
+    generated_artifact = models.OneToOneField(
+        GeneratedLessonArtifact,
+        on_delete=models.RESTRICT,
+        related_name="canonicalization_edge",
+    )
+    source_version = models.ForeignKey("documents.SourceVersion", on_delete=models.RESTRICT)
+    source_section = models.ForeignKey("documents.DocumentSection", on_delete=models.RESTRICT)
+    course = models.ForeignKey("courses.Course", on_delete=models.RESTRICT)
+    course_version = models.ForeignKey("courses.CourseVersion", on_delete=models.RESTRICT)
+    # Immutable acceptance-time identities, validated under row locks by a DB trigger.
+    # Current draft rows may be removed by a later authorized curriculum replacement.
+    curriculum_section_id = models.UUIDField()
+    lesson_id = models.UUIDField()
+    content_block_id = models.UUIDField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'app"."course_generation_canonicalization_edges'
+        constraints = [
+            models.UniqueConstraint(fields=("tenant", "id"), name="uq_canonical_edges_tenant_id"),
+            models.UniqueConstraint(
+                fields=("tenant", "canonicalization", "generated_artifact"),
+                name="uq_canonical_edges_artifact",
+            ),
+            models.UniqueConstraint(
+                fields=("tenant", "canonicalization", "content_block_id"),
+                name="uq_canonical_edges_block",
+            ),
+        ]

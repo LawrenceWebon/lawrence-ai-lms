@@ -1,21 +1,29 @@
 from __future__ import annotations
 
 from typing import Any
+from uuid import uuid4
 
 import pytest
 from django.db import DatabaseError, connection, transaction
 
+from lms.modules.course_generation.errors import CourseGenerationError
 from lms.modules.course_generation.models import (
     BlueprintReviewDecision,
+    CanonicalizationSourceEdge,
     CourseBlueprint,
     CourseBlueprintItem,
     CourseGenerationAttempt,
     CourseGenerationRun,
     GeneratedLessonArtifact,
+    GenerationCanonicalization,
     GenerationRunSnapshot,
     GenerationSourceEdge,
 )
-from lms.modules.course_generation.types import ApproveBlueprintCommand
+from lms.modules.course_generation.types import (
+    ApproveBlueprintCommand,
+    CanonicalizeGenerationCommand,
+)
+from lms.modules.courses.models import CourseVersion
 from lms.modules.documents.models import DocumentSection
 from tests.course_generation.test_service import _intent, _ready_source
 from tests.documents.test_ingestion_service import _activate_operation
@@ -32,6 +40,8 @@ GENERATION_TABLES = {
     "course_generation_source_edges",
     "course_generation_blueprint_decisions",
     "course_generation_rejections",
+    "course_generation_canonicalizations",
+    "course_generation_canonicalization_edges",
 }
 
 
@@ -72,6 +82,8 @@ def test_generation_tables_are_non_runtime_owned_with_forced_rls() -> None:
                     ('app', 'course_generation_source_edges'),
                     ('audit', 'course_generation_blueprint_decisions'),
                     ('audit', 'course_generation_rejections')
+                    ,('audit', 'course_generation_canonicalizations')
+                    ,('app', 'course_generation_canonicalization_edges')
              )
             """
         )
@@ -88,6 +100,10 @@ def test_generation_tables_are_non_runtime_owned_with_forced_rls() -> None:
                 has_table_privilege(
                     'lms_worker_runtime',
                     'audit.course_generation_blueprint_decisions', 'INSERT'
+                ),
+                has_table_privilege(
+                    'lms_worker_runtime',
+                    'audit.course_generation_canonicalizations', 'SELECT'
                 )
             """
         )
@@ -95,7 +111,7 @@ def test_generation_tables_are_non_runtime_owned_with_forced_rls() -> None:
     assert {row[1] for row in rows} == GENERATION_TABLES
     assert all(row[2] == "lms_object_owner" for row in rows)
     assert all(row[3] and row[4] for row in rows)
-    assert privileges == (False, False, False)
+    assert privileges == (False, False, False, False)
 
 
 def test_generation_api_and_worker_services_succeed_through_production_roles(
@@ -170,6 +186,7 @@ def test_generation_api_and_worker_services_succeed_through_production_roles(
                 blueprint_revision=1,
                 expected_blueprint_content_sha256=package.blueprint.content_sha256,
             ),
+            idempotency_key="generation-runtime-approve-0001",
         )
         assert approved.status == "generation_queued"
         assert BlueprintReviewDecision.objects.filter(generation_run_id=run.id).exists()
@@ -190,6 +207,62 @@ def test_generation_api_and_worker_services_succeed_through_production_roles(
         with pytest.raises(DatabaseError), transaction.atomic():
             GeneratedLessonArtifact.objects.filter(id=artifact.id).update(
                 title="forbidden mutation"
+            )
+
+    with transaction.atomic():
+        _set_user_context(learner, tenant_id)
+        _set_role("lms_api_runtime")
+        with pytest.raises(CourseGenerationError, match="GENERATION_PERMISSION_DENIED"):
+            generation_service.canonicalize_generation(
+                actor_id=learner,
+                tenant_id=tenant_id,
+                run_id=run.id,
+                command=CanonicalizeGenerationCommand(
+                    expected_run_row_version=generated.run.row_version,
+                    expected_output_manifest_sha256=generated.run.output_manifest_sha256,
+                    course_slug="learner-forbidden-course",
+                ),
+                idempotency_key="generation-runtime-learner-denied-0001",
+            )
+
+    with transaction.atomic():
+        _set_user_context(admin, tenant_id)
+        _set_role("lms_api_runtime")
+        with pytest.raises(DatabaseError), transaction.atomic():
+            CourseGenerationRun.objects.filter(id=run.id).update(
+                status="canonicalized",
+                checkpoint="canonicalized",
+                row_version=generated.run.row_version + 1,
+            )
+        canonicalized = generation_service.canonicalize_generation(
+            actor_id=admin,
+            tenant_id=tenant_id,
+            run_id=run.id,
+            command=CanonicalizeGenerationCommand(
+                expected_run_row_version=generated.run.row_version,
+                expected_output_manifest_sha256=generated.run.output_manifest_sha256,
+                course_slug="production-role-canonical-course",
+            ),
+            idempotency_key="generation-runtime-canonicalize-0001",
+        )
+        assert GenerationCanonicalization.objects.filter(id=canonicalized.id).exists()
+        assert CanonicalizationSourceEdge.objects.filter(
+            canonicalization_id=canonicalized.id
+        ).exists()
+        forged = (
+            CanonicalizationSourceEdge.objects.filter(canonicalization_id=canonicalized.id)
+            .values()
+            .get()
+        )
+        forged["id"] = uuid4()
+        forged["lesson_id"] = uuid4()
+        with pytest.raises(DatabaseError, match="canonicalization target scope mismatch"):
+            with transaction.atomic():
+                CanonicalizationSourceEdge.objects.create(**forged)
+        assert CourseVersion.objects.get(id=canonicalized.course_version_id).status == "draft"
+        with pytest.raises(DatabaseError), transaction.atomic():
+            GenerationCanonicalization.objects.filter(id=canonicalized.id).update(
+                requested_course_slug="forbidden-mutation"
             )
 
     with transaction.atomic():

@@ -239,6 +239,35 @@
         "title": "CancelSourceAdmissionV1",
         "type": "object"
       },
+      "CanonicalizeCourseGenerationV1": {
+        "additionalProperties": false,
+        "properties": {
+          "course_slug": {
+            "maxLength": 63,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "title": "Course Slug",
+            "type": "string"
+          },
+          "expected_output_manifest_sha256": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Expected Output Manifest Sha256",
+            "type": "string"
+          },
+          "expected_run_row_version": {
+            "minimum": 1.0,
+            "title": "Expected Run Row Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expected_run_row_version",
+          "expected_output_manifest_sha256",
+          "course_slug"
+        ],
+        "title": "CanonicalizeCourseGenerationV1",
+        "type": "object"
+      },
       "ContentBlockRecordV1": {
         "additionalProperties": false,
         "properties": {
@@ -1951,6 +1980,75 @@
           "content_sha256"
         ],
         "title": "GeneratedLessonV1",
+        "type": "object"
+      },
+      "GenerationCanonicalizationV1": {
+        "additionalProperties": false,
+        "properties": {
+          "canonical_content_sha256": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Canonical Content Sha256",
+            "type": "string"
+          },
+          "canonicalization_sha256": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Canonicalization Sha256",
+            "type": "string"
+          },
+          "canonicalized_by_actor_id": {
+            "format": "uuid",
+            "title": "Canonicalized By Actor Id",
+            "type": "string"
+          },
+          "course_id": {
+            "format": "uuid",
+            "title": "Course Id",
+            "type": "string"
+          },
+          "course_version_id": {
+            "format": "uuid",
+            "title": "Course Version Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "generation_run_id": {
+            "format": "uuid",
+            "title": "Generation Run Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "reviewed_output_sha256": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Reviewed Output Sha256",
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "generation_run_id",
+          "course_id",
+          "course_version_id",
+          "reviewed_output_sha256",
+          "canonical_content_sha256",
+          "canonicalization_sha256",
+          "canonicalized_by_actor_id",
+          "created_at"
+        ],
+        "title": "GenerationCanonicalizationV1",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -5078,6 +5176,17 @@
           },
           {
             "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
             "name": "X-Tenant-ID",
             "required": true,
             "schema": {
@@ -5233,6 +5342,198 @@
         "summary": "Approve Course Generation Blueprint"
       }
     },
+    "/api/v1/tenants/{tenant_id}/course-generation-runs/{run_id}/canonicalize": {
+      "post": {
+        "operationId": "canonicalizeCourseGeneration",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "X-Tenant-Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CanonicalizeCourseGenerationV1"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationCanonicalizationV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC Problem Details response"
+          }
+        },
+        "summary": "Canonicalize Course Generation"
+      }
+    },
     "/api/v1/tenants/{tenant_id}/course-generation-runs/{run_id}/reject": {
       "post": {
         "operationId": "rejectCourseGeneration",
@@ -5254,6 +5555,17 @@
             "schema": {
               "format": "uuid",
               "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "title": "Idempotency-Key",
               "type": "string"
             }
           },

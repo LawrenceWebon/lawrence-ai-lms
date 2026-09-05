@@ -178,6 +178,15 @@ class CreateCourseCommand:
 
 
 @dataclass(frozen=True, slots=True)
+class CreateAiAssistedDraftCommand:
+    slug: str
+    primary_locale: str
+    title: str
+    description: str
+    sections: tuple[CurriculumSectionInput, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class UpdateCourseVersionCommand:
     expected_version_row_version: int
     primary_locale: str | None = None
