@@ -7,12 +7,9 @@ const alphaId = "00000000-0000-4000-8000-0000000000a1";
 
 type SessionResponse = { access_token: string };
 
-const validPdf = Buffer.from(
-  "%PDF-1.4\n" +
-    "1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n" +
-    "2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n" +
-    "3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >> endobj\n" +
-    "trailer << /Root 1 0 R >>\n%%EOF\n",
+const validPdfPath = path.resolve(
+  process.cwd(),
+  "../../backend/tests/documents/fixtures/synthetic-valid-one-page.pdf",
 );
 
 async function resetFixture(request: APIRequestContext) {
@@ -83,7 +80,7 @@ test.describe("F-003 private PDF source admission", () => {
     await page.getByLabel("Synthetic or rights-cleared PDF").setInputFiles({
       name: "synthetic-admitted.pdf",
       mimeType: "application/pdf",
-      buffer: validPdf,
+      buffer: await readFile(validPdfPath),
     });
     await page.getByRole("button", { name: "Upload and validate PDF" }).click();
     await expect(page.getByTestId("source-state")).toHaveText("Admitted");

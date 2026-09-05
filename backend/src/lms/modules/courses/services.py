@@ -30,6 +30,7 @@ from .types import (
     CourseStatus,
     CourseVersion,
     CourseVersionHistory,
+    CreateAiAssistedDraftCommand,
     CreateCourseCommand,
     CreateSuccessorDraftCommand,
     CurriculumSection,
@@ -150,6 +151,10 @@ class UnitOfWorkPort(Protocol):
     def transaction(self) -> AbstractContextManager[None]: ...
 
 
+class PublicationSourcePort(Protocol):
+    def allows_publication(self, snapshot: CourseSnapshot) -> bool: ...
+
+
 class UUIDFactory(Protocol):
     def new_uuid(self) -> UUID: ...
 
@@ -178,6 +183,7 @@ class CourseLifecycleService:
         idempotency: IdempotencyPort,
         facts: FactWriterPort,
         unit_of_work: UnitOfWorkPort,
+        publication_sources: PublicationSourcePort | None = None,
         ids: UUIDFactory | None = None,
         clock: Clock | None = None,
     ) -> None:
@@ -187,6 +193,7 @@ class CourseLifecycleService:
         self._idempotency = idempotency
         self._facts = facts
         self._unit_of_work = unit_of_work
+        self._publication_sources = publication_sources
         self._ids = ids or RandomUUIDFactory()
         self._clock = clock or SystemClock()
 
@@ -314,6 +321,126 @@ class CourseLifecycleService:
             )
             stored = self._repository.create(aggregate)
             snapshot = stored.snapshot()
+            self._idempotency.complete(scope, request_hash, snapshot)
+            return snapshot
+
+    def create_ai_assisted_draft(
+        self,
+        *,
+        actor_id: UUID,
+        tenant_id: UUID,
+        command: CreateAiAssistedDraftCommand,
+        idempotency_key: str,
+    ) -> CourseSnapshot:
+        """Create one editable AI-assisted v1 through the canonical Courses boundary."""
+
+        create_command = CreateCourseCommand(
+            slug=command.slug,
+            primary_locale=command.primary_locale,
+            title=command.title,
+            description=command.description,
+        )
+        curriculum_command = ReplaceCurriculumCommand(
+            expected_version_row_version=1,
+            sections=command.sections,
+        )
+        validate_create_course(create_command)
+        validate_replace_curriculum(curriculum_command)
+        validate_idempotency_key(idempotency_key)
+        request_hash = canonical_request_hash(
+            {
+                "slug": command.slug,
+                "primary_locale": command.primary_locale,
+                "title": command.title,
+                "description": command.description,
+                "sections": [
+                    {
+                        "title": section.title,
+                        "position": section.position,
+                        "lessons": [
+                            {
+                                "title": lesson.title,
+                                "position": lesson.position,
+                                "is_required": lesson.is_required,
+                                "content_blocks": [
+                                    {
+                                        "kind": block.kind,
+                                        "position": block.position,
+                                        "document": block.document,
+                                    }
+                                    for block in lesson.content_blocks
+                                ],
+                            }
+                            for lesson in section.lessons
+                        ],
+                    }
+                    for section in command.sections
+                ],
+            }
+        )
+        scope = IdempotencyScope(
+            tenant_id,
+            actor_id,
+            "create_ai_assisted_draft",
+            idempotency_key,
+        )
+        with self._unit_of_work.transaction():
+            actor = self._authorize(actor_id=actor_id, tenant_id=tenant_id)
+            require_human(actor)
+            require_permission(actor, PERMISSION_COURSES_DRAFTS_WRITE)
+            if actor.membership_id is None:
+                raise CourseLifecycleError("COURSE_PERMISSION_DENIED")
+            replay = self._reserve(scope, request_hash)
+            if replay is not None:
+                if not isinstance(replay, CourseSnapshot):
+                    raise CourseLifecycleError("SERVICE_CONTRACT_ERROR")
+                return replay
+
+            course_id = self._ids.new_uuid()
+            version_id = self._ids.new_uuid()
+            course = Course(
+                id=course_id,
+                tenant_id=tenant_id,
+                slug=command.slug,
+                reviewer_policy=self._reviewer_policies.reviewer_policy_for_new_course(
+                    tenant_id=tenant_id
+                ),
+                current_published_version_id=None,
+                instructor_membership_ids=(actor.membership_id,),
+                row_version=1,
+            )
+            version = CourseVersion(
+                id=version_id,
+                tenant_id=tenant_id,
+                course_id=course_id,
+                predecessor_version_id=None,
+                version_number=1,
+                status=CourseStatus.DRAFT,
+                origin_type=OriginType.AI_ASSISTED,
+                primary_locale=command.primary_locale,
+                title=command.title,
+                description=command.description,
+                content_hash=_ZERO_HASH,
+                submitted_hash=None,
+                approved_hash=None,
+                row_version=1,
+            )
+            aggregate = CourseAggregate(course, version, (), None, None)
+            aggregate = replace(
+                aggregate,
+                version=replace(
+                    aggregate.version,
+                    content_hash=canonical_content_hash(aggregate.snapshot()),
+                ),
+            )
+            stored = self._repository.create(aggregate)
+            populated = self._materialize_curriculum(stored, command.sections)
+            canonical = self._repository.save(
+                populated,
+                expected_version_row_version=stored.version.row_version,
+                expected_course_row_version=None,
+            )
+            snapshot = canonical.snapshot()
             self._idempotency.complete(scope, request_hash, snapshot)
             return snapshot
 
@@ -615,6 +742,23 @@ class CourseLifecycleService:
             if command.expected_content_hash != current_hash:
                 raise CourseLifecycleError("CONTENT_HASH_MISMATCH")
             decision = authorize_transition(actor, aggregate, command.transition)
+            if (
+                aggregate.version.origin_type is OriginType.AI_ASSISTED
+                and command.transition in {Transition.APPROVE, Transition.PUBLISH}
+                and (
+                    self._publication_sources is None
+                    or not self._publication_sources.allows_publication(aggregate.snapshot())
+                )
+            ):
+                raise validation_failed(
+                    (
+                        FieldError(
+                            path="source_rights",
+                            code="source_unavailable",
+                            detail="The generated course source is unavailable for publication.",
+                        ),
+                    )
+                )
             if command.transition is Transition.SUBMIT_REVIEW:
                 validate_complete_course(aggregate.snapshot())
             if command.transition in {Transition.REQUEST_CHANGES, Transition.APPROVE} and (

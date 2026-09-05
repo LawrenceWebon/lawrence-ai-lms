@@ -9,15 +9,28 @@ from tests.tenancy.conftest import tenancy_seed as tenancy_seed
 
 
 @pytest.fixture
-def documents_service(tmp_path: Path) -> Any:
-    from lms.modules.documents.inspector import LocalPdfInspector
-    from lms.modules.documents.services import SourceAdmissionService
+def documents_storage(tmp_path: Path) -> Any:
     from lms.modules.documents.storage import LocalQuarantineStorage
 
+    return LocalQuarantineStorage(tmp_path / "quarantine")
+
+
+@pytest.fixture
+def documents_service(documents_storage: Any) -> Any:
+    from lms.modules.documents.inspector import LocalPdfInspector
+    from lms.modules.documents.services import SourceAdmissionService
+
     return SourceAdmissionService(
-        storage=LocalQuarantineStorage(tmp_path / "quarantine"),
+        storage=documents_storage,
         inspector=LocalPdfInspector(),
     )
+
+
+@pytest.fixture
+def ingestion_service(documents_storage: Any) -> Any:
+    from lms.modules.documents.ingestion import DocumentIngestionService
+
+    return DocumentIngestionService(storage=documents_storage)
 
 
 @pytest.fixture

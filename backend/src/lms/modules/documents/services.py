@@ -33,6 +33,7 @@ from .models import (
 )
 from .policy import (
     ADMISSION_POLICY,
+    PERMISSION_INGESTION_START,
     PERMISSION_SOURCE_RIGHTS_REVIEW,
     PERMISSION_SOURCES_ADMIT,
     PERMISSION_SOURCES_CANCEL,
@@ -50,6 +51,7 @@ from .types import (
     SourceAdmissionSnapshot,
     SourceAuthorizationRecord,
     SourceDocumentRecord,
+    SourceOperation,
     SourceVersionRecord,
     TrustedAuthorizationBlockCommand,
     UploadIntentReceipt,
@@ -70,6 +72,11 @@ _DECISION_CODES = {
 _TRUSTED_BLOCK_CODES = {
     "expired": "RIGHTS_EXPIRED",
     "disputed": "RIGHTS_DISPUTED",
+}
+_OPERATION_REQUEST_PERMISSIONS = {
+    "extract": PERMISSION_INGESTION_START,
+    "ocr": PERMISSION_INGESTION_START,
+    "generate": "course_generation.runs.create",
 }
 _EVENT_REASONS = {
     "source.version.rejected.v1": frozenset(
@@ -333,6 +340,26 @@ class SourceAdmissionService:
         return document, version, declaration, authorization
 
     @staticmethod
+    def _authorization_record(
+        authorization: SourceUseAuthorization,
+    ) -> SourceAuthorizationRecord:
+        return SourceAuthorizationRecord(
+            id=authorization.id,
+            tenant_id=authorization.tenant_id,
+            source_document_id=authorization.source_document_id,
+            source_version_id=authorization.source_version_id,
+            rights_declaration_id=authorization.rights_declaration_id,
+            operation=authorization.operation,
+            status=authorization.status,
+            requested_by_actor_id=authorization.requested_by_actor_id,
+            reviewed_by_actor_id=authorization.reviewed_by_actor_id,
+            decision_code=authorization.decision_code,
+            valid_from=authorization.valid_from,
+            valid_until=authorization.valid_until,
+            row_version=authorization.row_version,
+        )
+
+    @staticmethod
     def _snapshot(
         document: SourceDocument,
         version: SourceVersion,
@@ -391,21 +418,7 @@ class SourceAdmissionService:
                 evidence_reference=declaration.evidence_reference,
                 row_version=declaration.row_version,
             ),
-            store_authorization=SourceAuthorizationRecord(
-                id=authorization.id,
-                tenant_id=authorization.tenant_id,
-                source_document_id=authorization.source_document_id,
-                source_version_id=authorization.source_version_id,
-                rights_declaration_id=authorization.rights_declaration_id,
-                operation=authorization.operation,
-                status=authorization.status,
-                requested_by_actor_id=authorization.requested_by_actor_id,
-                reviewed_by_actor_id=authorization.reviewed_by_actor_id,
-                decision_code=authorization.decision_code,
-                valid_from=authorization.valid_from,
-                valid_until=authorization.valid_until,
-                row_version=authorization.row_version,
-            ),
+            store_authorization=SourceAdmissionService._authorization_record(authorization),
             upload_intent=(
                 None
                 if intent is None
@@ -610,6 +623,227 @@ class SourceAdmissionService:
                     source_version_id=source_version_id,
                 )
             )
+
+    def list_operation_authorizations(
+        self,
+        *,
+        actor_id: UUID,
+        tenant_id: UUID,
+        source_document_id: UUID,
+        source_version_id: UUID,
+    ) -> tuple[SourceAuthorizationRecord, ...]:
+        with transaction.atomic():
+            self._authorize(
+                actor_id=actor_id,
+                tenant_id=tenant_id,
+                permission=PERMISSION_SOURCES_READ,
+            )
+            self._load_models(
+                tenant_id=tenant_id,
+                source_document_id=source_document_id,
+                source_version_id=source_version_id,
+            )
+            authorizations = SourceUseAuthorization.objects.filter(
+                tenant_id=tenant_id,
+                source_document_id=source_document_id,
+                source_version_id=source_version_id,
+            ).order_by("operation", "id")
+            return tuple(self._authorization_record(item) for item in authorizations)
+
+    def request_operation_authorization(
+        self,
+        *,
+        actor_id: UUID,
+        tenant_id: UUID,
+        source_document_id: UUID,
+        source_version_id: UUID,
+        operation: SourceOperation,
+        idempotency_key: str,
+    ) -> SourceAuthorizationRecord:
+        permission = _OPERATION_REQUEST_PERMISSIONS.get(operation)
+        if permission is None:
+            raise SourceAdmissionError("SOURCE_ADMISSION_VALIDATION_FAILED")
+        request = {
+            "source_document_id": source_document_id,
+            "source_version_id": source_version_id,
+            "operation": operation,
+        }
+        with transaction.atomic():
+            self._authorize(actor_id=actor_id, tenant_id=tenant_id, permission=permission)
+            document, version, declaration, store_authorization = self._load_models(
+                tenant_id=tenant_id,
+                source_document_id=source_document_id,
+                source_version_id=source_version_id,
+                lock=True,
+            )
+            if version.admission_status != "admitted" or not self._authorization_is_active(
+                store_authorization
+            ):
+                raise SourceAdmissionError("SOURCE_OPERATION_AUTHORIZATION_REQUIRED")
+            reservation, replay = self._reserve_idempotency(
+                actor_id=actor_id,
+                tenant_id=tenant_id,
+                operation=f"documents.authorizations.{operation}.request",
+                key=idempotency_key,
+                request=request,
+            )
+            if replay is not None:
+                try:
+                    authorization = SourceUseAuthorization.objects.get(
+                        tenant_id=tenant_id,
+                        source_document_id=source_document_id,
+                        source_version_id=source_version_id,
+                        id=UUID(str(replay["resource_id"])),
+                        operation=operation,
+                    )
+                except (KeyError, ValueError, SourceUseAuthorization.DoesNotExist) as error:
+                    raise SourceAdmissionError("SERVICE_CONTRACT_ERROR") from error
+                return self._authorization_record(authorization)
+
+            authorization, created = SourceUseAuthorization.objects.get_or_create(
+                tenant_id=tenant_id,
+                source_document=document,
+                source_version=version,
+                operation=operation,
+                defaults={
+                    "rights_declaration": declaration,
+                    "status": "requested",
+                    "requested_by_actor_id": actor_id,
+                },
+            )
+            if authorization.rights_declaration_id != declaration.id:
+                raise SourceAdmissionError("SERVICE_CONTRACT_ERROR")
+            if created:
+                self._record_fact(
+                    actor_id=actor_id,
+                    tenant_id=tenant_id,
+                    event_type="source.operation_authorization.requested.v1",
+                    document=document,
+                    version=version,
+                )
+            self._complete_idempotency(
+                reservation,
+                source_document_id=document.id,
+                source_version_id=version.id,
+                resource_id=authorization.id,
+            )
+            return self._authorization_record(authorization)
+
+    def review_operation_authorization(
+        self,
+        *,
+        actor_id: UUID,
+        tenant_id: UUID,
+        source_document_id: UUID,
+        source_version_id: UUID,
+        operation: SourceOperation,
+        command: ReviewAuthorizationCommand,
+        idempotency_key: str,
+    ) -> SourceAuthorizationRecord:
+        if operation not in _OPERATION_REQUEST_PERMISSIONS:
+            raise SourceAdmissionError("SOURCE_ADMISSION_VALIDATION_FAILED")
+        expected_code = _DECISION_CODES.get(command.decision)
+        if expected_code is None or command.decision_code != expected_code:
+            raise SourceAdmissionError("SOURCE_ADMISSION_VALIDATION_FAILED")
+        request = {
+            "source_document_id": source_document_id,
+            "source_version_id": source_version_id,
+            "operation": operation,
+            **asdict(command),
+        }
+        with transaction.atomic():
+            self._authorize(
+                actor_id=actor_id,
+                tenant_id=tenant_id,
+                permission=PERMISSION_SOURCE_RIGHTS_REVIEW,
+            )
+            document, version, declaration, store_authorization = self._load_models(
+                tenant_id=tenant_id,
+                source_document_id=source_document_id,
+                source_version_id=source_version_id,
+                lock=True,
+            )
+            if version.admission_status != "admitted" or not self._authorization_is_active(
+                store_authorization
+            ):
+                raise SourceAdmissionError("SOURCE_OPERATION_AUTHORIZATION_INACTIVE")
+            try:
+                authorization = SourceUseAuthorization.objects.select_for_update().get(
+                    tenant_id=tenant_id,
+                    source_document_id=source_document_id,
+                    source_version_id=source_version_id,
+                    rights_declaration_id=declaration.id,
+                    operation=operation,
+                )
+            except SourceUseAuthorization.DoesNotExist as error:
+                raise SourceAdmissionError("RESOURCE_NOT_FOUND") from error
+            if authorization.requested_by_actor_id == actor_id:
+                raise SourceAdmissionError("SOURCE_RIGHTS_REVIEWER_SEPARATION_REQUIRED")
+            reservation, replay = self._reserve_idempotency(
+                actor_id=actor_id,
+                tenant_id=tenant_id,
+                operation=f"documents.authorizations.{operation}.review",
+                key=idempotency_key,
+                request=request,
+            )
+            if replay is not None:
+                try:
+                    replayed = SourceUseAuthorization.objects.get(
+                        tenant_id=tenant_id,
+                        source_version_id=source_version_id,
+                        id=UUID(str(replay["resource_id"])),
+                        operation=operation,
+                    )
+                except (KeyError, ValueError, SourceUseAuthorization.DoesNotExist) as error:
+                    raise SourceAdmissionError("SERVICE_CONTRACT_ERROR") from error
+                return self._authorization_record(replayed)
+            if authorization.row_version != command.expected_authorization_row_version:
+                raise SourceAdmissionError("SOURCE_ADMISSION_VERSION_CONFLICT")
+            if command.decision in {"activate", "deny"} and authorization.status != "requested":
+                raise SourceAdmissionError("SOURCE_ADMISSION_STATE_CONFLICT")
+            if command.decision == "revoke" and authorization.status != "active":
+                raise SourceAdmissionError("SOURCE_ADMISSION_STATE_CONFLICT")
+
+            now = timezone.now()
+            authorization.reviewed_by_actor_id = actor_id
+            authorization.decision_code = command.decision_code
+            authorization.row_version += 1
+            if command.decision == "activate":
+                if declaration.valid_until is not None and declaration.valid_until <= now:
+                    raise SourceAdmissionError("SOURCE_OPERATION_AUTHORIZATION_INACTIVE")
+                authorization.status = "active"
+                authorization.valid_from = now
+                authorization.valid_until = declaration.valid_until
+            elif command.decision == "deny":
+                authorization.status = "denied"
+            else:
+                authorization.status = "revoked"
+            authorization.save(
+                update_fields=(
+                    "status",
+                    "reviewed_by_actor_id",
+                    "decision_code",
+                    "valid_from",
+                    "valid_until",
+                    "row_version",
+                    "updated_at",
+                )
+            )
+            self._record_fact(
+                actor_id=actor_id,
+                tenant_id=tenant_id,
+                event_type=(f"source.operation_authorization.{authorization.status}.v1"),
+                document=document,
+                version=version,
+                reason_code=(None if command.decision == "activate" else command.decision_code),
+            )
+            self._complete_idempotency(
+                reservation,
+                source_document_id=document.id,
+                source_version_id=version.id,
+                resource_id=authorization.id,
+            )
+            return self._authorization_record(authorization)
 
     def review_authorization(
         self,

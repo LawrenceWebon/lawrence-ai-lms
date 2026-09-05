@@ -1,0 +1,29 @@
+{
+  "event_id": "10000000-0000-4000-8000-000000000504",
+  "event_type": "course_generation.canonicalized.v1",
+  "event_version": 1,
+  "producer": "course_generation",
+  "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+  "aggregate_type": "course_generation_run",
+  "aggregate_id": "00000000-0000-4000-8000-00000000d504",
+  "source_document_id": "00000000-0000-4000-8000-00000000c301",
+  "source_version_id": "00000000-0000-4000-8000-00000000c302",
+  "ingestion_run_id": "00000000-0000-4000-8000-00000000c401",
+  "course_generation_run_id": "00000000-0000-4000-8000-00000000d504",
+  "aggregate_version": 7,
+  "occurred_at": "2026-08-31T04:10:00Z",
+  "recorded_at": "2026-08-31T04:10:01Z",
+  "correlation_id": "30000000-0000-4000-8000-000000000504",
+  "causation_id": "40000000-0000-4000-8000-000000000504",
+  "privacy_class": "internal",
+  "payload": {
+    "status": "canonicalized",
+    "checkpoint": "canonicalized",
+    "course_generation_canonicalization_id": "00000000-0000-4000-8000-00000000d505",
+    "course_id": "00000000-0000-4000-8000-00000000e201",
+    "course_version_id": "00000000-0000-4000-8000-00000000e202",
+    "reviewed_output_sha256": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "canonical_content_sha256": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "canonicalization_sha256": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+  }
+}

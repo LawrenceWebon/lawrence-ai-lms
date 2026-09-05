@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "authority": "Django",
-  "schema_fingerprint": "sha256:09cb1ccd00cc4cbe88fc9c353bfc775f1b1f981656588b7e7d46239f6cd2003b",
-  "database_fingerprint": "sha256:2d49eb3fd95cb658299f49162200ed679fc859b4eab76046c0fbb3a9be2126cd",
+  "schema_fingerprint": "sha256:2390502c971d303b736a28acc734e3a86afdd0f1116e89804f7570879df5102e",
+  "database_fingerprint": "sha256:ba236c2c97c71402ec745ebf503683ceb8c8158af975ba918e3c65e6d08b8d02",
   "objects": [
     {
       "schema": "app",
@@ -44,10 +44,10 @@
       "schema": "app",
       "table": "source_use_authorizations",
       "migration": "documents.0001_initial",
-      "security_migration": "documents.0002_document_security",
+      "security_migration": "documents.0005_ingestion_security",
       "columns": ["id", "tenant_id", "source_document_id", "source_version_id", "rights_declaration_id", "operation", "status", "requested_by_actor_id", "reviewed_by_actor_id", "decision_code", "valid_from", "valid_until", "row_version", "created_at", "updated_at"],
       "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,source_version_id,operation)", "composite tenant foreign keys to document, version, and declaration"],
-      "checks": ["operation = store", "fixed status", "reviewer separation", "decision/status shape"],
+      "checks": ["operation in store/extract/ocr/generate", "fixed status", "reviewer separation", "decision/status shape"],
       "indexes": ["ix_source_auth_active (tenant_id,source_version_id,operation,status)"],
       "lifecycle": "separately reviewed operation-scoped authorization",
       "rls": "ENABLE + FORCE"
@@ -98,6 +98,90 @@
       "checks": ["fixed outcome", "observation is object", "canonical manifest hashes"],
       "indexes": ["ix_doc_attempts_job (tenant_id,job_id,attempt_number)"],
       "lifecycle": "immutable completed attempt evidence",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "integration",
+      "table": "document_ingestion_runs",
+      "migration": "documents.0003_ingestion_schema",
+      "security_migration": "documents.0005_ingestion_security",
+      "columns": ["id", "tenant_id", "source_document_id", "source_version_id", "storage_object_id", "extract_authorization_id", "requested_by_actor_id", "status", "parser_version", "configuration_version", "locale", "attempt_count", "max_attempts", "lease_owner", "lease_expires_at", "heartbeat_at", "checkpoint", "input_manifest_sha256", "output_manifest_sha256", "reason_code", "quality_summary", "row_version", "created_at", "updated_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE active (tenant_id,source_version_id,parser_version,configuration_version)", "composite tenant foreign keys to document, version, storage object, and extract authorization"],
+      "checks": ["fixed durable status", "locale = en", "canonical manifest hashes", "lease/result/quality shapes", "1 <= max_attempts <= 10", "attempt_count <= max_attempts"],
+      "indexes": ["ix_ingest_runs_claim (tenant_id,status,created_at)", "ix_ingest_runs_source (tenant_id,source_version_id,created_at)", "uq_ingestion_runs_active_version partial unique"],
+      "lifecycle": "durable leased extraction/normalization run; terminal scope and evidence are immutable",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "integration",
+      "table": "document_ingestion_attempts",
+      "migration": "documents.0003_ingestion_schema",
+      "security_migration": "documents.0005_ingestion_security",
+      "columns": ["id", "tenant_id", "ingestion_run_id", "attempt_number", "outcome", "reason_code", "checkpoint", "input_manifest_sha256", "output_manifest_sha256", "observation", "started_at", "completed_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,ingestion_run_id,attempt_number)", "FOREIGN KEY (tenant_id,ingestion_run_id) -> document_ingestion_runs(tenant_id,id)"],
+      "checks": ["fixed outcome", "completion timestamp shape", "observation is object", "canonical manifest hashes"],
+      "indexes": ["ix_ingest_attempts_run (tenant_id,ingestion_run_id,attempt_number)"],
+      "lifecycle": "immutable completed attempt evidence with one running-to-terminal transition",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "app",
+      "table": "source_artifacts",
+      "migration": "documents.0003_ingestion_schema",
+      "security_migration": "documents.0005_ingestion_security",
+      "columns": ["id", "tenant_id", "source_document_id", "source_version_id", "created_by_run_id", "artifact_role", "schema_version", "content_sha256", "byte_count", "json_payload", "text_payload", "created_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,source_version_id,artifact_role,schema_version)", "composite tenant foreign keys to document, version, and ingestion run"],
+      "checks": ["role in canonical_json/normalized_markdown", "canonical content hash", "positive bytes", "role-specific payload shape"],
+      "indexes": ["ix_source_artifacts_version (tenant_id,source_version_id,artifact_role)"],
+      "lifecycle": "immutable normalized-source projection; source text never enters audit/outbox facts",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "app",
+      "table": "document_pages",
+      "migration": "documents.0003_ingestion_schema",
+      "security_migration": "documents.0005_ingestion_security",
+      "columns": ["id", "tenant_id", "source_document_id", "source_version_id", "created_by_run_id", "parser_version", "configuration_version", "page_number", "width_points", "height_points", "text", "text_sha256", "ocr_used", "created_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,source_version_id,parser_version,configuration_version,page_number)", "composite tenant foreign keys to document, version, and ingestion run"],
+      "checks": ["page_number >= 1", "positive finite page dimensions", "canonical text hash"],
+      "indexes": ["ix_document_pages_version (tenant_id,source_version_id,page_number)"],
+      "lifecycle": "immutable authoritative normalized page",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "app",
+      "table": "document_elements",
+      "migration": "documents.0003_ingestion_schema",
+      "security_migration": "documents.0005_ingestion_security",
+      "columns": ["id", "tenant_id", "source_document_id", "source_version_id", "page_id", "created_by_run_id", "position", "kind", "text", "text_sha256", "created_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,page_id,position)", "composite tenant foreign keys to document, version, page, and ingestion run"],
+      "checks": ["position >= 1", "kind in heading/paragraph", "canonical text hash"],
+      "indexes": ["ix_document_elements_page (tenant_id,page_id,position)"],
+      "lifecycle": "immutable authoritative normalized element",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "app",
+      "table": "document_sections",
+      "migration": "documents.0003_ingestion_schema",
+      "security_migration": "documents.0005_ingestion_security",
+      "columns": ["id", "tenant_id", "source_document_id", "source_version_id", "created_by_run_id", "position", "title", "start_page", "end_page", "created_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,source_version_id,position)", "composite tenant foreign keys to document, version, and ingestion run"],
+      "checks": ["position >= 1", "1 <= start_page <= end_page"],
+      "indexes": ["ix_document_sections_version (tenant_id,source_version_id,position)"],
+      "lifecycle": "immutable authoritative normalized section",
+      "rls": "ENABLE + FORCE"
+    },
+    {
+      "schema": "app",
+      "table": "document_section_elements",
+      "migration": "documents.0003_ingestion_schema",
+      "security_migration": "documents.0005_ingestion_security",
+      "columns": ["id", "tenant_id", "source_version_id", "section_id", "element_id", "position", "created_at"],
+      "keys": ["PRIMARY KEY (id)", "UNIQUE (tenant_id,id)", "UNIQUE (tenant_id,section_id,position)", "UNIQUE (tenant_id,section_id,element_id)", "composite tenant foreign keys to version, section, and element"],
+      "checks": ["position >= 1"],
+      "indexes": ["ix_doc_section_elements (tenant_id,section_id,position)"],
+      "lifecycle": "immutable ordered normalized section-to-element edge",
       "rls": "ENABLE + FORCE"
     }
   ]

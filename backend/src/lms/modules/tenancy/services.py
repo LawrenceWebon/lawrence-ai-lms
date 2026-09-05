@@ -53,6 +53,12 @@ PERMISSION_DOCUMENT_SOURCES_READ = "documents.sources.read"
 PERMISSION_DOCUMENT_SOURCES_ADMIT = "documents.sources.admit"
 PERMISSION_DOCUMENT_SOURCES_CANCEL = "documents.sources.cancel"
 PERMISSION_DOCUMENT_SOURCE_RIGHTS_REVIEW = "documents.source_rights.review"
+PERMISSION_DOCUMENT_INGESTION_START = "documents.ingestion.start"
+PERMISSION_DOCUMENT_INGESTION_READ = "documents.ingestion.read"
+PERMISSION_GENERATION_CREATE = "course_generation.runs.create"
+PERMISSION_GENERATION_READ = "course_generation.runs.read"
+PERMISSION_GENERATION_BLUEPRINT_REVIEW = "course_generation.blueprints.review"
+PERMISSION_GENERATION_DRAFT_CANONICALIZE = "course_generation.drafts.canonicalize"
 PERMISSION_LEARNING_ENROLLMENTS_MANAGE = "learning.enrollments.manage"
 PERMISSION_LEARNING_PLAYBACK_READ = "learning.playback.read"
 FIXED_PERMISSIONS = {
@@ -67,6 +73,12 @@ FIXED_PERMISSIONS = {
     PERMISSION_DOCUMENT_SOURCES_ADMIT: "Declare and upload private PDF sources",
     PERMISSION_DOCUMENT_SOURCES_CANCEL: "Cancel tenant source admissions",
     PERMISSION_DOCUMENT_SOURCE_RIGHTS_REVIEW: "Review operation-scoped source rights",
+    PERMISSION_DOCUMENT_INGESTION_START: "Start parser-backed source ingestion",
+    PERMISSION_DOCUMENT_INGESTION_READ: ("Read source ingestion status and normalized evidence"),
+    PERMISSION_GENERATION_CREATE: "Start structured course generation",
+    PERMISSION_GENERATION_READ: "Read structured generation review packages",
+    PERMISSION_GENERATION_BLUEPRINT_REVIEW: "Approve or reject generation blueprints",
+    PERMISSION_GENERATION_DRAFT_CANONICALIZE: "Canonicalize a reviewed generation revision",
     PERMISSION_LEARNING_ENROLLMENTS_MANAGE: "Create and revoke manual learner enrollments",
     PERMISSION_LEARNING_PLAYBACK_READ: "Read own enrolled courses and record progress",
 }
@@ -90,10 +102,25 @@ ROLE_PERMISSION_CODES = {
                 PERMISSION_DOCUMENT_SOURCES_READ,
                 PERMISSION_DOCUMENT_SOURCES_ADMIT,
                 PERMISSION_DOCUMENT_SOURCES_CANCEL,
+                PERMISSION_DOCUMENT_INGESTION_START,
+                PERMISSION_DOCUMENT_INGESTION_READ,
+                PERMISSION_GENERATION_CREATE,
+                PERMISSION_GENERATION_READ,
+                PERMISSION_GENERATION_BLUEPRINT_REVIEW,
+                PERMISSION_GENERATION_DRAFT_CANONICALIZE,
             )
         )
     ),
-    "reviewer": tuple(sorted((PERMISSION_COURSES_READ, PERMISSION_COURSES_REVIEW))),
+    "reviewer": tuple(
+        sorted(
+            (
+                PERMISSION_COURSES_READ,
+                PERMISSION_COURSES_REVIEW,
+                PERMISSION_GENERATION_READ,
+                PERMISSION_GENERATION_BLUEPRINT_REVIEW,
+            )
+        )
+    ),
     "learner": (PERMISSION_LEARNING_PLAYBACK_READ,),
 }
 _EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")

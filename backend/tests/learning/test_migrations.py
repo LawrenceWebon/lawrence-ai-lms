@@ -17,7 +17,7 @@ def test_learning_migrations_reverse_and_roll_forward() -> None:
             assert cursor.fetchone() == (0,)
 
         executor = MigrationExecutor(connection)
-        executor.migrate([("learning", "0002_learning_security")])
+        executor.migrate([("learning", "0003_enrollment_management_only")])
         with connection.cursor() as cursor:
             cursor.execute(
                 """
@@ -32,4 +32,4 @@ def test_learning_migrations_reverse_and_roll_forward() -> None:
             assert cursor.fetchone() == (2,)
     finally:
         executor = MigrationExecutor(connection)
-        executor.migrate([("learning", "0002_learning_security")])
+        executor.migrate([("learning", "0003_enrollment_management_only")])

@@ -215,6 +215,71 @@ def test_composed_private_admission_rejection_revocation_and_idor(
     assert admitted.json()["source_version"]["admission_status"] == "admitted"
 
     base = f"/api/v1/tenants/{tenant_id}/source-documents/{document_id}/versions/{version_id}"
+    authorizations = send(
+        app,
+        "GET",
+        f"{base}/authorizations",
+        request_headers=headers("instructor", tenant_id),
+    )
+    assert authorizations.status_code == 200, authorizations.text
+    assert [item["operation"] for item in authorizations.json()] == ["store"]
+    extract_request = send(
+        app,
+        "POST",
+        f"{base}/authorizations/extract",
+        request_headers=headers(
+            "instructor",
+            tenant_id,
+            idempotency="integration-extract-request-0001",
+        ),
+    )
+    assert extract_request.status_code == 200, extract_request.text
+    assert extract_request.json()["status"] == "requested"
+    extract_review = send(
+        app,
+        "POST",
+        f"{base}/authorizations/extract/review",
+        request_headers=headers(
+            "admin",
+            tenant_id,
+            idempotency="integration-extract-review-0001",
+        ),
+        json={
+            "decision": "activate",
+            "expected_authorization_row_version": 1,
+            "decision_code": "RIGHTS_EVIDENCE_ACCEPTED",
+        },
+    )
+    assert extract_review.status_code == 200, extract_review.text
+    assert extract_review.json()["status"] == "active"
+    ingestion = send(
+        app,
+        "POST",
+        f"{base}/ingestion-runs",
+        request_headers=headers(
+            "instructor",
+            tenant_id,
+            idempotency="integration-ingestion-start-0001",
+        ),
+    )
+    assert ingestion.status_code == 202, ingestion.text
+    assert ingestion.json()["status"] == "queued"
+    run_id = UUID(ingestion.json()["id"])
+    document_service.run_ingestion(
+        tenant_id=tenant_id,
+        run_id=run_id,
+        worker_id="integration-document-worker",
+    )
+    ready = send(
+        app,
+        "GET",
+        f"{base}/ingestion-runs/{run_id}",
+        request_headers=headers("instructor", tenant_id),
+    )
+    assert ready.status_code == 200, ready.text
+    assert ready.json()["status"] == "ready_for_generation"
+    assert ready.json()["output_manifest_sha256"].startswith("sha256:")
+
     outsider = send(
         app,
         "GET",

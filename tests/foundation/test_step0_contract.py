@@ -85,7 +85,6 @@ class StepZeroScaffoldContractTests(unittest.TestCase):
             "backend/src/lms/modules/ai_companion",
             "backend/src/lms/modules/assessments",
             "backend/src/lms/modules/commerce",
-            "backend/src/lms/modules/course_generation",
             "backend/src/lms/modules/payments",
             "backend/src/lms/workers",
             "apps/worker",
