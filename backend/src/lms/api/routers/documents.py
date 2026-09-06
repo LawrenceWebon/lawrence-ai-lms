@@ -16,10 +16,14 @@ from lms.api.dependencies.authentication import AuthenticationProblem
 from lms.api.schemas.documents import (
     CancelSourceAdmissionV1,
     CreateSourceAdmissionV1,
+    DocumentIngestionRunV1,
+    RequestedSourceOperation,
+    ReviewSourceOperationAuthorizationV1,
     ReviewSourceStoreAuthorizationV1,
     SourceAdmissionContractError,
     SourceAdmissionServiceV1,
     SourceAdmissionV1,
+    SourceOperationAuthorizationV1,
     UploadIntentV1,
     VerifiedActorResult,
 )
@@ -42,6 +46,8 @@ _SAFE_LOCATION_PARTS = frozenset(
         "source_document_id",
         "source_version_id",
         "authorization_id",
+        "operation",
+        "run_id",
         "display_name",
         "declared_filename",
         "rights_declaration",
@@ -83,6 +89,52 @@ _SAFE_PROBLEMS: dict[str, tuple[int, str, str]] = {
         403,
         "Separate reviewer required",
         "A separate source-rights reviewer is required.",
+    ),
+    "SOURCE_OPERATION_AUTHORIZATION_REQUIRED": (
+        403,
+        "Operation rights required",
+        "Active operation rights are required.",
+    ),
+    "SOURCE_OPERATION_AUTHORIZATION_INACTIVE": (
+        403,
+        "Operation rights inactive",
+        "Operation rights are inactive.",
+    ),
+    "INGESTION_RESOURCE_NOT_FOUND": (
+        404,
+        "Ingestion unavailable",
+        "The ingestion resource is unavailable.",
+    ),
+    "INGESTION_STATE_CONFLICT": (
+        409,
+        "Ingestion state conflict",
+        "The ingestion state changed.",
+    ),
+    "INGESTION_LEASE_CONFLICT": (
+        409,
+        "Ingestion lease conflict",
+        "The ingestion lease is unavailable.",
+    ),
+    "INGESTION_RETRY_EXHAUSTED": (
+        409,
+        "Ingestion retry exhausted",
+        "The ingestion retry budget is exhausted.",
+    ),
+    "EXTRACTION_PARSER_FAILED": (
+        422,
+        "Extraction failed",
+        "The admitted PDF could not be extracted.",
+    ),
+    "OCR_REQUIRED": (422, "OCR required", "The admitted PDF requires OCR."),
+    "OCR_ADAPTER_UNAVAILABLE": (
+        503,
+        "OCR unavailable",
+        "The OCR adapter is unavailable.",
+    ),
+    "DOCUMENT_QUALITY_INSUFFICIENT": (
+        422,
+        "Document quality insufficient",
+        "The normalized document is insufficient.",
     ),
     "UPLOAD_INTENT_EXPIRED": (410, "Upload target expired", "The upload target expired."),
     "UPLOAD_QUOTA_EXCEEDED": (
@@ -262,6 +314,14 @@ def _snapshot(result: object) -> SourceAdmissionV1:
     return SourceAdmissionV1.model_validate(result, from_attributes=True)
 
 
+def _operation_authorization(result: object) -> SourceOperationAuthorizationV1:
+    return SourceOperationAuthorizationV1.model_validate(result, from_attributes=True)
+
+
+def _ingestion_run(result: object) -> DocumentIngestionRunV1:
+    return DocumentIngestionRunV1.model_validate(result, from_attributes=True)
+
+
 async def _bounded_upload_body(request: Request) -> bytes:
     body = bytearray()
     async for chunk in request.stream():
@@ -429,6 +489,137 @@ def create_document_router(
                 source_version_id=source_version_id,
                 command=command,
                 idempotency_key=idempotency_key,
+            )
+        )
+
+    @router.get(
+        "/tenants/{tenant_id}/source-documents/{source_document_id}/versions/"
+        "{source_version_id}/authorizations",
+        operation_id="listSourceOperationAuthorizations",
+        response_model=list[SourceOperationAuthorizationV1],
+        responses=_problem_responses(400, 401, 403, 404, 500),
+    )
+    def list_source_operation_authorizations(
+        tenant_id: UUID,
+        source_document_id: UUID,
+        source_version_id: UUID,
+        x_tenant_id: TenantHeader,
+        verified_actor: VerifiedActorResult = actor_requirement,
+    ) -> list[SourceOperationAuthorizationV1]:
+        result = service.list_operation_authorizations(
+            actor_id=verified_actor.principal_id,
+            tenant_id=_tenant(tenant_id, x_tenant_id),
+            source_document_id=source_document_id,
+            source_version_id=source_version_id,
+        )
+        if not isinstance(result, Sequence):
+            raise SourceAdmissionContractError(code="SERVICE_CONTRACT_ERROR")
+        return [_operation_authorization(item) for item in result]
+
+    @router.post(
+        "/tenants/{tenant_id}/source-documents/{source_document_id}/versions/"
+        "{source_version_id}/authorizations/{operation}",
+        operation_id="requestSourceOperationAuthorization",
+        response_model=SourceOperationAuthorizationV1,
+        responses=_problem_responses(400, 401, 403, 404, 409, 422, 500),
+    )
+    def request_source_operation_authorization(
+        tenant_id: UUID,
+        source_document_id: UUID,
+        source_version_id: UUID,
+        operation: RequestedSourceOperation,
+        idempotency_key: IdempotencyHeader,
+        x_tenant_id: TenantHeader,
+        verified_actor: VerifiedActorResult = actor_requirement,
+    ) -> SourceOperationAuthorizationV1:
+        return _operation_authorization(
+            service.request_operation_authorization(
+                actor_id=verified_actor.principal_id,
+                tenant_id=_tenant(tenant_id, x_tenant_id),
+                source_document_id=source_document_id,
+                source_version_id=source_version_id,
+                operation=operation,
+                idempotency_key=idempotency_key,
+            )
+        )
+
+    @router.post(
+        "/tenants/{tenant_id}/source-documents/{source_document_id}/versions/"
+        "{source_version_id}/authorizations/{operation}/review",
+        operation_id="reviewSourceOperationAuthorization",
+        response_model=SourceOperationAuthorizationV1,
+        responses=_problem_responses(400, 401, 403, 404, 409, 422, 500),
+    )
+    def review_source_operation_authorization(
+        tenant_id: UUID,
+        source_document_id: UUID,
+        source_version_id: UUID,
+        operation: RequestedSourceOperation,
+        command: ReviewSourceOperationAuthorizationV1,
+        idempotency_key: IdempotencyHeader,
+        x_tenant_id: TenantHeader,
+        verified_actor: VerifiedActorResult = actor_requirement,
+    ) -> SourceOperationAuthorizationV1:
+        return _operation_authorization(
+            service.review_operation_authorization(
+                actor_id=verified_actor.principal_id,
+                tenant_id=_tenant(tenant_id, x_tenant_id),
+                source_document_id=source_document_id,
+                source_version_id=source_version_id,
+                operation=operation,
+                command=command,
+                idempotency_key=idempotency_key,
+            )
+        )
+
+    @router.post(
+        "/tenants/{tenant_id}/source-documents/{source_document_id}/versions/"
+        "{source_version_id}/ingestion-runs",
+        operation_id="startDocumentIngestion",
+        response_model=DocumentIngestionRunV1,
+        status_code=status.HTTP_202_ACCEPTED,
+        responses=_problem_responses(400, 401, 403, 404, 409, 422, 500),
+    )
+    def start_document_ingestion(
+        tenant_id: UUID,
+        source_document_id: UUID,
+        source_version_id: UUID,
+        idempotency_key: IdempotencyHeader,
+        x_tenant_id: TenantHeader,
+        verified_actor: VerifiedActorResult = actor_requirement,
+    ) -> DocumentIngestionRunV1:
+        return _ingestion_run(
+            service.start_ingestion(
+                actor_id=verified_actor.principal_id,
+                tenant_id=_tenant(tenant_id, x_tenant_id),
+                source_document_id=source_document_id,
+                source_version_id=source_version_id,
+                idempotency_key=idempotency_key,
+            )
+        )
+
+    @router.get(
+        "/tenants/{tenant_id}/source-documents/{source_document_id}/versions/"
+        "{source_version_id}/ingestion-runs/{run_id}",
+        operation_id="getDocumentIngestion",
+        response_model=DocumentIngestionRunV1,
+        responses=_problem_responses(400, 401, 403, 404, 500),
+    )
+    def get_document_ingestion(
+        tenant_id: UUID,
+        source_document_id: UUID,
+        source_version_id: UUID,
+        run_id: UUID,
+        x_tenant_id: TenantHeader,
+        verified_actor: VerifiedActorResult = actor_requirement,
+    ) -> DocumentIngestionRunV1:
+        return _ingestion_run(
+            service.get_ingestion(
+                actor_id=verified_actor.principal_id,
+                tenant_id=_tenant(tenant_id, x_tenant_id),
+                source_document_id=source_document_id,
+                source_version_id=source_version_id,
+                run_id=run_id,
             )
         )
 

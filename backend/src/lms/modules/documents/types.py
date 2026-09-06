@@ -16,6 +16,7 @@ AuthorizationDecision = Literal["activate", "deny", "revoke"]
 TrustedAuthorizationBlockStatus = Literal["expired", "disputed"]
 CancellationReason = Literal["USER_CANCELLED", "SOURCE_REPLACED"]
 ValidationOutcome = Literal["admitted", "rejected", "retryable_failure"]
+SourceOperation = Literal["store", "extract", "ocr", "generate"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -191,3 +192,31 @@ class UploadIntentReceipt:
     max_bytes: int
     accepted_media_type: str
     row_version: int
+
+
+@dataclass(frozen=True, slots=True)
+class IngestionRunRecord:
+    id: UUID
+    tenant_id: UUID
+    source_document_id: UUID
+    source_version_id: UUID
+    status: str
+    parser_version: str
+    configuration_version: str
+    locale: str
+    attempt_count: int
+    max_attempts: int
+    checkpoint: str
+    input_manifest_sha256: str
+    output_manifest_sha256: str | None
+    reason_code: str | None
+    quality_summary: dict[str, object]
+    row_version: int
+    created_at: datetime
+    updated_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class IngestionWorkerResult:
+    run: IngestionRunRecord
+    claimed: bool

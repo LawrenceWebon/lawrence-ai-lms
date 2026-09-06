@@ -1,6 +1,56 @@
-%PDF-1.4
-1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
-2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
-3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >> endobj
-trailer << /Root 1 0 R >>
+%PDF-1.7
+% Synthetic deterministic fixture
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Length 474 >>
+stream
+BT
+/F1 16 Tf
+72 740 Td
+/F1 16 Tf
+(Synthetic Course Source) Tj
+0 -30 Td
+/F1 13 Tf
+(Chapter One: Foundations) Tj
+0 -22 Td
+/F1 11 Tf
+(Authorized source material explains durable workflows.) Tj
+0 -18 Td
+/F1 11 Tf
+(Human review protects quality before publication.) Tj
+0 -34 Td
+/F1 13 Tf
+(Chapter Two: Safe Delivery) Tj
+0 -22 Td
+/F1 11 Tf
+(Tenant isolation and immutable provenance protect learners.) Tj
+0 -18 Td
+/F1 11 Tf
+(Publication is an explicit instructor decision.) Tj
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f
+0000000043 00000 n
+0000000092 00000 n
+0000000149 00000 n
+0000000275 00000 n
+0000000372 00000 n
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+896
 %%EOF

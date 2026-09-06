@@ -1,0 +1,28 @@
+{
+  "event_id": "10000000-0000-4000-8000-000000000502",
+  "event_type": "course_generation.blueprint_ready.v1",
+  "event_version": 1,
+  "producer": "course_generation",
+  "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+  "aggregate_type": "course_generation_run",
+  "aggregate_id": "00000000-0000-4000-8000-00000000d502",
+  "source_document_id": "00000000-0000-4000-8000-00000000c301",
+  "source_version_id": "00000000-0000-4000-8000-00000000c302",
+  "ingestion_run_id": "00000000-0000-4000-8000-00000000c401",
+  "course_generation_run_id": "00000000-0000-4000-8000-00000000d502",
+  "aggregate_version": 2,
+  "occurred_at": "2026-08-31T03:00:00Z",
+  "recorded_at": "2026-08-31T03:00:01Z",
+  "correlation_id": "30000000-0000-4000-8000-000000000502",
+  "causation_id": "40000000-0000-4000-8000-000000000502",
+  "privacy_class": "internal",
+  "payload": {
+    "status": "blueprint_review",
+    "checkpoint": "blueprint_review",
+    "reason_code": null,
+    "input_manifest_sha256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "blueprint_content_sha256": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "output_manifest_sha256": null,
+    "attempt_count": 1
+  }
+}

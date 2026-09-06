@@ -34,5 +34,8 @@ project `ai-lms-lms-43`, PostgreSQL port `55243`, and host scratch child
 PR #56 later merged at exact head `ecbac896157fe157973f5116da91366cdacb8304` as
 `ed4670e6fa765d3edfb84610a450bef371a653ca`; configured checks passed. The independent
 [post-merge audit](https://github.com/LawrenceWebon/lawrence-ai-lms/pull/56#issuecomment-5384251039)
-returned `CHANGES REQUIRED` after admitting a structurally invalid pseudo-PDF. #61 is
-the next F-003 task and blocks F-004 implementation.
+returned `CHANGES REQUIRED` after admitting a structurally invalid pseudo-PDF. #61
+originally blocked F-004 implementation. The later owner-approved
+[backend execution contract](../backend-mvp-completion-execution.md) absorbs #61's
+planning and remediation scope into #63/PR #64, with parser correction before
+extraction. #61 remains open until that candidate is independently reviewed and merged.

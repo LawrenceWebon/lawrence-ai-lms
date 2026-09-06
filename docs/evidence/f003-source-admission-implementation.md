@@ -82,7 +82,7 @@ artifact manifest validates each path, origin, license, and digest.
 
 | Artifact | SHA-256 |
 |---|---|
-| `synthetic-valid-one-page.pdf` | `6350af32579ffbd7b251a6244bf9bd036d303cbc7404ae06d5e02f1b8f5b994f` |
+| `synthetic-valid-one-page.pdf` | `3be1c6ba99cbc5f4ccf3d75257baaefd8bab593082b2f2a1aea662a13c1cf115` |
 | `synthetic-signature-mismatch.pdf` | `6632b76d4ea7b4846b85664c1b81c935ac1f1c3639c50e955e8b1d92f0b46954` |
 | `synthetic-encrypted.pdf` | `89ce04d4c34af288bd0a6a4c70316d3a1a4d26d6b9e39e415c760f86c2455343` |
 | `synthetic-corrupt.pdf` | `59a535d21a08e07d540167522eee5d1115dcbcb2d5f49eb2858b0a2ae36d184f` |

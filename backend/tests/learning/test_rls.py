@@ -7,12 +7,14 @@ import pytest
 from django.db import DatabaseError, connection, transaction
 
 from lms.api.learning_composition import DjangoLearningService
-from lms.api.schemas.learning import ProgressCommandV1
+from lms.api.schemas.learning import ProgressCommandV1, RevokeEnrollmentV1
 from lms.modules.courses.models import Course, CourseVersion, Lesson
 from lms.modules.identity.models import UserProfile
 from lms.modules.learning.models import CourseProgress, Enrollment, LessonProgress
 from lms.modules.tenancy.models import (
+    AuditFact,
     MembershipRole,
+    OutboxFact,
     Role,
     RolePermission,
     TenantMembership,
@@ -134,6 +136,88 @@ def test_runtime_learner_sees_only_own_active_pin_and_safe_course_graph(
         assert Course.objects.count() == 0
         assert CourseVersion.objects.count() == 0
         assert Lesson.objects.count() == 0
+
+
+def test_runtime_learner_cannot_revoke_own_enrollment_directly(
+    tenancy_seed: dict[str, Any],
+) -> None:
+    graph = create_published_course(tenancy_seed)
+    enrollment = create_enrollment(
+        tenancy_seed,
+        graph,
+        tenancy_seed["memberships"]["learner"],
+    )
+    actor_id = tenancy_seed["profiles"]["learner"].provider_subject
+    tenant_id = tenancy_seed["alpha"].id
+
+    with transaction.atomic():
+        set_context(actor_id, tenant_id)
+        set_runtime_role()
+        with pytest.raises(DatabaseError), transaction.atomic(), connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE app.enrollments
+                   SET status = 'revoked',
+                       revoked_at = transaction_timestamp(),
+                       revocation_reason_code = 'LEARNER_FORGED',
+                       row_version = row_version + 1
+                 WHERE id = %s
+                """,
+                [str(enrollment.id)],
+            )
+
+    enrollment.refresh_from_db()
+    assert enrollment.status == "active"
+    assert enrollment.revoked_at is None
+    assert enrollment.revocation_reason_code is None
+    assert enrollment.row_version == 1
+
+
+def test_runtime_admin_revokes_through_service_with_audit_and_outbox(
+    tenancy_seed: dict[str, Any],
+) -> None:
+    graph = create_published_course(tenancy_seed)
+    enrollment = create_enrollment(
+        tenancy_seed,
+        graph,
+        tenancy_seed["memberships"]["learner"],
+    )
+    actor_id = tenancy_seed["profiles"]["admin"].provider_subject
+    tenant_id = tenancy_seed["alpha"].id
+    service = DjangoLearningService()
+
+    with transaction.atomic():
+        set_context(actor_id, tenant_id)
+        set_runtime_role()
+        result = service.revoke_enrollment(
+            actor_id=actor_id,
+            tenant_id=tenant_id,
+            enrollment_id=enrollment.id,
+            command=RevokeEnrollmentV1(
+                expected_enrollment_row_version=1,
+                reason_code="ADMIN_REVOKED",
+            ),
+            idempotency_key="runtime-admin-revoke-0001",
+        )
+
+    assert result.status.value == "revoked"
+    assert result.row_version == 2
+    assert (
+        AuditFact.objects.filter(
+            tenant_id=tenant_id,
+            event_type="learning.enrollment.revoked.v1",
+            subject_id=enrollment.id,
+        ).count()
+        == 1
+    )
+    assert (
+        OutboxFact.objects.filter(
+            tenant_id=tenant_id,
+            event_type="learning.enrollment.revoked.v1",
+            aggregate_id=enrollment.id,
+        ).count()
+        == 1
+    )
 
 
 def test_real_progress_service_commits_as_non_owner_and_permission_revocation_closes_access(

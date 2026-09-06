@@ -33,6 +33,10 @@ PR #57 later merged at exact head `843d34b168f7cb0b140f7663e775585c80b35cfd` as
 returned `CHANGES REQUIRED` after proving learner-runtime self-revocation. #60 owns the
 narrow forward RLS correction.
 
+The later owner-approved [backend execution contract](../backend-mvp-completion-execution.md)
+delivers #60's correction through #63/PR #64 before the full backend integration
+checkpoint. #60 remains open pending independent review and merge of that candidate.
+
 The authoritative owned paths, tests, dependencies, non-goals, shared-hotspot owner,
 and merge order are in `implementation-plan.md`. The merged #46 author resources were
 cleaned and verified absent; review-only resources are removed after durable audit

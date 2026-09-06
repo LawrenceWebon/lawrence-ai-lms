@@ -6,6 +6,8 @@ PERMISSION_SOURCES_READ = "documents.sources.read"
 PERMISSION_SOURCES_ADMIT = "documents.sources.admit"
 PERMISSION_SOURCES_CANCEL = "documents.sources.cancel"
 PERMISSION_SOURCE_RIGHTS_REVIEW = "documents.source_rights.review"
+PERMISSION_INGESTION_START = "documents.ingestion.start"
+PERMISSION_INGESTION_READ = "documents.ingestion.read"
 
 ADMISSION_POLICY = AdmissionPolicy(
     version="f003-local-v1",

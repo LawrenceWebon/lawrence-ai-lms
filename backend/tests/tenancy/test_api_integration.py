@@ -113,10 +113,16 @@ def test_real_auth_context_service_selects_explicit_tenant_and_denies_outsider(
     assert selected.status_code == 200
     assert selected.json()["membership"]["role_codes"] == ["instructor"]
     assert selected.json()["membership"]["permission_codes"] == [
+        "course_generation.blueprints.review",
+        "course_generation.drafts.canonicalize",
+        "course_generation.runs.create",
+        "course_generation.runs.read",
         "courses.drafts.write",
         "courses.publish",
         "courses.read",
         "courses.review",
+        "documents.ingestion.read",
+        "documents.ingestion.start",
         "documents.sources.admit",
         "documents.sources.cancel",
         "documents.sources.read",

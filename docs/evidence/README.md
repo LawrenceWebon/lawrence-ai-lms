@@ -57,3 +57,8 @@ F-007 enrollment-RLS remediation. These records remain local evidence only; rele
 deployment, retention/recovery, provider, and production gates remain pending or
 blocked. The [F-003 planning review correction](f003-planning-review-correction.md)
 remains a governance record rather than implementation or release evidence.
+
+The [backend MVP completion record](backend-mvp-completion.md) tracks PR #64's
+local extraction, generation, human canonicalization, and backend integration
+candidate, including the #60–#62 remediation scope. PR #59 has merged; PR #64's
+base integration, verification, and independent-review status are recorded there.

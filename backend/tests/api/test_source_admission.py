@@ -18,6 +18,7 @@ from tests.contract_fakes.f003_source_admission import (
     AUTHORIZATION_ID,
     BETA_TENANT_ID,
     IDEMPOTENCY_KEY,
+    INGESTION_RUN_ID,
     OPAQUE_TOKEN,
     SOURCE_DOCUMENT_ID,
     SOURCE_VERSION_ID,
@@ -96,6 +97,47 @@ def route_cases() -> tuple[RouteCase, ...]:
             examples["CancelSourceAdmissionV1"],
             True,
         ),
+        RouteCase(
+            "list_operation_authorizations",
+            "listSourceOperationAuthorizations",
+            "GET",
+            f"{base}/authorizations",
+            200,
+        ),
+        RouteCase(
+            "request_operation_authorization",
+            "requestSourceOperationAuthorization",
+            "POST",
+            f"{base}/authorizations/extract",
+            200,
+            None,
+            True,
+        ),
+        RouteCase(
+            "review_operation_authorization",
+            "reviewSourceOperationAuthorization",
+            "POST",
+            f"{base}/authorizations/extract/review",
+            200,
+            examples["ReviewSourceStoreAuthorizationV1"],
+            True,
+        ),
+        RouteCase(
+            "start_ingestion",
+            "startDocumentIngestion",
+            "POST",
+            f"{base}/ingestion-runs",
+            202,
+            None,
+            True,
+        ),
+        RouteCase(
+            "get_ingestion",
+            "getDocumentIngestion",
+            "GET",
+            f"{base}/ingestion-runs/{INGESTION_RUN_ID}",
+            200,
+        ),
     )
 
 
@@ -163,11 +205,22 @@ def test_routes_delegate_only_verified_actor_and_explicit_selectors() -> None:
     assert upload.content_type == "application/pdf"
     assert upload.body == PDF_BYTES
     assert responses[2].json() == service.intent
-    assert all(
-        response.json() == service.snapshot
-        for response in responses
-        if response.status_code in {200, 202}
-    )
+    expected = {
+        "create_admission": service.snapshot,
+        "review_authorization": service.snapshot,
+        "create_upload_intent": service.intent,
+        "upload_to_intent": service.snapshot,
+        "get_admission": service.snapshot,
+        "cancel_admission": service.snapshot,
+        "list_operation_authorizations": [service.operation_authorization],
+        "request_operation_authorization": service.operation_authorization,
+        "review_operation_authorization": service.operation_authorization,
+        "start_ingestion": service.ingestion_run,
+        "get_ingestion": service.ingestion_run,
+    }
+    assert [response.json() for response in responses] == [
+        expected[case.operation] for case in route_cases()
+    ]
 
 
 def test_openapi_has_frozen_paths_methods_statuses_and_binary_upload() -> None:
@@ -178,6 +231,8 @@ def test_openapi_has_frozen_paths_methods_statuses_and_binary_upload() -> None:
             .replace(str(SOURCE_DOCUMENT_ID), "{source_document_id}")
             .replace(str(SOURCE_VERSION_ID), "{source_version_id}")
             .replace(str(AUTHORIZATION_ID), "{authorization_id}")
+            .replace(str(INGESTION_RUN_ID), "{run_id}")
+            .replace("/authorizations/extract", "/authorizations/{operation}")
             .replace(OPAQUE_TOKEN, "{opaque_token}")
         )
         operation = schema["paths"][path][case.method.casefold()]

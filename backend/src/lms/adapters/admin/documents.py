@@ -7,10 +7,14 @@ from uuid import UUID
 from lms.api.schemas.documents import (
     CancelSourceAdmissionV1,
     CreateSourceAdmissionV1,
+    DocumentIngestionRunV1,
+    RequestedSourceOperation,
+    ReviewSourceOperationAuthorizationV1,
     ReviewSourceStoreAuthorizationV1,
     SourceAdmissionContractError,
     SourceAdmissionServiceV1,
     SourceAdmissionV1,
+    SourceOperationAuthorizationV1,
     UploadIntentV1,
 )
 
@@ -41,6 +45,14 @@ SOURCE_ADMISSION_READONLY_FIELDS: Final[frozenset[str]] = frozenset(
         "validation_attempt_count",
         "removal",
         "row_version",
+        "parser_version",
+        "configuration_version",
+        "attempt_count",
+        "max_attempts",
+        "checkpoint",
+        "input_manifest_sha256",
+        "output_manifest_sha256",
+        "quality_summary",
     }
 )
 
@@ -176,3 +188,97 @@ class SourceAdmissionAdminActions:
             idempotency_key=self._idempotency_key(idempotency_key),
         )
         return SourceAdmissionV1.model_validate(result, from_attributes=True)
+
+    def list_operation_authorizations(
+        self,
+        *,
+        context: AdminActorContext,
+        source_document_id: UUID,
+        source_version_id: UUID,
+    ) -> tuple[SourceOperationAuthorizationV1, ...]:
+        result = self._service.list_operation_authorizations(
+            actor_id=context.actor_id,
+            tenant_id=self._tenant_id(context),
+            source_document_id=source_document_id,
+            source_version_id=source_version_id,
+        )
+        if not isinstance(result, (list, tuple)):
+            raise SourceAdmissionContractError(code="SERVICE_CONTRACT_ERROR")
+        return tuple(
+            SourceOperationAuthorizationV1.model_validate(item, from_attributes=True)
+            for item in result
+        )
+
+    def request_operation_authorization(
+        self,
+        *,
+        context: AdminActorContext,
+        source_document_id: UUID,
+        source_version_id: UUID,
+        operation: RequestedSourceOperation,
+        idempotency_key: str,
+    ) -> SourceOperationAuthorizationV1:
+        result = self._service.request_operation_authorization(
+            actor_id=context.actor_id,
+            tenant_id=self._tenant_id(context),
+            source_document_id=source_document_id,
+            source_version_id=source_version_id,
+            operation=operation,
+            idempotency_key=self._idempotency_key(idempotency_key),
+        )
+        return SourceOperationAuthorizationV1.model_validate(result, from_attributes=True)
+
+    def review_operation_authorization(
+        self,
+        *,
+        context: AdminActorContext,
+        source_document_id: UUID,
+        source_version_id: UUID,
+        operation: RequestedSourceOperation,
+        request: ReviewSourceOperationAuthorizationV1,
+        idempotency_key: str,
+    ) -> SourceOperationAuthorizationV1:
+        result = self._service.review_operation_authorization(
+            actor_id=context.actor_id,
+            tenant_id=self._tenant_id(context),
+            source_document_id=source_document_id,
+            source_version_id=source_version_id,
+            operation=operation,
+            command=request,
+            idempotency_key=self._idempotency_key(idempotency_key),
+        )
+        return SourceOperationAuthorizationV1.model_validate(result, from_attributes=True)
+
+    def start_ingestion(
+        self,
+        *,
+        context: AdminActorContext,
+        source_document_id: UUID,
+        source_version_id: UUID,
+        idempotency_key: str,
+    ) -> DocumentIngestionRunV1:
+        result = self._service.start_ingestion(
+            actor_id=context.actor_id,
+            tenant_id=self._tenant_id(context),
+            source_document_id=source_document_id,
+            source_version_id=source_version_id,
+            idempotency_key=self._idempotency_key(idempotency_key),
+        )
+        return DocumentIngestionRunV1.model_validate(result, from_attributes=True)
+
+    def get_ingestion(
+        self,
+        *,
+        context: AdminActorContext,
+        source_document_id: UUID,
+        source_version_id: UUID,
+        run_id: UUID,
+    ) -> DocumentIngestionRunV1:
+        result = self._service.get_ingestion(
+            actor_id=context.actor_id,
+            tenant_id=self._tenant_id(context),
+            source_document_id=source_document_id,
+            source_version_id=source_version_id,
+            run_id=run_id,
+        )
+        return DocumentIngestionRunV1.model_validate(result, from_attributes=True)

@@ -8,7 +8,7 @@ from lms.modules.tenancy.models import RolePermission
 
 
 @pytest.mark.django_db
-def test_f003_permission_matrix_is_exact_and_grants_no_inferred_operation(
+def test_document_permission_matrix_is_exact_and_grants_no_inferred_operation(
     tenancy_seed: dict[str, Any],
 ) -> None:
     rows = RolePermission.objects.filter(
@@ -29,6 +29,8 @@ def test_f003_permission_matrix_is_exact_and_grants_no_inferred_operation(
         "documents.sources.admit",
         "documents.sources.cancel",
         "documents.source_rights.review",
+        "documents.ingestion.start",
+        "documents.ingestion.read",
     }
     assert actual == {
         "tenant_admin": all_permissions,
@@ -36,6 +38,8 @@ def test_f003_permission_matrix_is_exact_and_grants_no_inferred_operation(
             "documents.sources.read",
             "documents.sources.admit",
             "documents.sources.cancel",
+            "documents.ingestion.start",
+            "documents.ingestion.read",
         },
         "reviewer": set(),
         "learner": set(),

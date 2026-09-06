@@ -21,6 +21,7 @@ from lms.api.schemas.courses import (
     TransitionCourseVersionV1,
     UpdateCourseVersionV1,
 )
+from lms.modules.course_generation.publication import GenerationPublicationSources
 from lms.modules.courses.errors import CourseLifecycleError, FieldError, validation_failed
 from lms.modules.courses.repositories import (
     CoursePersistenceConflictError,
@@ -40,6 +41,7 @@ from lms.modules.courses.types import (
     CourseVersion,
     CourseVersionHistory,
     CourseVersionSummary,
+    CreateAiAssistedDraftCommand,
     CreateCourseCommand,
     CreateSuccessorDraftCommand,
     CurriculumSection,
@@ -386,11 +388,16 @@ class DjangoCourseRepository:
         stored = self._repository.load_snapshot(tenant_id, course_id, version_id)
         if stored is None:
             return None
+        snapshot = _snapshot_model(stored)
         return _snapshot_from_contract(
-            stored,
-            submitted_by_actor_id=self._submitted_by(
-                tenant_id=tenant_id,
-                version_id=version_id,
+            snapshot,
+            submitted_by_actor_id=(
+                None
+                if snapshot.version.submitted_hash is None
+                else self._submitted_by(
+                    tenant_id=tenant_id,
+                    version_id=version_id,
+                )
             ),
         )
 
@@ -778,6 +785,7 @@ class DjangoCourseAdministrationService:
             idempotency=DjangoCourseIdempotency(persistence),
             facts=DjangoCourseFacts(persistence),
             unit_of_work=DjangoCourseUnitOfWork(),
+            publication_sources=GenerationPublicationSources(),
         )
 
     def create_course(
@@ -800,6 +808,23 @@ class DjangoCourseAdministrationService:
                 ),
                 idempotency_key=idempotency_key,
             )
+        )
+
+    def create_ai_assisted_draft(
+        self,
+        *,
+        actor_id: UUID,
+        tenant_id: UUID,
+        command: CreateAiAssistedDraftCommand,
+        idempotency_key: str,
+    ) -> CourseSnapshot:
+        """Internal cross-domain command; no separate HTTP mutation is exposed."""
+
+        return self._service.create_ai_assisted_draft(
+            actor_id=actor_id,
+            tenant_id=tenant_id,
+            command=command,
+            idempotency_key=idempotency_key,
         )
 
     def get_course_version(

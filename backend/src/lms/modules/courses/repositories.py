@@ -884,17 +884,13 @@ class CourseRepository:
         tenant_id: Identifier,
         version_id: Identifier,
     ) -> UUID | None:
-        return (
-            AuditFact.objects.filter(
-                tenant_id=_as_uuid(tenant_id),
-                event_type="course.version.submitted.v1",
-                subject_type="course_version",
-                subject_id=_as_uuid(version_id),
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT app.course_submission_actor(%s, %s)",
+                [str(_as_uuid(tenant_id)), str(_as_uuid(version_id))],
             )
-            .order_by("-occurred_at", "-id")
-            .values_list("actor_id", flat=True)
-            .first()
-        )
+            row = cursor.fetchone()
+        return None if row is None or row[0] is None else _as_uuid(row[0])
 
     def reserve_idempotency(
         self,

@@ -60,6 +60,11 @@ audit proved the production runtime lets a learner directly revoke its own enrol
 F-007 remains merged but requires the narrow forward migration and regression evidence
 in #60 before it is a clean dependency for F-008.
 
+The later owner-approved [backend execution contract](../backend-mvp-completion-execution.md)
+absorbs #60's remediation into #63/PR #64 before its integration checkpoint. This
+changes the delivery unit, not the enrollment rule or the requirement for independent
+review and merge of the correction.
+
 ## Known limitations
 
 - F-007 uses synthetic learner/course data and local infrastructure only.

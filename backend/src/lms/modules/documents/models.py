@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from decimal import Decimal
 from uuid import UUID
 
 from django.db import models
@@ -16,12 +17,43 @@ ADMISSION_STATUSES = (
     "blocked",
 )
 AUTHORIZATION_STATUSES = ("requested", "active", "denied", "revoked", "expired", "disputed")
+AUTHORIZATION_OPERATIONS = ("store", "extract", "ocr", "generate")
 UPLOAD_INTENT_STATUSES = ("active", "consumed", "expired", "cancelled")
 REMOVAL_STATUSES = ("not_required", "pending", "completed", "failed")
 STORAGE_OBJECT_STATUSES = ("present", "missing", "deleted")
 JOB_STAGES = ("validate_admission", "remove_quarantine_object")
 JOB_STATUSES = ("pending", "claimed", "retryable", "completed", "failed", "cancelled")
 JOB_ATTEMPT_OUTCOMES = ("running", "completed", "retryable", "failed", "cancelled")
+INGESTION_RUN_STATUSES = (
+    "queued",
+    "claimed",
+    "extracting",
+    "normalizing",
+    "quality_check",
+    "ready_for_generation",
+    "retryable",
+    "failed",
+    "cancelled",
+    "rights_blocked",
+)
+NON_TERMINAL_INGESTION_STATUSES = (
+    "queued",
+    "claimed",
+    "extracting",
+    "normalizing",
+    "quality_check",
+    "retryable",
+)
+INGESTION_ATTEMPT_OUTCOMES = (
+    "running",
+    "completed",
+    "retryable",
+    "failed",
+    "cancelled",
+    "rights_blocked",
+)
+SOURCE_ARTIFACT_ROLES = ("canonical_json", "normalized_markdown")
+DOCUMENT_ELEMENT_KINDS = ("heading", "paragraph")
 SHA256_PATTERN = r"^sha256:[0-9a-f]{64}$"
 
 
@@ -190,12 +222,16 @@ class SourceUseAuthorization(TimestampedDocumentModel):
         constraints = [
             models.UniqueConstraint(fields=("tenant", "id"), name="uq_source_auth_tenant_id"),
             models.UniqueConstraint(
+                fields=("tenant", "source_version", "id"),
+                name="uq_source_auth_tenant_ver_id",
+            ),
+            models.UniqueConstraint(
                 fields=("tenant", "source_version", "operation"),
                 name="uq_source_auth_version_operation",
             ),
             models.CheckConstraint(
-                condition=models.Q(operation="store"),
-                name="ck_source_auth_store_only",
+                condition=models.Q(operation__in=AUTHORIZATION_OPERATIONS),
+                name="ck_source_auth_operation",
             ),
             models.CheckConstraint(
                 condition=models.Q(status__in=AUTHORIZATION_STATUSES),
@@ -285,6 +321,10 @@ class StorageObject(TimestampedDocumentModel):
         db_table = 'app"."source_storage_objects'
         constraints = [
             models.UniqueConstraint(fields=("tenant", "id"), name="uq_source_objects_tenant_id"),
+            models.UniqueConstraint(
+                fields=("tenant", "source_version", "id"),
+                name="uq_source_objects_tenant_ver_id",
+            ),
             models.UniqueConstraint(
                 fields=("tenant", "source_version"),
                 name="uq_source_objects_version",
@@ -392,4 +432,419 @@ class DocumentJobAttempt(models.Model):
         ]
         indexes = [
             models.Index(fields=("tenant", "job", "attempt_number"), name="ix_doc_attempts_job"),
+        ]
+
+
+class DocumentIngestionRun(TimestampedDocumentModel):
+    objects: models.Manager[DocumentIngestionRun] = models.Manager()
+    tenant_id: UUID
+    source_document_id: UUID
+    source_version_id: UUID
+    storage_object_id: UUID
+    extract_authorization_id: UUID
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    tenant = models.ForeignKey("tenancy.Tenant", on_delete=models.RESTRICT)
+    source_document = models.ForeignKey(SourceDocument, on_delete=models.RESTRICT)
+    source_version = models.ForeignKey(SourceVersion, on_delete=models.RESTRICT)
+    storage_object = models.ForeignKey(StorageObject, on_delete=models.RESTRICT)
+    extract_authorization = models.ForeignKey(SourceUseAuthorization, on_delete=models.RESTRICT)
+    requested_by_actor_id = models.UUIDField()
+    status = models.CharField(max_length=24, default="queued")
+    parser_version = models.CharField(max_length=80)
+    configuration_version = models.CharField(max_length=64)
+    locale = models.CharField(max_length=8, default="en")
+    attempt_count = models.PositiveIntegerField(default=0)
+    max_attempts = models.PositiveIntegerField(default=3)
+    lease_owner = models.CharField(max_length=80, null=True, blank=True)
+    lease_expires_at = models.DateTimeField(null=True, blank=True)
+    heartbeat_at = models.DateTimeField(null=True, blank=True)
+    checkpoint = models.CharField(max_length=64, default="created")
+    input_manifest_sha256 = models.CharField(max_length=71)
+    output_manifest_sha256 = models.CharField(max_length=71, null=True, blank=True)
+    reason_code = models.CharField(max_length=80, null=True, blank=True)
+    quality_summary = models.JSONField(default=dict)
+    row_version = models.PositiveBigIntegerField(default=1)
+
+    class Meta:
+        db_table = 'integration"."document_ingestion_runs'
+        constraints = [
+            models.UniqueConstraint(fields=("tenant", "id"), name="uq_ingestion_runs_tenant_id"),
+            models.UniqueConstraint(
+                fields=("tenant", "source_version", "id"),
+                name="uq_ingestion_runs_tenant_ver_id",
+            ),
+            models.UniqueConstraint(
+                fields=("tenant", "source_version", "parser_version", "configuration_version"),
+                condition=models.Q(status__in=NON_TERMINAL_INGESTION_STATUSES),
+                name="uq_ingestion_runs_active_version",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(status__in=INGESTION_RUN_STATUSES),
+                name="ck_ingestion_runs_status",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(locale="en"),
+                name="ck_ingestion_runs_locale",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(input_manifest_sha256__regex=SHA256_PATTERN),
+                name="ck_ingestion_runs_input_hash",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(output_manifest_sha256__isnull=True)
+                | models.Q(output_manifest_sha256__regex=SHA256_PATTERN),
+                name="ck_ingestion_runs_output_hash",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(max_attempts__gte=1)
+                & models.Q(max_attempts__lte=10)
+                & models.Q(attempt_count__lte=models.F("max_attempts")),
+                name="ck_ingestion_runs_attempts",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(row_version__gte=1),
+                name="ck_ingestion_runs_row_version",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=("tenant", "status", "created_at"), name="ix_ingest_runs_claim"),
+            models.Index(
+                fields=("tenant", "source_version", "created_at"),
+                name="ix_ingest_runs_source",
+            ),
+        ]
+
+
+class DocumentIngestionAttempt(models.Model):
+    objects: models.Manager[DocumentIngestionAttempt] = models.Manager()
+    tenant_id: UUID
+    ingestion_run_id: UUID
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    tenant = models.ForeignKey("tenancy.Tenant", on_delete=models.RESTRICT)
+    ingestion_run = models.ForeignKey(
+        DocumentIngestionRun,
+        on_delete=models.RESTRICT,
+        related_name="attempts",
+    )
+    attempt_number = models.PositiveIntegerField()
+    outcome = models.CharField(max_length=24, default="running")
+    reason_code = models.CharField(max_length=80, null=True, blank=True)
+    checkpoint = models.CharField(max_length=64, default="claimed")
+    input_manifest_sha256 = models.CharField(max_length=71)
+    output_manifest_sha256 = models.CharField(max_length=71, null=True, blank=True)
+    observation = models.JSONField(default=dict)
+    started_at = models.DateTimeField()
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'integration"."document_ingestion_attempts'
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant", "id"),
+                name="uq_ingestion_attempts_tenant_id",
+            ),
+            models.UniqueConstraint(
+                fields=("tenant", "ingestion_run", "attempt_number"),
+                name="uq_ingestion_attempts_run_number",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(outcome__in=INGESTION_ATTEMPT_OUTCOMES),
+                name="ck_ingestion_attempts_outcome",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(input_manifest_sha256__regex=SHA256_PATTERN),
+                name="ck_ingestion_attempts_input_hash",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(output_manifest_sha256__isnull=True)
+                | models.Q(output_manifest_sha256__regex=SHA256_PATTERN),
+                name="ck_ingestion_attempts_output_hash",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("tenant", "ingestion_run", "attempt_number"),
+                name="ix_ingest_attempts_run",
+            ),
+        ]
+
+
+class SourceArtifact(models.Model):
+    objects: models.Manager[SourceArtifact] = models.Manager()
+    tenant_id: UUID
+    source_document_id: UUID
+    source_version_id: UUID
+    created_by_run_id: UUID
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    tenant = models.ForeignKey("tenancy.Tenant", on_delete=models.RESTRICT)
+    source_document = models.ForeignKey(SourceDocument, on_delete=models.RESTRICT)
+    source_version = models.ForeignKey(SourceVersion, on_delete=models.RESTRICT)
+    created_by_run = models.ForeignKey(DocumentIngestionRun, on_delete=models.RESTRICT)
+    artifact_role = models.CharField(max_length=24)
+    schema_version = models.CharField(max_length=64)
+    content_sha256 = models.CharField(max_length=71)
+    byte_count = models.PositiveBigIntegerField()
+    json_payload = models.JSONField(null=True, blank=True)
+    text_payload = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'app"."source_artifacts'
+        constraints = [
+            models.UniqueConstraint(fields=("tenant", "id"), name="uq_source_artifacts_tenant_id"),
+            models.UniqueConstraint(
+                fields=("tenant", "source_version", "id"),
+                name="uq_source_artifacts_tenant_ver_id",
+            ),
+            models.UniqueConstraint(
+                fields=("tenant", "source_version", "artifact_role", "schema_version"),
+                name="uq_source_artifacts_version_role",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(artifact_role__in=SOURCE_ARTIFACT_ROLES),
+                name="ck_source_artifacts_role",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(content_sha256__regex=SHA256_PATTERN),
+                name="ck_source_artifacts_hash",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(byte_count__gte=1),
+                name="ck_source_artifacts_bytes",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(
+                        artifact_role="canonical_json",
+                        json_payload__isnull=False,
+                        text_payload__isnull=True,
+                    )
+                    | models.Q(
+                        artifact_role="normalized_markdown",
+                        json_payload__isnull=True,
+                        text_payload__isnull=False,
+                    )
+                ),
+                name="ck_source_artifacts_payload",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("tenant", "source_version", "artifact_role"),
+                name="ix_source_artifacts_version",
+            ),
+        ]
+
+
+class DocumentPage(models.Model):
+    objects: models.Manager[DocumentPage] = models.Manager()
+    tenant_id: UUID
+    source_document_id: UUID
+    source_version_id: UUID
+    created_by_run_id: UUID
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    tenant = models.ForeignKey("tenancy.Tenant", on_delete=models.RESTRICT)
+    source_document = models.ForeignKey(SourceDocument, on_delete=models.RESTRICT)
+    source_version = models.ForeignKey(SourceVersion, on_delete=models.RESTRICT)
+    created_by_run = models.ForeignKey(DocumentIngestionRun, on_delete=models.RESTRICT)
+    parser_version = models.CharField(max_length=80)
+    configuration_version = models.CharField(max_length=64)
+    page_number = models.PositiveIntegerField()
+    width_points = models.DecimalField(max_digits=12, decimal_places=3)
+    height_points = models.DecimalField(max_digits=12, decimal_places=3)
+    text = models.TextField()
+    text_sha256 = models.CharField(max_length=71)
+    ocr_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'app"."document_pages'
+        constraints = [
+            models.UniqueConstraint(fields=("tenant", "id"), name="uq_document_pages_tenant_id"),
+            models.UniqueConstraint(
+                fields=("tenant", "source_version", "id"),
+                name="uq_document_pages_tenant_ver_id",
+            ),
+            models.UniqueConstraint(
+                fields=(
+                    "tenant",
+                    "source_version",
+                    "parser_version",
+                    "configuration_version",
+                    "page_number",
+                ),
+                name="uq_document_pages_version_number",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(page_number__gte=1),
+                name="ck_document_pages_number",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(width_points__gt=Decimal("0"))
+                & models.Q(height_points__gt=Decimal("0")),
+                name="ck_document_pages_dimensions",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(text_sha256__regex=SHA256_PATTERN),
+                name="ck_document_pages_text_hash",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("tenant", "source_version", "page_number"),
+                name="ix_document_pages_version",
+            ),
+        ]
+
+
+class DocumentElement(models.Model):
+    objects: models.Manager[DocumentElement] = models.Manager()
+    tenant_id: UUID
+    source_document_id: UUID
+    source_version_id: UUID
+    page_id: UUID
+    created_by_run_id: UUID
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    tenant = models.ForeignKey("tenancy.Tenant", on_delete=models.RESTRICT)
+    source_document = models.ForeignKey(SourceDocument, on_delete=models.RESTRICT)
+    source_version = models.ForeignKey(SourceVersion, on_delete=models.RESTRICT)
+    page = models.ForeignKey(DocumentPage, on_delete=models.RESTRICT, related_name="elements")
+    created_by_run = models.ForeignKey(DocumentIngestionRun, on_delete=models.RESTRICT)
+    position = models.PositiveIntegerField()
+    kind = models.CharField(max_length=16)
+    text = models.TextField()
+    text_sha256 = models.CharField(max_length=71)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'app"."document_elements'
+        constraints = [
+            models.UniqueConstraint(fields=("tenant", "id"), name="uq_document_elements_tenant_id"),
+            models.UniqueConstraint(
+                fields=("tenant", "source_version", "id"),
+                name="uq_document_elements_tenant_ver_id",
+            ),
+            models.UniqueConstraint(
+                fields=("tenant", "page", "position"),
+                name="uq_document_elements_page_position",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(position__gte=1),
+                name="ck_document_elements_position",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(kind__in=DOCUMENT_ELEMENT_KINDS),
+                name="ck_document_elements_kind",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(text_sha256__regex=SHA256_PATTERN),
+                name="ck_document_elements_text_hash",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=("tenant", "page", "position"), name="ix_document_elements_page"),
+        ]
+
+
+class DocumentSection(models.Model):
+    objects: models.Manager[DocumentSection] = models.Manager()
+    tenant_id: UUID
+    source_document_id: UUID
+    source_version_id: UUID
+    created_by_run_id: UUID
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    tenant = models.ForeignKey("tenancy.Tenant", on_delete=models.RESTRICT)
+    source_document = models.ForeignKey(SourceDocument, on_delete=models.RESTRICT)
+    source_version = models.ForeignKey(SourceVersion, on_delete=models.RESTRICT)
+    created_by_run = models.ForeignKey(DocumentIngestionRun, on_delete=models.RESTRICT)
+    position = models.PositiveIntegerField()
+    title = models.CharField(max_length=160)
+    start_page = models.PositiveIntegerField()
+    end_page = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'app"."document_sections'
+        constraints = [
+            models.UniqueConstraint(fields=("tenant", "id"), name="uq_document_sections_tenant_id"),
+            models.UniqueConstraint(
+                fields=("tenant", "source_version", "id"),
+                name="uq_document_sections_tenant_ver_id",
+            ),
+            models.UniqueConstraint(
+                fields=("tenant", "source_version", "position"),
+                name="uq_document_sections_version_position",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(position__gte=1),
+                name="ck_document_sections_position",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(start_page__gte=1)
+                & models.Q(end_page__gte=models.F("start_page")),
+                name="ck_document_sections_page_range",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("tenant", "source_version", "position"),
+                name="ix_document_sections_version",
+            ),
+        ]
+
+
+class DocumentSectionElement(models.Model):
+    objects: models.Manager[DocumentSectionElement] = models.Manager()
+    tenant_id: UUID
+    source_version_id: UUID
+    section_id: UUID
+    element_id: UUID
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    tenant = models.ForeignKey("tenancy.Tenant", on_delete=models.RESTRICT)
+    source_version = models.ForeignKey(SourceVersion, on_delete=models.RESTRICT)
+    section = models.ForeignKey(
+        DocumentSection,
+        on_delete=models.RESTRICT,
+        related_name="element_edges",
+    )
+    element = models.ForeignKey(DocumentElement, on_delete=models.RESTRICT)
+    position = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'app"."document_section_elements'
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant", "id"),
+                name="uq_document_section_elements_tenant_id",
+            ),
+            models.UniqueConstraint(
+                fields=("tenant", "source_version", "id"),
+                name="uq_document_section_elements_tenant_ver_id",
+            ),
+            models.UniqueConstraint(
+                fields=("tenant", "section", "position"),
+                name="uq_document_section_elements_position",
+            ),
+            models.UniqueConstraint(
+                fields=("tenant", "section", "element"),
+                name="uq_document_section_elements_edge",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(position__gte=1),
+                name="ck_document_section_elements_position",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("tenant", "section", "position"),
+                name="ix_doc_section_elements",
+            ),
         ]

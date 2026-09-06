@@ -9,8 +9,11 @@ import pytest
 from lms.modules.courses.errors import CourseLifecycleError
 from lms.modules.courses.hashing import canonical_content_hash
 from lms.modules.courses.types import (
+    CourseStatus,
+    CreateAiAssistedDraftCommand,
     CreateCourseCommand,
     CreateSuccessorDraftCommand,
+    OriginType,
     PrincipalType,
     ReviewerPolicy,
     Transition,
@@ -113,6 +116,39 @@ def test_create_is_atomic_idempotent_and_server_derives_reviewer_policy() -> Non
             command=CreateCourseCommand("changed", "en", "Changed", "Changed description"),
             idempotency_key="create-course-key-0001",
         )
+
+
+def test_ai_assisted_draft_command_creates_one_editable_unpublished_course_atomically() -> None:
+    harness = CourseServiceHarness()
+    curriculum = new_curriculum_command(section_count=2)
+    command = CreateAiAssistedDraftCommand(
+        slug="synthetic-ai-assisted",
+        primary_locale="en",
+        title="Synthetic AI-assisted course",
+        description="A source-grounded synthetic draft.",
+        sections=curriculum.sections,
+    )
+    created = harness.service.create_ai_assisted_draft(
+        actor_id=ALPHA_AUTHOR_ID,
+        tenant_id=ALPHA_TENANT_ID,
+        command=command,
+        idempotency_key="ai-assisted-draft-key-0001",
+    )
+    replay = harness.service.create_ai_assisted_draft(
+        actor_id=ALPHA_AUTHOR_ID,
+        tenant_id=ALPHA_TENANT_ID,
+        command=command,
+        idempotency_key="ai-assisted-draft-key-0001",
+    )
+
+    assert replay == created
+    assert created.version.origin_type is OriginType.AI_ASSISTED
+    assert created.version.status is CourseStatus.DRAFT
+    assert created.course.current_published_version_id is None
+    assert created.version.submitted_hash is None
+    assert created.version.approved_hash is None
+    assert len(created.sections) == 2
+    assert harness.repository.version_count == 1
 
 
 def test_update_and_replace_enforce_versions_and_increment_only_changed_children() -> None:

@@ -1,0 +1,26 @@
+{
+  "event_id": "10000000-0000-4000-8000-000000000402",
+  "event_type": "document.ingestion.ready.v1",
+  "event_version": 1,
+  "producer": "documents",
+  "tenant_id": "00000000-0000-4000-8000-0000000000a1",
+  "aggregate_type": "document_ingestion_run",
+  "aggregate_id": "00000000-0000-4000-8000-00000000c401",
+  "source_document_id": "00000000-0000-4000-8000-00000000c301",
+  "source_version_id": "00000000-0000-4000-8000-00000000c302",
+  "ingestion_run_id": "00000000-0000-4000-8000-00000000c401",
+  "aggregate_version": 5,
+  "occurred_at": "2026-08-31T01:00:05Z",
+  "recorded_at": "2026-08-31T01:00:06Z",
+  "correlation_id": "30000000-0000-4000-8000-000000000402",
+  "causation_id": "40000000-0000-4000-8000-000000000402",
+  "privacy_class": "internal",
+  "payload": {
+    "status": "ready_for_generation",
+    "checkpoint": "ready_for_generation",
+    "reason_code": null,
+    "input_manifest_sha256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "output_manifest_sha256": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "attempt_count": 1
+  }
+}

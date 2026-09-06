@@ -79,7 +79,12 @@ launch a parser-backed fail-closed correction with RED-to-GREEN evidence.
   F-005 owns generation/provider/evaluation; F-006 owns generated-draft review;
   F-007 owns learner access.
 - F-004 planning may continue only as non-implementing contract work; F-004
-  implementation cannot start until #61 and its follow-up remediation merge cleanly.
+  implementation originally required #61 and its follow-up remediation to merge
+  first. The later owner-approved
+  [backend execution contract](../backend-mvp-completion-execution.md) supersedes only
+  that separate-PR order: #63/PR #64 implements parser remediation before extraction
+  in sequential checkpoints. The remediation still requires independent review and
+  merge; the historical finding is not marked resolved by implementation alone.
 - The exception applies only to PR #44's historical ordering defect. PR #53's head
   changed after its `851d8fbb...` review and merged at `57bb2692...`; the owner
   disposition closes only #43's launch hold and waives no future approval.

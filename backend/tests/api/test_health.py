@@ -22,6 +22,7 @@ def test_health_endpoint_reports_f001_integration_readiness() -> None:
             "f002-course-lifecycle",
             "f003-pdf-source-admission",
             "f007-private-learner-playback",
+            "f005-structured-course-generation",
         ],
     }
 

@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "lms.modules.tenancy.apps.TenancyConfig",
     "lms.modules.courses.apps.CoursesConfig",
     "lms.modules.documents.apps.DocumentsConfig",
+    "lms.modules.course_generation.apps.CourseGenerationConfig",
     "lms.modules.learning.apps.LearningConfig",
     "lms.platform_database.apps.PlatformDatabaseConfig",
 ]
