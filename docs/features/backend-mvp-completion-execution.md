@@ -30,9 +30,11 @@ and `docs/workflows/README.md`. It does not waive:
 - the external-provider, real-data, privacy, retention, capacity, recovery, region,
   and production gates.
 
-PR #59 remains a dependency. Issue #63 may be implemented and kept as a blocked draft,
-but it must merge current `origin/develop` after #59 lands and rerun every applicable
-gate before becoming ready for review.
+PR #59 was a merge dependency and merged into `develop` at
+`86564ac03b3f9aac849a53c0e758201c1e16f058` on 2026-09-05. Issue #63 must incorporate
+that base and rerun every applicable gate before becoming ready for review. The
+[completion evidence](../evidence/backend-mvp-completion.md) records reconciliation
+and verification; the dependency merge does not itself approve PR #64.
 
 ## Product boundary
 

@@ -47,16 +47,18 @@ Phase 0 creates a machine-readable evidence manifest. Each entry contains:
 
 ## Current state
 
-The repository now contains local F-001/F-002 code plus F-003 and F-007 implementation
-candidates. The [F-003 local implementation record](f003-source-admission-implementation.md)
+The repository now contains local F-001/F-002 code plus merged F-003 and F-007
+implementations. The [F-003 local implementation record](f003-source-admission-implementation.md)
 and [F-007 local implementation record](f007-learner-playback-implementation.md) pin
 their application commits, synthetic inputs, migration/RLS results, API/client/build
-checks, and browser regressions. They are local candidate evidence only: protected PR
-checks, independent review, release, deployment, retention/recovery, provider, and
-production gates remain pending or blocked. The
-[F-003 planning review correction](f003-planning-review-correction.md) remains a
-governance record rather than implementation or release evidence.
+checks, and browser regressions. Independent post-merge audits returned
+`CHANGES REQUIRED`: #61 owns parser-backed F-003 admission remediation and #60 owns
+F-007 enrollment-RLS remediation. These records remain local evidence only; release,
+deployment, retention/recovery, provider, and production gates remain pending or
+blocked. The [F-003 planning review correction](f003-planning-review-correction.md)
+remains a governance record rather than implementation or release evidence.
 
 The [backend MVP completion record](backend-mvp-completion.md) tracks PR #64's
 local extraction, generation, human canonicalization, and backend integration
-candidate, including its outstanding PR #59 dependency and verification status.
+candidate, including the #60–#62 remediation scope. PR #59 has merged; PR #64's
+base integration, verification, and independent-review status are recorded there.

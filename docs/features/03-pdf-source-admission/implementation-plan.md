@@ -1,6 +1,6 @@
 # Implementation Plan — F-003 PDF Source Admission
 
-Status: **#43 local implementation candidate complete; review and protected checks pending**
+Status: **#43/PR #56 merged; independent post-merge audit returned CHANGES REQUIRED; parser remediation #61 blocks F-004**
 
 ## Dependency graph
 

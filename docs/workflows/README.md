@@ -101,7 +101,7 @@ project settings. Use the smallest skill matching the requested stage:
 | Feature planning | `$plan-ai-lms-feature` | `READY FOR IMPLEMENTATION` |
 | Feature implementation | `$implement-ai-lms-feature` | `READY FOR CODE REVIEW` |
 | Independent PR review | `$review-ai-lms-pr` | `APPROVED FOR MERGE`, `CHANGES REQUIRED`, or `BLOCKED` |
-| Guarded merge | `$merge-ai-lms-pr` | verified merge record; deployment remains separate |
+| Guarded merge or merged-task reconciliation | `$merge-ai-lms-pr` | verified merge, cleanup, review/status reconciliation, and next-task assessment; deployment remains separate |
 
 The packaging examples in the longer workflow guides are design references, not
 additional skills that must be scaffolded. This table is the active repository set.
@@ -432,6 +432,25 @@ provisioning the next task. A local handoff such as `READY FOR CODE REVIEW` or
 still be required. A closed-but-unmerged task is preserved unless the project owner
 explicitly records abandonment or another disposition.
 
+When the project owner says that the latest PR merged to `develop`, the coordinator
+does not stop at acknowledging the merge or ask separately for routine closeout. That
+owner signal authorizes the complete post-merge transition:
+
+```text
+verify remote merge and exact head/tree
+  -> clean only the issue-recorded task resources
+  -> independently audit the merged head
+  -> reconcile review, evidence, and feature status truthfully
+  -> remediate confirmed findings or assess the next dependency-ready task
+```
+
+The audit is automatic; a passing verdict is not. A merge does not retroactively prove
+that review occurred before merge. If the independent audit finds no blockers, mark
+the exact head as independently reviewed post-merge and preserve the historical timing
+of GitHub approvals. If it finds a blocker, record the finding and create or prepare a
+focused remediation issue before a dependent implementation starts. A same-identity
+review comment remains evidence rather than a distinct GitHub approval.
+
 Resolve exact values from the issue/worktree record; do not use globs or guessed
 paths. Then:
 
@@ -467,6 +486,13 @@ The required sequence is:
 6. verify the directory, worktree registration, containers, networks, disposable
    volumes, and scratch child are gone; and
 7. record what was removed and whether any retained artifact remains recoverable.
+
+After cleanup, remove review-only worktrees and resources when their audits finish,
+then update the affected feature/readiness/evidence status through the normal
+issue/branch/PR workflow. The coordinator may plan the next feature while independent
+audits run, but must not declare a dependency satisfied or provision dependent
+implementation until blocking review findings and required owner dispositions are
+resolved.
 
 Stop on a dirty tree, unresolved PR state, unexpected path, or resource-name mismatch.
 Never use `rm -rf` as a substitute for `git worktree remove`; never remove an active,

@@ -1,6 +1,6 @@
 # Local Backend MVP Completion Evidence
 
-Status: **local implementation and verification complete; PR #59 dependency open**
+Status: **local implementation complete; PR #59 base integrated; exact-head review pending**
 
 Date: 2026-09-05
 
@@ -158,10 +158,10 @@ a backend HTTP/worker integration proof; the existing browser regressions do not
 a newly implemented complete PDF-generation frontend.
 
 Issues #60–#62 remain open and are linked as scope absorbed by PR #64; no completed
-merge or independent approval is implied. PR #59 is still open. The execution contract
-requires #59 to merge, then the latest `develop` to be integrated and all applicable
-gates rerun before PR #64 becomes ready for review. This author does not approve or
-merge either PR.
+backend merge or independent approval is implied. PR #59 merged on 2026-09-05 at
+`86564ac03b3f9aac849a53c0e758201c1e16f058`. The execution contract requires that base
+to be integrated and all applicable gates rerun before PR #64 becomes ready for
+review. This author does not approve or merge PR #64.
 
 Rollback before merge is owner-directed branch/PR abandonment. After merge, use a
 reviewed forward change to disable the local ingestion/generation composition while
@@ -174,3 +174,33 @@ Remote actions before this evidence commit: GitHub reads and one progress/scope 
 on issue #63. Branch push, draft PR update, exact head SHA, and hosted CI outcomes are
 recorded in the subsequent PR handoff. No approval, merge, or deployment is authorized
 or claimed by this record.
+
+## PR #59 dependency integration
+
+Integration verification date: 2026-09-06
+
+The owner requested conflict repair after PR #59 merged. GitHub confirmed PR #64
+remained open at `e76772f1ba0c4441902a5712a77d7e4306986eff`, with conflicts against
+`develop`. The incoming base changes only documentation and workflow instructions.
+
+The merge reproduced conflicts in `docs/evidence/README.md` and `manifest.json`.
+The index preserves PR #59's historical F-003/F-007 audit findings alongside PR #64's
+candidate implementation evidence. The manifest is regenerated from the combined
+Markdown tree, not chosen from one side. Application code, migrations, dependencies,
+API contracts, and browser behavior are unchanged by this integration.
+
+The F-003/F-007 issue and readiness notes retain their historical findings and
+explicitly link the later owner-authorized #63 single-PR delivery override. The
+separate-remediation-PR ordering from #59 is not reinstated over that newer contract;
+the corrections still require independent review and merge.
+
+Post-integration RLS verification passed 38 tests in 107.66 seconds; the existing
+browser regressions passed all 22 tests. Lint/format, strict mypy, architecture,
+migration authority/drift, OpenAPI/client drift, web build, the imported merge skill
+validator, and the combined 95-document link/manifest checks also passed. No pending
+migration exists. The seven local-test deployment warnings remain unchanged.
+
+The exact merge-head handoff on PR #64 records the final full non-RLS rerun and
+hosted checks after push; the full-suite table above records the earlier implementation
+checkpoint. Exact-head independent review and a distinct authorized GitHub approval
+remain separate required gates.
