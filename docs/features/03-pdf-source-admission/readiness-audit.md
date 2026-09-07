@@ -1,6 +1,6 @@
 # Readiness Audit — F-003 PDF Source Admission
 
-Status: **IMPLEMENTATION MERGED — POST-MERGE AUDIT CHANGES REQUIRED; #61 BLOCKS F-004**
+Status: **IMPLEMENTATION AND REMEDIATION MERGED — CLEAN PR #64 POST-MERGE AUDIT**
 
 - [x] F-003 remains inside the focused PDF-to-course MVP and has no expanded source
   format, OCR, provider, or production scope.
@@ -57,16 +57,17 @@ Status: **IMPLEMENTATION MERGED — POST-MERGE AUDIT CHANGES REQUIRED; #61 BLOCK
 - [x] An independent post-merge audit reproduced a marker-shaped 90-byte pseudo-PDF
   being admitted with `parser_accepted=True` without a real PDF parser and returned
   `CHANGES REQUIRED` on the exact merged head.
-- [ ] #61 freezes the parser-backed boundary and its follow-up implementation
-  remediation is independently reviewed and merged.
+- [x] PR #64 absorbed #61, implemented the bounded parser-backed boundary before
+  extraction, merged exact head `136326cd39f730b3d77feec866c142a432e15f29`, and
+  received a clean independent post-merge audit; #61 is closed as completed.
 
 ## Verdict
 
-PR #56 is merged and its configured checks passed, but merge did not predetermine the
-independent audit result. The post-merge audit found that marker/regex inspection can
-report parser acceptance for structurally invalid pseudo-PDF bytes. F-003 therefore
-remains implemented but not a clean dependency for F-004. Issue #61 must freeze and
-launch a parser-backed fail-closed correction with RED-to-GREEN evidence.
+PR #56's historical audit finding remains valid for its exact head. PR #64 supersedes
+that vulnerable implementation with the bounded parser-backed correction, implements
+F-004 after that correction, and received a clean independent exact-head post-merge
+audit. F-003 is now a clean local/synthetic dependency; production and provider gates
+remain separate.
 
 ## Known limitations and blocked gates
 

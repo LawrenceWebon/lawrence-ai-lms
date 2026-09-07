@@ -1,6 +1,6 @@
 # F-003 — PDF Source Admission
 
-Status: **implementation merged; independent post-merge audit requires parser-backed remediation #61**
+Status: **implementation and parser remediation merged; clean PR #64 post-merge audit**
 
 Feature ID: `F-003`
 Planning issue: [#42](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/42)

@@ -1,6 +1,6 @@
 # Implementation Plan — F-003 PDF Source Admission
 
-Status: **#43/PR #56 merged; independent post-merge audit returned CHANGES REQUIRED; parser remediation #61 blocks F-004**
+Status: **PR #56 merged; parser remediation and F-004 completed by audited PR #64**
 
 ## Dependency graph
 

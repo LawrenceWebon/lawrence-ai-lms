@@ -1,6 +1,6 @@
 # Readiness Audit — F-007 Learner Course Playback and Progress
 
-Status: **IMPLEMENTATION MERGED — POST-MERGE AUDIT CHANGES REQUIRED; #60 PENDING**
+Status: **IMPLEMENTATION AND REMEDIATION MERGED — CLEAN PR #64 POST-MERGE AUDIT**
 
 Launch transition: **READY FOR IMPLEMENTATION** was satisfied by the narrow owner
 disposition before #46 resources were provisioned.
@@ -50,15 +50,16 @@ disposition before #46 resources were provisioned.
 - [x] An independent post-merge audit reproduced an enrolled learner using
   `lms_api_runtime` to set its own enrollment to `revoked`, bypassing the tenant-admin
   service, idempotency, audit, and outbox facts, and returned `CHANGES REQUIRED`.
-- [ ] Forward RLS remediation #60 is independently reviewed and merged.
+- [x] PR #64 absorbed #60, added the forward enrollment-RLS correction, merged exact
+  head `136326cd39f730b3d77feec866c142a432e15f29`, and received a clean independent
+  post-merge audit; #60 is closed as completed.
 
 ## Readiness verdict
 
-No material product decision is hidden: the merged policy contradicts the already
-frozen tenant-admin-only enrollment-management contract. The independent post-merge
-audit proved the production runtime lets a learner directly revoke its own enrollment.
-F-007 remains merged but requires the narrow forward migration and regression evidence
-in #60 before it is a clean dependency for F-008.
+PR #57's historical audit finding remains valid for its exact head. PR #64 supersedes
+that policy with the forward RLS correction, includes the regression in the complete
+backend integration, and received a clean independent exact-head post-merge audit.
+F-007 is now a clean local/synthetic dependency for F-008.
 
 The later owner-approved [backend execution contract](../backend-mvp-completion-execution.md)
 absorbs #60's remediation into #63/PR #64 before its integration checkpoint. This

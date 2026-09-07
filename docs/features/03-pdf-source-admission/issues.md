@@ -15,7 +15,7 @@ across branches.
 | [#42](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/42) | Feature package, frozen DTO/job/event/fixture contract, P-013, test plan, ownership | merged in PR #44 | none |
 | [#51](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/51) | Exact-head audit, fail-closed/event/fixture-boundary corrections, controlled exception, readiness, serialized manifest | merged in PR #53; merge-head review and distinct approval were not recorded | PR #44 merged |
 | [#43](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/43) | Private local PDF source admission, migration/RLS, API/Admin, local adapter/worker, OpenAPI/client, web/E2E, evidence | merged in PR #56; post-merge audit returned `CHANGES REQUIRED` | owner launch disposition recorded |
-| [#61](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/61) | Freeze the parser-backed fail-closed admission remediation contract and implementation issue | planning required; blocks F-004 implementation | PR #56 post-merge audit |
+| [#61](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/61) | Parser-backed fail-closed admission remediation planning and implementation | completed by merged PR #64; clean post-merge audit | PR #56 post-merge audit |
 
 PR #53 merged as `5b89c6a8e62140f8032492b5454a12b2ef063bce`; the clean #51
 worktree and task-local Compose resources were removed. Its merge head
@@ -38,4 +38,5 @@ returned `CHANGES REQUIRED` after admitting a structurally invalid pseudo-PDF. #
 originally blocked F-004 implementation. The later owner-approved
 [backend execution contract](../backend-mvp-completion-execution.md) absorbs #61's
 planning and remediation scope into #63/PR #64, with parser correction before
-extraction. #61 remains open until that candidate is independently reviewed and merged.
+extraction. PR #64 merged that candidate and its exact implementation head received a
+clean independent post-merge audit; #61 is closed as completed.

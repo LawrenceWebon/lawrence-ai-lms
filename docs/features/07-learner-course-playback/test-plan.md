@@ -1,6 +1,6 @@
 # Test Plan — F-007 Learner Course Playback and Progress
 
-Status: **local/CI verification recorded; independent post-merge audit found an uncovered enrollment-RLS defect tracked by #60**
+Status: **local/CI verification recorded; enrollment-RLS defect remediated and audited through PR #64**
 
 Local results are recorded in
 [F007-LOCAL-IMPLEMENTATION-2026-08-22](../../evidence/f007-learner-playback-implementation.md).
