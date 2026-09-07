@@ -47,18 +47,18 @@ Phase 0 creates a machine-readable evidence manifest. Each entry contains:
 
 ## Current state
 
-The repository now contains local F-001/F-002 code plus merged F-003 and F-007
-implementations. The [F-003 local implementation record](f003-source-admission-implementation.md)
-and [F-007 local implementation record](f007-learner-playback-implementation.md) pin
-their application commits, synthetic inputs, migration/RLS results, API/client/build
-checks, and browser regressions. Independent post-merge audits returned
-`CHANGES REQUIRED`: #61 owns parser-backed F-003 admission remediation and #60 owns
-F-007 enrollment-RLS remediation. These records remain local evidence only; release,
-deployment, retention/recovery, provider, and production gates remain pending or
-blocked. The [F-003 planning review correction](f003-planning-review-correction.md)
-remains a governance record rather than implementation or release evidence.
+The repository contains the local synthetic backend path from F-001 through F-008.
+The historical [F-003](f003-source-admission-implementation.md) and
+[F-007](f007-learner-playback-implementation.md) records preserve the findings from
+their original merged heads. PR #64 subsequently implemented issues #60–#62 together
+with extraction, deterministic generation, human canonicalization, and backend
+integration. It merged as `bebcc22d5ec475a52a124872838468d5cb897158` from exact head
+`136326cd39f730b3d77feec866c142a432e15f29`; an independent post-merge audit found no
+Critical, Error, or Warning findings. Issues #60–#62 are closed as absorbed.
 
-The [backend MVP completion record](backend-mvp-completion.md) tracks PR #64's
-local extraction, generation, human canonicalization, and backend integration
-candidate, including the #60–#62 remediation scope. PR #59 has merged; PR #64's
-base integration, verification, and independent-review status are recorded there.
+The [backend MVP completion record](backend-mvp-completion.md) holds the exact local
+verification and audit evidence. This is not release or production evidence:
+deployment, external OCR/model/storage/queue providers, real/private data,
+retention/recovery/privacy/capacity approval, provider-backed quality thresholds, and
+production activation remain pending or blocked. Frontend theme purchase/design
+planning is the next product task.

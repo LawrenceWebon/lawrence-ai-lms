@@ -12,7 +12,7 @@ recorded the narrow launch disposition required for #46 to start.
 | Initial planning | [#45](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/45) — private enrollment, version-pinned playback, and explicit progress | merged in PR #47 |
 | Decision correction | [#50](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/50) — freeze P-014 and F007-Q01–Q04 | merged in PR #52; distinct approval was not recorded |
 | Implementation | [#46](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/46) — one vertical learner playback/progress slice | merged in PR #57; post-merge audit returned `CHANGES REQUIRED` |
-| Remediation | [#60](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/60) — deny learner enrollment revocation through RLS | ready after workflow reconciliation #59; required before F-008 |
+| Remediation | [#60](https://github.com/LawrenceWebon/lawrence-ai-lms/issues/60) — deny learner enrollment revocation through RLS | completed by merged PR #64; clean post-merge audit |
 
 The contract contains no remaining product decision hidden behind implementation.
 PR #52 merged as `eb0fb3e808c37073e99625609c1338ce4b1ce51e`; its reviewed head has
@@ -35,7 +35,8 @@ narrow forward RLS correction.
 
 The later owner-approved [backend execution contract](../backend-mvp-completion-execution.md)
 delivers #60's correction through #63/PR #64 before the full backend integration
-checkpoint. #60 remains open pending independent review and merge of that candidate.
+checkpoint. PR #64 merged that candidate and its exact implementation head received a
+clean independent post-merge audit; #60 is closed as completed.
 
 The authoritative owned paths, tests, dependencies, non-goals, shared-hotspot owner,
 and merge order are in `implementation-plan.md`. The merged #46 author resources were

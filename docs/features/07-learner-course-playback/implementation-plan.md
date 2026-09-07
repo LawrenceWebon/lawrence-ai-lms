@@ -1,6 +1,6 @@
 # Implementation Plan — F-007 Learner Course Playback and Progress
 
-Status: **#46/PR #57 merged; independent post-merge audit returned CHANGES REQUIRED; RLS remediation #60 pending**
+Status: **PR #57 merged; enrollment-RLS remediation completed by audited PR #64**
 
 ## Dependency graph
 

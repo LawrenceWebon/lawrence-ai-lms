@@ -1,6 +1,6 @@
 # F-003 Local Source-Admission Implementation Evidence
 
-Status: **implementation merged; independent post-merge audit returned CHANGES REQUIRED; #61 pending**
+Status: **historical implementation record; finding remediated by merged and audited PR #64**
 
 - Evidence ID: `F003-LOCAL-IMPLEMENTATION-2026-08-22`
 - Classification: internal, synthetic/local-only implementation evidence
@@ -115,5 +115,6 @@ Additional reproducibility identities:
   credential, deployment, release, or production mutation was used.
 - PR #56 merged with configured checks green. Its independent post-merge audit proved
   that a 90-byte marker-shaped pseudo-PDF is admitted with `parser_accepted=True`
-  without a real parser. This local evidence therefore does not satisfy parser-backed
-  fail-closed admission; remediation #61 is required before F-004 implementation.
+  without a real parser. This original head did not satisfy parser-backed fail-closed
+  admission. PR #64 later implemented #61 before F-004 and received a clean
+  independent exact-head post-merge audit.

@@ -1,6 +1,6 @@
 # F-007 Local Learner-Playback Implementation Evidence
 
-Status: **implementation merged; independent post-merge audit returned CHANGES REQUIRED; #60 pending**
+Status: **historical implementation record; finding remediated by merged and audited PR #64**
 
 - Evidence ID: `F007-LOCAL-IMPLEMENTATION-2026-08-22`
 - Classification: internal, synthetic/local-only implementation evidence
@@ -123,5 +123,6 @@ evidence.
   was used.
 - PR #57 merged with configured checks green. Its independent post-merge audit proved
   that an enrolled learner using the production runtime can directly revoke its own
-  enrollment and bypass service idempotency/audit/outbox facts. Remediation #60 is
-  required before F-008 integration.
+  enrollment and bypass service idempotency/audit/outbox facts. PR #64 later
+  implemented #60 before F-008 and received a clean independent exact-head
+  post-merge audit.

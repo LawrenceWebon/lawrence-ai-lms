@@ -1,6 +1,6 @@
 # Technical Decisions — F-007 Learner Course Playback and Progress
 
-Status: **owner-approved and frozen; implementation merged; independent post-merge audit requires RLS remediation #60**
+Status: **owner-approved and frozen; implementation and RLS remediation merged and audited post-merge**
 
 Local implementation evidence is recorded in
 [F007-LOCAL-IMPLEMENTATION-2026-08-22](../../evidence/f007-learner-playback-implementation.md)

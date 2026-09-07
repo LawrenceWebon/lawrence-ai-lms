@@ -1,6 +1,6 @@
 # AI LMS Feature Inventory
 
-Status: **approved MVP sequence; F-001 complete; F-002 implementation merged with review evidence unrecorded; F-003/F-007 implementations merged and independently audited post-merge with remediation required**
+Status: **local backend MVP implemented and independently audited post-merge; frontend theme purchase/design planning is next**
 
 Derived from: `docs/product/spec.md`
 

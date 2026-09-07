@@ -1,6 +1,6 @@
 # Local Backend MVP Completion Evidence
 
-Status: **local implementation complete; PR #59 base integrated; exact-head review pending**
+Status: **merged; exact implementation head independently audited post-merge with no findings**
 
 Date: 2026-09-05
 
@@ -157,8 +157,9 @@ and the themed frontend remain outside this local delivery. The new full journey
 a backend HTTP/worker integration proof; the existing browser regressions do not claim
 a newly implemented complete PDF-generation frontend.
 
-Issues #60–#62 remain open and are linked as scope absorbed by PR #64; no completed
-backend merge or independent approval is implied. PR #59 merged on 2026-09-05 at
+At this pre-merge checkpoint, issues #60–#62 remained open and were linked as scope
+absorbed by PR #64; no completed backend merge or independent approval was implied.
+PR #59 merged on 2026-09-05 at
 `86564ac03b3f9aac849a53c0e758201c1e16f058`. The execution contract requires that base
 to be integrated and all applicable gates rerun before PR #64 becomes ready for
 review. This author does not approve or merge PR #64.
@@ -204,3 +205,28 @@ The exact merge-head handoff on PR #64 records the final full non-RLS rerun and
 hosted checks after push; the full-suite table above records the earlier implementation
 checkpoint. Exact-head independent review and a distinct authorized GitHub approval
 remain separate required gates.
+
+## Merge, independent audit, and cleanup
+
+Post-merge reconciliation date: 2026-09-07
+
+PR #64 merged exact head `136326cd39f730b3d77feec866c142a432e15f29`
+to `develop` as `bebcc22d5ec475a52a124872838468d5cb897158`. All six hosted checks
+on the implementation head passed. GitHub records no submitted pre-merge review, so
+the later audit is recorded as post-merge evidence rather than retroactive approval.
+
+An independent audit reviewed the 118-file delta against base
+`86564ac03b3f9aac849a53c0e758201c1e16f058`, prioritizing parser isolation,
+operation-scoped rights, tenant isolation and RLS, worker leases and retry safety,
+immutable provenance, human canonicalization/publication, and publication-time rights
+rechecks. It confirmed no Critical, Error, or Warning findings. The focused backend
+suite passed 13 tests; the isolated production-role RLS suite passed 38 tests with
+637 deselected; architecture, migration authority, Ruff, strict mypy, migration and
+OpenAPI drift, and whitespace checks passed.
+
+The verdict is durable on PR #64. Issues #60–#62 were closed as implemented by this
+head. The clean audit worktree, exact audit scratch child, and recorded
+`ai-lms-lms-63` Compose containers, network, and disposable volumes were removed.
+The next product task may proceed to frontend theme purchase/design planning. All
+production, provider, real-data, accessibility, privacy, retention, capacity,
+recovery, quality-threshold, and deployment gates remain separate.
